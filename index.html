@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>LogiKron - Giochi Matematici di Interistituto</title>
+  <meta name="description" content="Piattaforma per le gare matematiche a squadre tra Istituti Comprensivi">
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="manifest" href="manifest.json">
+  <link rel="icon" href="assets/favicon.ico">
+  <link rel="apple-touch-icon" href="assets/icon-192.png">
+</head>
+<body>
+  <div class="container container-md">
+
+    <!-- HEADER -->
+    <header class="text-center">
+      <div class="logo-container">
+        <span class="logo-l">L</span>
+        <span class="logo-o1">o</span>
+        <span class="logo-g">g</span>
+        <span class="logo-sand">&#8987;</span>
+        <span class="logo-k">K</span>
+        <span class="logo-r">r</span>
+        <span class="logo-o2">o</span>
+        <span class="logo-n">n</span>
+      </div>
+      <h1 class="mb-1" style="font-size: 1.5rem; color: var(--lk-primary);">
+        Giochi Matematici di Interistituto
+      </h1>
+      <p class="text-muted">Gare a squadre per le scuole primarie</p>
+    </header>
+
+    <!-- INFO GARE -->
+    <section class="card mt-3">
+      <div class="card-header">
+        <h2 class="card-title">Cosa sono i Giochi LogiKron?</h2>
+      </div>
+      <p class="mb-2">
+        I <strong>Giochi Matematici LogiKron</strong> sono gare a squadre che coinvolgono
+        le classi 4^ e 5^ delle scuole primarie di diversi Istituti Comprensivi della zona.
+      </p>
+      <p class="mb-2">
+        Ogni squadra, composta da <strong>5-9 studenti</strong>, affronta una serie di
+        quesiti logico-matematici. Il punteggio varia in base alla velocita e alla
+        correttezza delle risposte.
+      </p>
+      <p>
+        L'obiettivo e promuovere il <strong>lavoro di squadra</strong> e l'interesse
+        per la matematica in modo divertente e stimolante.
+      </p>
+    </section>
+
+    <!-- ISTITUTI PARTECIPANTI -->
+    <section class="card">
+      <div class="card-header">
+        <h2 class="card-title">Istituti Partecipanti</h2>
+      </div>
+      <div class="admin-grid" style="grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem;">
+        <div class="text-center">
+          <strong>IC Gottolengo</strong>
+          <p class="text-muted" style="font-size: 0.85rem;">Gottolengo, Gambara, Fiesse</p>
+        </div>
+        <div class="text-center">
+          <strong>IC Calvisano</strong>
+          <p class="text-muted" style="font-size: 0.85rem;">Calvisano, Isorella, Viadana</p>
+        </div>
+        <div class="text-center">
+          <strong>IC Pralboino</strong>
+          <p class="text-muted" style="font-size: 0.85rem;">Pralboino, Pavone, Milzano, Cigole, Seniga</p>
+        </div>
+        <div class="text-center">
+          <strong>IC Ghedi</strong>
+          <p class="text-muted" style="font-size: 0.85rem;">Ghedi</p>
+        </div>
+        <div class="text-center">
+          <strong>IC Verolanuova</strong>
+          <p class="text-muted" style="font-size: 0.85rem;">Verolanuova, Verolavecchia, Bassano B., Cadignano</p>
+        </div>
+        <div class="text-center">
+          <strong>IC Orzinuovi</strong>
+          <p class="text-muted" style="font-size: 0.85rem;">Orzinuovi, Orzivecchi, Pompiano, Villachiara</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- REGOLAMENTO BREVE -->
+    <section class="card">
+      <div class="card-header">
+        <h2 class="card-title">Regolamento in breve</h2>
+      </div>
+      <ul style="padding-left: 1.5rem;">
+        <li class="mb-1"><strong>Squadre:</strong> da 5 a 9 studenti per squadra</li>
+        <li class="mb-1"><strong>Classi:</strong> 4^ e 5^ primaria (anche pluriclassi)</li>
+        <li class="mb-1"><strong>Durata:</strong> 60 minuti circa</li>
+        <li class="mb-1"><strong>Quesiti:</strong> 20 problemi logico-matematici</li>
+        <li class="mb-1"><strong>Risposte:</strong> numeri interi da 0000 a 9999</li>
+        <li class="mb-1"><strong>Punteggio:</strong> decresce col tempo, bonus per velocita</li>
+        <li><strong>Jolly:</strong> una domanda a scelta con punteggio doppio</li>
+      </ul>
+    </section>
+
+    <!-- LINK PER DOCENTI -->
+    <section class="card" style="background: linear-gradient(135deg, #eff6ff, #f5f3ff);">
+      <div class="card-header">
+        <h2 class="card-title">Area Docenti</h2>
+      </div>
+      <p class="mb-2">
+        Sei un docente e vuoi partecipare con la tua classe? Segui questi passaggi:
+      </p>
+      <div class="admin-grid" style="margin-top: 1rem;">
+        <a href="intenzioni.html" class="btn btn-primary btn-lg btn-block">
+          1. Esprimi Intenzione
+        </a>
+        <a href="iscrizioni.html" class="btn btn-secondary btn-lg btn-block">
+          2. Iscrivi la Squadra
+        </a>
+      </div>
+      <p class="text-muted mt-2" style="font-size: 0.85rem;">
+        Prima esprimi l'intenzione di partecipare, poi potrai iscrivere la squadra con i nomi degli studenti.
+      </p>
+    </section>
+
+    <!-- LINK GARA -->
+    <section class="card">
+      <div class="card-header">
+        <h2 class="card-title">Durante la Gara</h2>
+      </div>
+      <div class="admin-grid">
+        <a href="gara.html" class="btn btn-success btn-lg btn-block">
+          Pannello Squadra
+        </a>
+        <a href="tabellone.html" class="btn btn-outline btn-lg btn-block">
+          Tabellone Live
+        </a>
+      </div>
+    </section>
+
+    <!-- FOOTER -->
+    <footer class="footer">
+      <p>
+        <strong>LogiKron</strong> - Giochi Matematici di Interistituto<br>
+        Organizzato da IC Gottolengo<br>
+        <a href="https://edutechlab-ita.github.io" target="_blank">EduTechLab</a> |
+        Powered by Vibe Coding - Fabio Rizzotto
+      </p>
+    </footer>
+
+  </div>
+
+  <script src="js/config.js"></script>
+</body>
+</html>

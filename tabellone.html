@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>LogiKron - Tabellone Live</title>
+  <link rel="stylesheet" href="css/style.css">
+  <style>
+    body {
+      background: linear-gradient(135deg, #1e1b4b, #312e81);
+      min-height: 100vh;
+    }
+
+    .tabellone-header {
+      text-align: center;
+      padding: 1.5rem;
+      color: white;
+    }
+
+    .tabellone-header h1 {
+      font-size: 2rem;
+      margin: 0;
+    }
+
+    .live-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      background: #ef4444;
+      color: white;
+      padding: 4px 12px;
+      border-radius: 9999px;
+      font-size: 0.85rem;
+      font-weight: bold;
+      animation: pulse 2s infinite;
+    }
+
+    .live-dot {
+      width: 8px;
+      height: 8px;
+      background: white;
+      border-radius: 50%;
+    }
+
+    .timer-big {
+      font-size: 4rem;
+      font-weight: bold;
+      font-family: 'Courier New', monospace;
+      color: #fcd34d;
+      text-shadow: 0 0 20px rgba(252, 211, 77, 0.5);
+    }
+
+    .tabellone-container {
+      background: rgba(255, 255, 255, 0.95);
+      border-radius: 1rem;
+      padding: 1.5rem;
+      margin: 1rem;
+      overflow-x: auto;
+    }
+
+    .tabellone table {
+      width: 100%;
+      border-collapse: separate;
+      border-spacing: 3px;
+    }
+
+    .tabellone th {
+      background: #4f46e5;
+      color: white;
+      padding: 0.75rem 0.5rem;
+      font-size: 0.85rem;
+      border-radius: 6px;
+    }
+
+    .tabellone td {
+      padding: 0.5rem;
+      text-align: center;
+      border-radius: 6px;
+      font-weight: 500;
+    }
+
+    .tabellone .squadra-row td:first-child {
+      text-align: left;
+      font-weight: 600;
+      background: #f1f5f9;
+    }
+
+    .cell-correct {
+      background: #10b981 !important;
+      color: white;
+    }
+
+    .cell-wrong {
+      background: #ef4444 !important;
+      color: white;
+    }
+
+    .cell-pending {
+      background: #fef3c7;
+    }
+
+    .cell-empty {
+      background: #f8fafc;
+      color: #94a3b8;
+    }
+
+    .punteggio-cell {
+      background: linear-gradient(135deg, #4f46e5, #7c3aed) !important;
+      color: white !important;
+      font-size: 1.1rem;
+      font-weight: bold;
+    }
+
+    .posizione-1 { background: linear-gradient(135deg, #fcd34d, #f59e0b) !important; }
+    .posizione-2 { background: linear-gradient(135deg, #d1d5db, #9ca3af) !important; }
+    .posizione-3 { background: linear-gradient(135deg, #f59e0b, #d97706) !important; }
+  </style>
+</head>
+<body>
+  <div class="tabellone-header">
+    <div class="logo-container" style="font-size: 1.8rem; margin: 0;">
+      <span style="color: #93c5fd;">L</span>
+      <span style="color: #c4b5fd;">o</span>
+      <span style="color: #67e8f9;">g</span>
+      <span style="color: #fcd34d;">&#8987;</span>
+      <span style="color: #6ee7b7;">K</span>
+      <span style="color: #fcd34d;">r</span>
+      <span style="color: #fca5a5;">o</span>
+      <span style="color: #f9a8d4;">n</span>
+    </div>
+    <h1>Tabellone Live</h1>
+    <span class="live-badge">
+      <span class="live-dot"></span>
+      LIVE
+    </span>
+    <div class="timer-big" id="timerDisplay">45:00</div>
+  </div>
+
+  <div class="tabellone-container">
+    <div class="tabellone">
+      <table>
+        <thead>
+          <tr>
+            <th style="min-width: 150px;">Squadra</th>
+            <th>1</th>
+            <th>2</th>
+            <th>3</th>
+            <th>4</th>
+            <th>5</th>
+            <th>6</th>
+            <th>7</th>
+            <th>8</th>
+            <th>9</th>
+            <th>10</th>
+            <th style="min-width: 80px;">Punti</th>
+          </tr>
+        </thead>
+        <tbody>
+          <!-- Esempio righe -->
+          <tr class="squadra-row">
+            <td class="posizione-1">🥇 4-A-GT</td>
+            <td class="cell-correct">✓</td>
+            <td class="cell-correct">✓</td>
+            <td class="cell-correct">✓</td>
+            <td class="cell-wrong">✗</td>
+            <td class="cell-correct">✓</td>
+            <td class="cell-pending">...</td>
+            <td class="cell-empty">-</td>
+            <td class="cell-empty">-</td>
+            <td class="cell-empty">-</td>
+            <td class="cell-empty">-</td>
+            <td class="punteggio-cell">156</td>
+          </tr>
+          <tr class="squadra-row">
+            <td class="posizione-2">🥈 5-B-CV</td>
+            <td class="cell-correct">✓</td>
+            <td class="cell-correct">✓</td>
+            <td class="cell-wrong">✗</td>
+            <td class="cell-correct">✓</td>
+            <td class="cell-pending">...</td>
+            <td class="cell-empty">-</td>
+            <td class="cell-empty">-</td>
+            <td class="cell-empty">-</td>
+            <td class="cell-empty">-</td>
+            <td class="cell-empty">-</td>
+            <td class="punteggio-cell">142</td>
+          </tr>
+          <tr class="squadra-row">
+            <td class="posizione-3">🥉 4-A-PR</td>
+            <td class="cell-correct">✓</td>
+            <td class="cell-correct">✓</td>
+            <td class="cell-correct">✓</td>
+            <td class="cell-empty">-</td>
+            <td class="cell-empty">-</td>
+            <td class="cell-empty">-</td>
+            <td class="cell-empty">-</td>
+            <td class="cell-empty">-</td>
+            <td class="cell-empty">-</td>
+            <td class="cell-empty">-</td>
+            <td class="punteggio-cell">128</td>
+          </tr>
+          <tr class="squadra-row">
+            <td>5-A-GH</td>
+            <td class="cell-correct">✓</td>
+            <td class="cell-wrong">✗</td>
+            <td class="cell-pending">...</td>
+            <td class="cell-empty">-</td>
+            <td class="cell-empty">-</td>
+            <td class="cell-empty">-</td>
+            <td class="cell-empty">-</td>
+            <td class="cell-empty">-</td>
+            <td class="cell-empty">-</td>
+            <td class="cell-empty">-</td>
+            <td class="punteggio-cell">95</td>
+          </tr>
+          <tr class="squadra-row">
+            <td>4-B-VN</td>
+            <td class="cell-correct">✓</td>
+            <td class="cell-pending">...</td>
+            <td class="cell-empty">-</td>
+            <td class="cell-empty">-</td>
+            <td class="cell-empty">-</td>
+            <td class="cell-empty">-</td>
+            <td class="cell-empty">-</td>
+            <td class="cell-empty">-</td>
+            <td class="cell-empty">-</td>
+            <td class="cell-empty">-</td>
+            <td class="punteggio-cell">72</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <p style="text-align: center; color: #64748b; font-size: 0.85rem; margin-top: 1rem;">
+      ✓ Risposta corretta | ✗ Risposta sbagliata | ... In attesa | - Non risposto
+    </p>
+  </div>
+
+  <script>
+    // Timer countdown
+    let secondi = 45 * 60;
+    setInterval(() => {
+      if (secondi > 0) {
+        secondi--;
+        const min = Math.floor(secondi / 60);
+        const sec = secondi % 60;
+        document.getElementById('timerDisplay').textContent =
+          `${min.toString().padStart(2, '0')}:${sec.toString().padStart(2, '0')}`;
+      }
+    }, 1000);
+
+    // TODO: Polling per aggiornamento real-time da Apps Script
+  </script>
+</body>
+</html>

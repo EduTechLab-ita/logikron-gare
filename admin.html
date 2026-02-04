@@ -1,0 +1,454 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>LogiKron Admin - Pannello di Controllo</title>
+  <link rel="stylesheet" href="css/style.css">
+  <style>
+    .admin-header {
+      background: linear-gradient(135deg, var(--lk-primary), var(--lk-secondary));
+      color: white;
+      padding: var(--lk-spacing-xl);
+      border-radius: var(--lk-radius-lg);
+      margin-bottom: var(--lk-spacing-xl);
+    }
+
+    .admin-section {
+      margin-bottom: var(--lk-spacing-xl);
+    }
+
+    .admin-section-title {
+      font-size: 1.1rem;
+      font-weight: 600;
+      color: var(--lk-text);
+      margin-bottom: var(--lk-spacing-md);
+      padding-bottom: var(--lk-spacing-sm);
+      border-bottom: 2px solid var(--lk-primary);
+      display: flex;
+      align-items: center;
+      gap: var(--lk-spacing-sm);
+    }
+
+    .phase-badge {
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: 9999px;
+      font-size: 0.75rem;
+      font-weight: 600;
+      text-transform: uppercase;
+    }
+
+    .phase-1 { background: #dbeafe; color: #1e40af; }
+    .phase-2 { background: #fef3c7; color: #92400e; }
+    .phase-3 { background: #d1fae5; color: #065f46; }
+    .phase-4 { background: #fce7f3; color: #9d174d; }
+    .phase-5 { background: #e0e7ff; color: #3730a3; }
+
+    .status-indicator {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      display: inline-block;
+      margin-right: 8px;
+    }
+
+    .status-active { background: var(--lk-success); }
+    .status-pending { background: var(--lk-warning); }
+    .status-inactive { background: var(--lk-text-muted); }
+
+    .quick-stats {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+      gap: var(--lk-spacing-md);
+      margin-bottom: var(--lk-spacing-xl);
+    }
+
+    .quick-stat {
+      background: white;
+      border-radius: var(--lk-radius-md);
+      padding: var(--lk-spacing-md);
+      text-align: center;
+      border: 1px solid var(--lk-border);
+    }
+
+    .quick-stat-value {
+      font-size: 2rem;
+      font-weight: bold;
+      color: var(--lk-primary);
+    }
+
+    .quick-stat-label {
+      font-size: 0.8rem;
+      color: var(--lk-text-muted);
+    }
+
+    .login-container {
+      max-width: 400px;
+      margin: 100px auto;
+    }
+
+    #adminPanel { display: none; }
+    #loginPanel { display: block; }
+
+    .anno-scolastico {
+      background: rgba(255,255,255,0.2);
+      padding: 4px 12px;
+      border-radius: 9999px;
+      font-size: 0.9rem;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+
+    <!-- LOGIN PANEL -->
+    <div id="loginPanel" class="login-container">
+      <div class="card text-center">
+        <div class="logo-container" style="font-size: 2rem;">
+          <span class="logo-l">L</span>
+          <span class="logo-o1">o</span>
+          <span class="logo-g">g</span>
+          <span class="logo-sand">&#8987;</span>
+          <span class="logo-k">K</span>
+          <span class="logo-r">r</span>
+          <span class="logo-o2">o</span>
+          <span class="logo-n">n</span>
+        </div>
+        <h2 class="mb-2">Accesso Admin</h2>
+        <p class="text-muted mb-3">Inserisci la password per accedere al pannello di controllo</p>
+
+        <div class="form-group">
+          <input type="password" id="adminPassword" class="form-control" placeholder="Password"
+                 onkeypress="if(event.key==='Enter') checkPassword()">
+        </div>
+        <button onclick="checkPassword()" class="btn btn-primary btn-block">
+          Accedi
+        </button>
+        <p id="loginError" class="form-error mt-2 hidden">Password non corretta</p>
+      </div>
+    </div>
+
+    <!-- ADMIN PANEL -->
+    <div id="adminPanel">
+
+      <!-- HEADER -->
+      <div class="admin-header text-center">
+        <div class="logo-container" style="font-size: 2rem; margin: 0;">
+          <span class="logo-l" style="color: white;">L</span>
+          <span class="logo-o1" style="color: #c4b5fd;">o</span>
+          <span class="logo-g" style="color: #a5f3fc;">g</span>
+          <span class="logo-sand" style="color: #fcd34d;">&#8987;</span>
+          <span class="logo-k" style="color: #6ee7b7;">K</span>
+          <span class="logo-r" style="color: #fcd34d;">r</span>
+          <span class="logo-o2" style="color: #fca5a5;">o</span>
+          <span class="logo-n" style="color: #f9a8d4;">n</span>
+        </div>
+        <h1 style="font-size: 1.5rem; margin: 0.5rem 0;">Pannello Admin</h1>
+        <span class="anno-scolastico" id="annoScolastico">2025-2026</span>
+      </div>
+
+      <!-- QUICK STATS -->
+      <div class="quick-stats">
+        <div class="quick-stat">
+          <div class="quick-stat-value" id="statIstituti">6</div>
+          <div class="quick-stat-label">Istituti</div>
+        </div>
+        <div class="quick-stat">
+          <div class="quick-stat-value" id="statIntenzioni">-</div>
+          <div class="quick-stat-label">Intenzioni</div>
+        </div>
+        <div class="quick-stat">
+          <div class="quick-stat-value" id="statSquadre">-</div>
+          <div class="quick-stat-label">Squadre</div>
+        </div>
+        <div class="quick-stat">
+          <div class="quick-stat-value" id="statStudenti">-</div>
+          <div class="quick-stat-label">Studenti</div>
+        </div>
+        <div class="quick-stat">
+          <div class="quick-stat-value" id="statGare">-</div>
+          <div class="quick-stat-label">Gare</div>
+        </div>
+      </div>
+
+      <!-- FASE 0: SETUP ANNO -->
+      <section class="admin-section">
+        <h3 class="admin-section-title">
+          <span class="phase-badge phase-1">Setup</span>
+          Configurazione Anno Scolastico
+        </h3>
+        <div class="admin-grid">
+          <div class="admin-card">
+            <div class="admin-card-icon">📅</div>
+            <h4 class="admin-card-title">Nuovo Anno</h4>
+            <p class="admin-card-desc">Crea le cartelle per il nuovo anno scolastico</p>
+            <button class="btn btn-primary" onclick="setupNuovoAnno()">
+              Crea Cartelle
+            </button>
+          </div>
+          <div class="admin-card">
+            <div class="admin-card-icon">⚙️</div>
+            <h4 class="admin-card-title">Configurazione</h4>
+            <p class="admin-card-desc">Modifica parametri gare e istituti</p>
+            <button class="btn btn-outline" onclick="openConfig()">
+              Configura
+            </button>
+          </div>
+        </div>
+      </section>
+
+      <!-- FASE 1: INTENZIONI -->
+      <section class="admin-section">
+        <h3 class="admin-section-title">
+          <span class="phase-badge phase-2">Fase 1</span>
+          Raccolta Intenzioni
+        </h3>
+        <div class="admin-grid">
+          <div class="admin-card">
+            <div class="admin-card-icon">📝</div>
+            <h4 class="admin-card-title">Form Intenzioni</h4>
+            <p class="admin-card-desc">Link da condividere con i docenti</p>
+            <button class="btn btn-primary" onclick="copyLink('intenzioni')">
+              Copia Link
+            </button>
+            <a href="intenzioni.html" target="_blank" class="btn btn-outline mt-1" style="display: block;">
+              Apri Form
+            </a>
+          </div>
+          <div class="admin-card">
+            <div class="admin-card-icon">📊</div>
+            <h4 class="admin-card-title">Visualizza Intenzioni</h4>
+            <p class="admin-card-desc">Vedi chi ha espresso interesse</p>
+            <button class="btn btn-outline" onclick="viewIntenzioni()">
+              Visualizza
+            </button>
+          </div>
+        </div>
+      </section>
+
+      <!-- FASE 2: ISCRIZIONI -->
+      <section class="admin-section">
+        <h3 class="admin-section-title">
+          <span class="phase-badge phase-3">Fase 2</span>
+          Iscrizioni Squadre
+        </h3>
+        <div class="admin-grid">
+          <div class="admin-card">
+            <div class="admin-card-icon">👥</div>
+            <h4 class="admin-card-title">Form Iscrizioni</h4>
+            <p class="admin-card-desc">Link per registrare le squadre</p>
+            <button class="btn btn-primary" onclick="copyLink('iscrizioni')">
+              Copia Link
+            </button>
+            <a href="iscrizioni.html" target="_blank" class="btn btn-outline mt-1" style="display: block;">
+              Apri Form
+            </a>
+          </div>
+          <div class="admin-card">
+            <div class="admin-card-icon">📋</div>
+            <h4 class="admin-card-title">Gestisci Squadre</h4>
+            <p class="admin-card-desc">Modifica, elimina, esporta squadre</p>
+            <button class="btn btn-outline" onclick="manageSquadre()">
+              Gestisci
+            </button>
+          </div>
+        </div>
+      </section>
+
+      <!-- FASE 3: GARA -->
+      <section class="admin-section">
+        <h3 class="admin-section-title">
+          <span class="phase-badge phase-4">Fase 3</span>
+          Gestione Gara
+        </h3>
+        <div class="admin-grid">
+          <div class="admin-card">
+            <div class="admin-card-icon">🎮</div>
+            <h4 class="admin-card-title">Crea Nuova Gara</h4>
+            <p class="admin-card-desc">Imposta quesiti e parametri</p>
+            <button class="btn btn-primary" onclick="createGara()">
+              Nuova Gara
+            </button>
+          </div>
+          <div class="admin-card">
+            <div class="admin-card-icon">🖥️</div>
+            <h4 class="admin-card-title">Tabellone Live</h4>
+            <p class="admin-card-desc">Visualizza punteggi in tempo reale</p>
+            <a href="tabellone.html" target="_blank" class="btn btn-success">
+              Apri Tabellone
+            </a>
+          </div>
+          <div class="admin-card">
+            <div class="admin-card-icon">🎯</div>
+            <h4 class="admin-card-title">Pannello Squadre</h4>
+            <p class="admin-card-desc">Link per le squadre durante la gara</p>
+            <button class="btn btn-outline" onclick="copyLink('gara')">
+              Copia Link
+            </button>
+          </div>
+        </div>
+      </section>
+
+      <!-- FASE 4: POST-GARA -->
+      <section class="admin-section">
+        <h3 class="admin-section-title">
+          <span class="phase-badge phase-5">Fase 4</span>
+          Post-Gara
+        </h3>
+        <div class="admin-grid">
+          <div class="admin-card">
+            <div class="admin-card-icon">🏆</div>
+            <h4 class="admin-card-title">Classifica Finale</h4>
+            <p class="admin-card-desc">Visualizza e pubblica i risultati</p>
+            <button class="btn btn-primary" onclick="viewClassifica()">
+              Classifica
+            </button>
+          </div>
+          <div class="admin-card">
+            <div class="admin-card-icon">📜</div>
+            <h4 class="admin-card-title">Genera Attestati</h4>
+            <p class="admin-card-desc">Crea PDF e invia via email</p>
+            <button class="btn btn-secondary" onclick="generateAttestati()">
+              Genera
+            </button>
+          </div>
+          <div class="admin-card">
+            <div class="admin-card-icon">📈</div>
+            <h4 class="admin-card-title">Statistiche</h4>
+            <p class="admin-card-desc">Grafici e dati per rendicontazione</p>
+            <button class="btn btn-outline" onclick="viewStatistiche()">
+              Statistiche
+            </button>
+          </div>
+        </div>
+      </section>
+
+      <!-- LINK RAPIDI -->
+      <section class="admin-section">
+        <h3 class="admin-section-title">
+          Link Rapidi
+        </h3>
+        <div class="card">
+          <table style="width: 100%; border-collapse: collapse;">
+            <tr>
+              <td style="padding: 8px; border-bottom: 1px solid var(--lk-border);">
+                <strong>Google Sheet Master</strong>
+              </td>
+              <td style="padding: 8px; border-bottom: 1px solid var(--lk-border); text-align: right;">
+                <a href="#" id="linkSheetMaster" target="_blank" class="btn btn-outline" style="padding: 4px 12px; font-size: 0.85rem;">
+                  Apri
+                </a>
+              </td>
+            </tr>
+            <tr>
+              <td style="padding: 8px; border-bottom: 1px solid var(--lk-border);">
+                <strong>Cartella Drive Anno</strong>
+              </td>
+              <td style="padding: 8px; border-bottom: 1px solid var(--lk-border); text-align: right;">
+                <a href="#" id="linkDriveAnno" target="_blank" class="btn btn-outline" style="padding: 4px 12px; font-size: 0.85rem;">
+                  Apri
+                </a>
+              </td>
+            </tr>
+            <tr>
+              <td style="padding: 8px;">
+                <strong>Pagina Pubblica</strong>
+              </td>
+              <td style="padding: 8px; text-align: right;">
+                <a href="index.html" target="_blank" class="btn btn-outline" style="padding: 4px 12px; font-size: 0.85rem;">
+                  Apri
+                </a>
+              </td>
+            </tr>
+          </table>
+        </div>
+      </section>
+
+      <!-- FOOTER -->
+      <footer class="footer">
+        <p>
+          <strong>LogiKron Admin</strong> - Sistema Gare Matematiche<br>
+          <a href="https://edutechlab-ita.github.io" target="_blank">EduTechLab</a> |
+          Powered by Vibe Coding - Fabio Rizzotto
+        </p>
+        <button onclick="logout()" class="btn btn-outline mt-2" style="padding: 4px 16px; font-size: 0.85rem;">
+          Esci
+        </button>
+      </footer>
+
+    </div>
+
+  </div>
+
+  <script src="js/config.js"></script>
+  <script>
+    // Password admin (in produzione usare hash)
+    // Per ora password semplice: "logikron2025"
+    const ADMIN_PASSWORD = 'logikron2025';
+
+    function checkPassword() {
+      const input = document.getElementById('adminPassword').value;
+      if (input === ADMIN_PASSWORD) {
+        document.getElementById('loginPanel').style.display = 'none';
+        document.getElementById('adminPanel').style.display = 'block';
+        sessionStorage.setItem('logikronAdmin', 'true');
+        loadDashboard();
+      } else {
+        document.getElementById('loginError').classList.remove('hidden');
+      }
+    }
+
+    function logout() {
+      sessionStorage.removeItem('logikronAdmin');
+      document.getElementById('adminPanel').style.display = 'none';
+      document.getElementById('loginPanel').style.display = 'block';
+      document.getElementById('adminPassword').value = '';
+    }
+
+    // Check if already logged in
+    if (sessionStorage.getItem('logikronAdmin') === 'true') {
+      document.getElementById('loginPanel').style.display = 'none';
+      document.getElementById('adminPanel').style.display = 'block';
+      loadDashboard();
+    }
+
+    function loadDashboard() {
+      // Carica anno scolastico dalla config
+      document.getElementById('annoScolastico').textContent = LOGIKRON_CONFIG.annoScolastico;
+
+      // TODO: Caricare statistiche reali da Apps Script
+      // Per ora placeholder
+    }
+
+    function copyLink(type) {
+      const baseUrl = window.location.origin + window.location.pathname.replace('admin.html', '');
+      let url = '';
+      switch(type) {
+        case 'intenzioni':
+          url = baseUrl + 'intenzioni.html';
+          break;
+        case 'iscrizioni':
+          url = baseUrl + 'iscrizioni.html';
+          break;
+        case 'gara':
+          url = baseUrl + 'gara.html';
+          break;
+      }
+      navigator.clipboard.writeText(url).then(() => {
+        alert('Link copiato: ' + url);
+      });
+    }
+
+    // Placeholder functions - da implementare
+    function setupNuovoAnno() { alert('Setup Nuovo Anno - Da implementare'); }
+    function openConfig() { alert('Configurazione - Da implementare'); }
+    function viewIntenzioni() { alert('Visualizza Intenzioni - Da implementare'); }
+    function manageSquadre() { alert('Gestisci Squadre - Da implementare'); }
+    function createGara() { alert('Crea Gara - Da implementare'); }
+    function viewClassifica() { alert('Classifica - Da implementare'); }
+    function generateAttestati() { alert('Genera Attestati - Da implementare'); }
+    function viewStatistiche() { alert('Statistiche - Da implementare'); }
+  </script>
+</body>
+</html>

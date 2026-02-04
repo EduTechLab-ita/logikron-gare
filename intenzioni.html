@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>LogiKron - Intenzione di Partecipazione</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <div class="container container-sm">
+
+    <!-- HEADER -->
+    <header class="text-center">
+      <div class="logo-container" style="font-size: 2rem;">
+        <span class="logo-l">L</span>
+        <span class="logo-o1">o</span>
+        <span class="logo-g">g</span>
+        <span class="logo-sand">&#8987;</span>
+        <span class="logo-k">K</span>
+        <span class="logo-r">r</span>
+        <span class="logo-o2">o</span>
+        <span class="logo-n">n</span>
+      </div>
+      <h1 style="font-size: 1.25rem; color: var(--lk-primary);">
+        Intenzione di Partecipazione
+      </h1>
+      <p class="text-muted">Giochi Matematici di Interistituto 2025-2026</p>
+    </header>
+
+    <!-- INFO -->
+    <div class="card mt-3" style="background: #fef3c7; border-left: 4px solid #f59e0b;">
+      <p style="margin: 0;">
+        <strong>Fase 1:</strong> Esprimi l'intenzione di partecipare con la tua classe.
+        I dati inseriti qui serviranno per abilitare l'iscrizione delle squadre nella Fase 2.
+      </p>
+    </div>
+
+    <!-- FORM -->
+    <div class="card mt-2">
+      <form id="formIntenzioni">
+
+        <div class="form-group">
+          <label class="form-label">Email Docente *</label>
+          <input type="email" id="emailDocente" class="form-control" required
+                 placeholder="nome.cognome@ictuascuola.edu.it">
+          <p class="form-hint">Usa l'email istituzionale. Riceverai qui le comunicazioni.</p>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Nome e Cognome Docente *</label>
+          <input type="text" id="nomeDocente" class="form-control" required
+                 placeholder="Mario Rossi">
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Istituto Comprensivo *</label>
+          <select id="istituto" class="form-control" required onchange="updatePlessi()">
+            <option value="">Seleziona un Istituto</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Plesso *</label>
+          <select id="plesso" class="form-control" required disabled>
+            <option value="">Prima seleziona l'Istituto</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Classe *</label>
+          <select id="classe" class="form-control" required>
+            <option value="">Seleziona la classe</option>
+            <option value="4^">Classe 4^</option>
+            <option value="5^">Classe 5^</option>
+            <option value="Pluriclasse 3^-4^">Pluriclasse 3^-4^</option>
+            <option value="Pluriclasse 4^-5^">Pluriclasse 4^-5^</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Numero stimato di squadre</label>
+          <select id="numeroSquadre" class="form-control">
+            <option value="1">1 squadra</option>
+            <option value="2">2 squadre</option>
+            <option value="3">3 squadre</option>
+            <option value="4">4 o piu squadre</option>
+          </select>
+          <p class="form-hint">Stima approssimativa, potrai modificare in fase di iscrizione.</p>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Note (opzionale)</label>
+          <textarea id="note" class="form-control" rows="3"
+                    placeholder="Eventuali comunicazioni o richieste..."></textarea>
+        </div>
+
+        <button type="submit" class="btn btn-primary btn-lg btn-block mt-3">
+          Invia Intenzione
+        </button>
+
+      </form>
+    </div>
+
+    <!-- SUCCESSO (nascosto) -->
+    <div id="successMessage" class="card mt-3 hidden" style="background: #d1fae5; text-align: center;">
+      <h2 style="color: #065f46;">Intenzione Registrata!</h2>
+      <p>Grazie per aver espresso l'intenzione di partecipare ai Giochi LogiKron.</p>
+      <p>Riceverai una email quando sara aperta la fase di iscrizione squadre.</p>
+      <a href="index.html" class="btn btn-outline mt-2">Torna alla Home</a>
+    </div>
+
+    <!-- FOOTER -->
+    <footer class="footer">
+      <p>
+        <a href="index.html">Torna alla Home</a> |
+        <a href="https://edutechlab-ita.github.io" target="_blank">EduTechLab</a>
+      </p>
+    </footer>
+
+  </div>
+
+  <script src="js/config.js"></script>
+  <script>
+    // Popola istituti dalla config
+    function initForm() {
+      const select = document.getElementById('istituto');
+      LOGIKRON_CONFIG.istituti.forEach(ist => {
+        const option = document.createElement('option');
+        option.value = ist.nome;
+        option.textContent = ist.nome;
+        select.appendChild(option);
+      });
+    }
+
+    // Aggiorna plessi quando cambia istituto
+    function updatePlessi() {
+      const istitutoNome = document.getElementById('istituto').value;
+      const plessoSelect = document.getElementById('plesso');
+
+      plessoSelect.innerHTML = '<option value="">Seleziona un Plesso</option>';
+
+      if (istitutoNome) {
+        const istituto = LOGIKRON_CONFIG.istituti.find(i => i.nome === istitutoNome);
+        if (istituto) {
+          istituto.plessi.forEach(pl => {
+            const option = document.createElement('option');
+            option.value = pl.nome;
+            option.textContent = pl.nome;
+            plessoSelect.appendChild(option);
+          });
+          plessoSelect.disabled = false;
+        }
+      } else {
+        plessoSelect.disabled = true;
+      }
+    }
+
+    // Submit form
+    document.getElementById('formIntenzioni').addEventListener('submit', function(e) {
+      e.preventDefault();
+
+      // TODO: Inviare dati a Google Apps Script
+      // Per ora mostra solo il messaggio di successo
+
+      const formData = {
+        email: document.getElementById('emailDocente').value,
+        nome: document.getElementById('nomeDocente').value,
+        istituto: document.getElementById('istituto').value,
+        plesso: document.getElementById('plesso').value,
+        classe: document.getElementById('classe').value,
+        numeroSquadre: document.getElementById('numeroSquadre').value,
+        note: document.getElementById('note').value,
+        timestamp: new Date().toISOString()
+      };
+
+      console.log('Dati intenzione:', formData);
+
+      // Mostra successo
+      document.getElementById('formIntenzioni').parentElement.classList.add('hidden');
+      document.getElementById('successMessage').classList.remove('hidden');
+    });
+
+    // Init
+    initForm();
+  </script>
+</body>
+</html>

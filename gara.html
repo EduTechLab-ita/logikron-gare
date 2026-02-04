@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>LogiKron - Pannello Squadra</title>
+  <link rel="stylesheet" href="css/style.css">
+  <style>
+    .gara-header {
+      background: linear-gradient(135deg, #10b981, #059669);
+      color: white;
+      padding: 1.5rem;
+      border-radius: var(--lk-radius-lg);
+      text-align: center;
+      margin-bottom: 1.5rem;
+    }
+
+    .timer {
+      font-size: 3rem;
+      font-weight: bold;
+      font-family: 'Courier New', monospace;
+    }
+
+    .risposta-input {
+      font-size: 2rem;
+      text-align: center;
+      font-family: 'Courier New', monospace;
+      letter-spacing: 0.5rem;
+      padding: 1rem;
+    }
+
+    .domanda-card {
+      border-left: 4px solid var(--lk-primary);
+    }
+
+    .domanda-numero {
+      background: var(--lk-primary);
+      color: white;
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: bold;
+    }
+
+    .jolly-badge {
+      background: gold;
+      color: black;
+      padding: 2px 8px;
+      border-radius: 4px;
+      font-size: 0.8rem;
+      font-weight: bold;
+    }
+  </style>
+</head>
+<body>
+  <div class="container container-sm">
+
+    <!-- LOGIN SQUADRA -->
+    <div id="loginSquadra">
+      <header class="text-center">
+        <div class="logo-container" style="font-size: 2rem;">
+          <span class="logo-l">L</span>
+          <span class="logo-o1">o</span>
+          <span class="logo-g">g</span>
+          <span class="logo-sand">&#8987;</span>
+          <span class="logo-k">K</span>
+          <span class="logo-r">r</span>
+          <span class="logo-o2">o</span>
+          <span class="logo-n">n</span>
+        </div>
+        <h1 style="font-size: 1.25rem;">Accesso Squadra</h1>
+      </header>
+
+      <div class="card mt-3">
+        <div class="form-group">
+          <label class="form-label">Codice Squadra</label>
+          <input type="text" id="codiceSquadra" class="form-control risposta-input"
+                 placeholder="ABC123" maxlength="6" style="text-transform: uppercase;">
+          <p class="form-hint">Inserisci il codice ricevuto dal docente</p>
+        </div>
+        <button onclick="accessoSquadra()" class="btn btn-success btn-lg btn-block">
+          Entra
+        </button>
+      </div>
+    </div>
+
+    <!-- PANNELLO GARA (nascosto) -->
+    <div id="pannelloGara" class="hidden">
+
+      <!-- HEADER GARA -->
+      <div class="gara-header">
+        <p style="margin: 0; opacity: 0.9;">Squadra</p>
+        <h2 id="nomeSquadraDisplay" style="margin: 0.25rem 0;">4-A-GT</h2>
+        <div class="timer" id="timer">45:00</div>
+        <p style="margin: 0; font-size: 0.9rem;">Tempo rimanente</p>
+      </div>
+
+      <!-- PLACEHOLDER GARA -->
+      <div class="card text-center" style="padding: 2rem;">
+        <div style="font-size: 3rem; margin-bottom: 1rem;">🎮</div>
+        <h2>Pannello Gara</h2>
+        <p class="text-muted mb-2">
+          Durante la gara qui appariranno i quesiti e potrai inserire le risposte.
+        </p>
+        <p>
+          <strong>Funzionalita previste:</strong>
+        </p>
+        <ul style="text-align: left; max-width: 350px; margin: 1rem auto;">
+          <li>Lista quesiti con stato (risposto/non risposto)</li>
+          <li>Inserimento risposta (0000-9999)</li>
+          <li>Selezione Jolly (x2 punti)</li>
+          <li>Feedback immediato risposta</li>
+          <li>Punteggio attuale squadra</li>
+          <li>Sincronizzazione real-time</li>
+        </ul>
+      </div>
+
+      <!-- ESEMPIO DOMANDA -->
+      <div class="card domanda-card">
+        <div style="display: flex; align-items: center; gap: 1rem; margin-bottom: 1rem;">
+          <div class="domanda-numero">1</div>
+          <div>
+            <strong>Quesito di esempio</strong>
+            <span class="jolly-badge">JOLLY</span>
+          </div>
+        </div>
+        <p class="mb-2">
+          Un treno parte alle 8:45 e arriva a destinazione alle 11:20.
+          Quanti minuti dura il viaggio?
+        </p>
+        <div class="form-group mb-0">
+          <input type="text" class="form-control risposta-input"
+                 placeholder="0000" maxlength="4" pattern="[0-9]*">
+        </div>
+        <button class="btn btn-primary btn-block mt-2">
+          Invia Risposta
+        </button>
+      </div>
+
+    </div>
+
+    <!-- FOOTER -->
+    <footer class="footer">
+      <p>
+        <a href="index.html">Home</a> |
+        <a href="tabellone.html" target="_blank">Tabellone Live</a>
+      </p>
+    </footer>
+
+  </div>
+
+  <script src="js/config.js"></script>
+  <script>
+    function accessoSquadra() {
+      const codice = document.getElementById('codiceSquadra').value.toUpperCase();
+      if (codice.length >= 4) {
+        // TODO: Verificare codice con Apps Script
+        document.getElementById('loginSquadra').classList.add('hidden');
+        document.getElementById('pannelloGara').classList.remove('hidden');
+        document.getElementById('nomeSquadraDisplay').textContent = codice;
+      } else {
+        alert('Inserisci un codice valido');
+      }
+    }
+
+    // Timer placeholder
+    let secondiRimanenti = 45 * 60;
+    setInterval(() => {
+      if (secondiRimanenti > 0) {
+        secondiRimanenti--;
+        const minuti = Math.floor(secondiRimanenti / 60);
+        const secondi = secondiRimanenti % 60;
+        document.getElementById('timer').textContent =
+          `${minuti.toString().padStart(2, '0')}:${secondi.toString().padStart(2, '0')}`;
+      }
+    }, 1000);
+  </script>
+</body>
+</html>
