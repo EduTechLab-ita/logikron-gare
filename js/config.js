@@ -49,7 +49,8 @@ const LOGIKRON_CONFIG = {
     incrementoPuntiOgniMinuti: 2,
     penalitaRispostaSbagliata: -10,
     bonusProblemaPenalita: 2,
-    tempoJollyMinuti: 5,
+    tempoJollyMinuti: 15,
+    tempoDomandeMinuti: 30,
 
     // Bonus posizionamento (primi 10 a risolvere)
     bonusPosizionamento: [20, 15, 10, 8, 6, 5, 4, 3, 2, 1],

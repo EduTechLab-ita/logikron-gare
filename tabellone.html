@@ -129,10 +129,10 @@
       color: white;
     }
 
-    .pos-1 { background: linear-gradient(135deg, #fbbf24, #f59e0b); }
-    .pos-2 { background: linear-gradient(135deg, #9ca3af, #6b7280); }
-    .pos-3 { background: linear-gradient(135deg, #f97316, #ea580c); }
-    .pos-other { background: #94a3b8; }
+    .pos-1 { background: linear-gradient(135deg, #fbbf24, #f59e0b); color: #1e1b4b; }
+    .pos-2 { background: linear-gradient(135deg, #9ca3af, #6b7280); color: white; }
+    .pos-3 { background: linear-gradient(135deg, #f97316, #ea580c); color: white; }
+    .pos-other { background: #94a3b8; color: white; }
 
     .cell-correct {
       background: #10b981 !important;
@@ -189,6 +189,70 @@
       border-radius: 4px;
       display: inline-block;
     }
+
+    /* Cella Jolly - "J" in angolo */
+    .cell-jolly {
+      position: relative;
+    }
+
+    .jolly-tag {
+      position: absolute;
+      top: 2px;
+      right: 3px;
+      background: #fbbf24;
+      color: #1e1b4b;
+      font-size: 0.55rem;
+      font-weight: 900;
+      width: 14px;
+      height: 14px;
+      line-height: 14px;
+      text-align: center;
+      border-radius: 3px;
+    }
+
+    /* Mini-timer in alto */
+    .mini-timers {
+      display: flex;
+      justify-content: center;
+      gap: 1.5rem;
+      margin-top: 0.5rem;
+      flex-wrap: wrap;
+    }
+
+    .mini-timer {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      background: rgba(255,255,255,0.1);
+      padding: 6px 14px;
+      border-radius: 9999px;
+      color: white;
+      font-size: 0.85rem;
+    }
+
+    .mini-timer-label {
+      opacity: 0.7;
+      font-size: 0.75rem;
+    }
+
+    .mini-timer-value {
+      font-family: 'Courier New', monospace;
+      font-weight: bold;
+      font-size: 1rem;
+    }
+
+    .mini-timer-value.scaduto {
+      color: #6b7280;
+      text-decoration: line-through;
+    }
+
+    .mini-timer-value.attivo {
+      color: #fcd34d;
+    }
+
+    .mini-timer-icon {
+      font-size: 1rem;
+    }
   </style>
 </head>
 <body>
@@ -209,6 +273,18 @@
       LIVE
     </span>
     <div class="timer-big" id="timerDisplay">90:00</div>
+    <div class="mini-timers">
+      <div class="mini-timer">
+        <span class="mini-timer-icon">🃏</span>
+        <span class="mini-timer-label">Scelta Jolly</span>
+        <span class="mini-timer-value attivo" id="timerJolly">15:00</span>
+      </div>
+      <div class="mini-timer">
+        <span class="mini-timer-icon">❓</span>
+        <span class="mini-timer-label">Domande sul testo</span>
+        <span class="mini-timer-value attivo" id="timerDomande">30:00</span>
+      </div>
+    </div>
   </div>
 
   <div class="tabellone-container">
@@ -274,6 +350,9 @@
       <div class="legenda-item">
         <span class="legenda-dot" style="background: #f8fafc; border: 1px solid #e2e8f0;"></span> Non risposto
       </div>
+      <div class="legenda-item">
+        <span class="legenda-dot" style="background: #fbbf24; color: #1e1b4b; font-weight: 900; font-size: 0.7rem; text-align: center; line-height: 16px;">J</span> Jolly (punti x2)
+      </div>
     </div>
   </div>
 
@@ -298,15 +377,18 @@
     // stato: 'correct' | 'wrong' | 'pending' | 'empty'
     // punti: punti assegnati (positivi) o penalita accumulate (negativi)
     // tentativi_sbagliati: numero di risposte sbagliate date
+    // jolly: indice (0-based) della domanda scelta come Jolly
+    // Se jolly + correct: punti x2 | Se jolly + wrong: penalita x2 (-20 per tentativo)
     const squadreDemo = [
       {
         nome: "Squadra A",
+        jolly: 4,  // Q5 scelta come Jolly
         risposte: [
           { stato: 'correct', punti: 22 },
           { stato: 'correct', punti: 24 },
           { stato: 'correct', punti: 20 },
           { stato: 'wrong', tentativi: 2 },
-          { stato: 'correct', punti: 26 },
+          { stato: 'correct', punti: 52 },   // Jolly! 26 x2 = 52
           { stato: 'correct', punti: 30 },
           { stato: 'pending' },
           { stato: 'empty' },
@@ -321,10 +403,11 @@
       },
       {
         nome: "Squadra B",
+        jolly: 2,  // Q3 scelta come Jolly
         risposte: [
           { stato: 'correct', punti: 20 },
           { stato: 'correct', punti: 22 },
-          { stato: 'wrong', tentativi: 1 },
+          { stato: 'wrong', tentativi: 1 },   // Jolly sbagliato! -20 (penalita x2)
           { stato: 'correct', punti: 28 },
           { stato: 'correct', punti: 30 },
           { stato: 'pending' },
@@ -341,8 +424,9 @@
       },
       {
         nome: "Squadra C",
+        jolly: 0,  // Q1 scelta come Jolly
         risposte: [
-          { stato: 'correct', punti: 20 },
+          { stato: 'correct', punti: 40 },   // Jolly! 20 x2 = 40
           { stato: 'correct', punti: 22 },
           { stato: 'correct', punti: 24 },
           { stato: 'correct', punti: 26 },
@@ -361,9 +445,10 @@
       },
       {
         nome: "Squadra D",
+        jolly: 1,  // Q2 scelta come Jolly
         risposte: [
           { stato: 'correct', punti: 24 },
-          { stato: 'wrong', tentativi: 3 },
+          { stato: 'wrong', tentativi: 3 },   // Jolly sbagliato! -60 (3 x -20)
           { stato: 'correct', punti: 26 },
           { stato: 'pending' },
           { stato: 'empty' },
@@ -381,6 +466,7 @@
       },
       {
         nome: "Squadra E",
+        jolly: null,  // Non ha ancora scelto
         risposte: [
           { stato: 'correct', punti: 20 },
           { stato: 'pending' },
@@ -406,11 +492,13 @@
     // ==========================================
     function calcolaTotale(squadra) {
       let totale = 0;
-      squadra.risposte.forEach(r => {
+      squadra.risposte.forEach((r, i) => {
+        const isJolly = (squadra.jolly === i);
         if (r.stato === 'correct') {
-          totale += r.punti;           // Punti positivi (assegnati una volta)
+          totale += r.punti;  // Gia raddoppiato nei dati se Jolly
         } else if (r.stato === 'wrong') {
-          totale += PENALITA * r.tentativi;  // Penalita cumulative
+          const pen = isJolly ? (PENALITA * 2) : PENALITA;  // -20 se Jolly, -10 altrimenti
+          totale += pen * r.tentativi;
         }
       });
       return totale;
@@ -448,16 +536,21 @@
         let html = `<td class="squadra-cell"><span class="pos-num ${posClass}">${pos}</span>${sq.nome}</td>`;
 
         // Celle risposte
-        sq.risposte.forEach(r => {
+        sq.risposte.forEach((r, i) => {
+          const isJolly = (sq.jolly === i);
+          const jollyTag = isJolly ? '<span class="jolly-tag">J</span>' : '';
+          const jollyClass = isJolly ? ' cell-jolly' : '';
+
           if (r.stato === 'correct') {
-            html += `<td class="cell-correct">+${r.punti}</td>`;
+            html += `<td class="cell-correct${jollyClass}">${jollyTag}+${r.punti}</td>`;
           } else if (r.stato === 'wrong') {
-            const penTotale = PENALITA * r.tentativi;
-            html += `<td class="cell-wrong">${penTotale}</td>`;
+            const pen = isJolly ? (PENALITA * 2) : PENALITA;
+            const penTotale = pen * r.tentativi;
+            html += `<td class="cell-wrong${jollyClass}">${jollyTag}${penTotale}</td>`;
           } else if (r.stato === 'pending') {
-            html += `<td class="cell-pending">...</td>`;
+            html += `<td class="cell-pending${jollyClass}">${jollyTag}...</td>`;
           } else {
-            html += `<td class="cell-empty">-</td>`;
+            html += `<td class="cell-empty${jollyClass}">${jollyTag}-</td>`;
           }
         });
 
@@ -495,12 +588,50 @@
       }
     }
 
+    // ==========================================
+    // TIMER JOLLY (15 min) + TIMER DOMANDE (30 min)
+    // ==========================================
+    const TEMPO_JOLLY = LOGIKRON_CONFIG.gare.tempoJollyMinuti * 60;       // 15 min
+    const TEMPO_DOMANDE = LOGIKRON_CONFIG.gare.tempoDomandeMinuti * 60;  // 30 min
+    let secJollyRimanenti = TEMPO_JOLLY;
+    let secDomandeRimanenti = TEMPO_DOMANDE;
+
+    function formatTimer(sec) {
+      const m = Math.floor(sec / 60);
+      const s = sec % 60;
+      return `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
+    }
+
+    function aggiornaMiniTimers() {
+      const elJolly = document.getElementById('timerJolly');
+      const elDomande = document.getElementById('timerDomande');
+
+      if (secJollyRimanenti > 0) {
+        secJollyRimanenti--;
+        elJolly.textContent = formatTimer(secJollyRimanenti);
+      } else {
+        elJolly.textContent = 'SCADUTO';
+        elJolly.classList.remove('attivo');
+        elJolly.classList.add('scaduto');
+      }
+
+      if (secDomandeRimanenti > 0) {
+        secDomandeRimanenti--;
+        elDomande.textContent = formatTimer(secDomandeRimanenti);
+      } else {
+        elDomande.textContent = 'SCADUTO';
+        elDomande.classList.remove('attivo');
+        elDomande.classList.add('scaduto');
+      }
+    }
+
     // Tick ogni secondo
     setInterval(() => {
       if (secondiTrascorsi < secondiTotali) {
         secondiTrascorsi++;
         aggiornaTimer();
         aggiornaValoriDomande();
+        aggiornaMiniTimers();
       }
     }, 1000);
 
