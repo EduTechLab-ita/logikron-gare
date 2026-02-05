@@ -6,31 +6,112 @@
   <title>LogiKron - Pannello Squadra</title>
   <link rel="stylesheet" href="css/style.css">
   <style>
+    /* Header compatto: nome SX | timer CENTRO | punti DX */
     .gara-header {
       background: linear-gradient(135deg, #10b981, #059669);
       color: white;
-      padding: 1.5rem;
+      padding: 0.75rem 1.25rem;
       border-radius: var(--lk-radius-lg);
-      text-align: center;
-      margin-bottom: 1.5rem;
+      margin-bottom: 1rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
     }
 
-    .timer {
-      font-size: 3rem;
+    .gara-header-left { text-align: left; }
+    .gara-header-left p { margin: 0; font-size: 0.75rem; opacity: 0.8; }
+    .gara-header-left h2 { margin: 0; font-size: 1.3rem; }
+
+    .gara-header-center { text-align: center; }
+    .gara-header-center .timer {
+      font-size: 2.5rem;
       font-weight: bold;
       font-family: 'Courier New', monospace;
+      line-height: 1;
     }
+    .gara-header-center p { margin: 0; font-size: 0.7rem; opacity: 0.8; }
 
-    .risposta-input {
+    .gara-header-right { text-align: right; }
+    .gara-header-right .score {
       font-size: 2rem;
-      text-align: center;
+      font-weight: 900;
       font-family: 'Courier New', monospace;
-      letter-spacing: 0.5rem;
-      padding: 1rem;
+      color: #fcd34d;
+      text-shadow: 0 0 10px rgba(252, 211, 77, 0.4);
+    }
+    .gara-header-right p { margin: 0; font-size: 0.7rem; opacity: 0.8; }
+
+    /* Layout 2 colonne */
+    .gara-columns {
+      display: grid;
+      grid-template-columns: 280px 1fr;
+      gap: 1rem;
+      align-items: start;
     }
 
-    .domanda-card {
-      border-left: 4px solid var(--lk-primary);
+    /* Colonna sinistra: Jolly + stato quesiti */
+    .jolly-panel { padding: 1.25rem; }
+
+    .jolly-timer {
+      background: linear-gradient(135deg, #fbbf24, #f59e0b);
+      color: #1e1b4b;
+      padding: 0.4rem 0.8rem;
+      border-radius: 9999px;
+      font-size: 0.8rem;
+      font-weight: 700;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+      margin-bottom: 0.75rem;
+    }
+
+    .jolly-timer-value {
+      font-family: 'Courier New', monospace;
+      font-weight: 900;
+    }
+
+    .quesiti-grid {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 6px;
+      margin-top: 0.75rem;
+    }
+
+    .q-btn {
+      aspect-ratio: 1;
+      border: 2px solid #e2e8f0;
+      border-radius: 8px;
+      background: #f8fafc;
+      color: #64748b;
+      font-weight: 700;
+      font-size: 0.9rem;
+      cursor: pointer;
+      transition: all 0.2s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: 'Fredoka', sans-serif;
+    }
+
+    .q-btn:hover { border-color: var(--lk-primary); transform: scale(1.05); }
+    .q-btn.q-answered { background: #10b981; color: white; border-color: #10b981; }
+    .q-btn.q-wrong { background: #ef4444; color: white; border-color: #ef4444; }
+    .q-btn.q-selected { border-color: var(--lk-primary); background: #ede9fe; color: var(--lk-primary); }
+    .q-btn.q-jolly {
+      border-color: #fbbf24;
+      background: linear-gradient(135deg, #fef3c7, #fde68a);
+      color: #92400e;
+      box-shadow: 0 0 8px rgba(251, 191, 36, 0.4);
+    }
+
+    /* Colonna destra: domanda attuale */
+    .domanda-panel { padding: 1.25rem; }
+
+    .domanda-header {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      margin-bottom: 1rem;
     }
 
     .domanda-numero {
@@ -43,6 +124,7 @@
       align-items: center;
       justify-content: center;
       font-weight: bold;
+      flex-shrink: 0;
     }
 
     .jolly-badge {
@@ -53,91 +135,168 @@
       font-size: 0.8rem;
       font-weight: bold;
     }
+
+    .risposta-input {
+      font-size: 2.5rem;
+      text-align: center;
+      font-family: 'Courier New', monospace;
+      letter-spacing: 0.5rem;
+      padding: 0.75rem;
+    }
+
+    .valore-attuale {
+      background: linear-gradient(135deg, #4f46e5, #7c3aed);
+      color: white;
+      padding: 0.4rem 0.8rem;
+      border-radius: 8px;
+      font-size: 0.85rem;
+      font-weight: 600;
+      text-align: center;
+      margin-bottom: 1rem;
+    }
+
+    @media (max-width: 768px) {
+      .gara-columns {
+        grid-template-columns: 1fr;
+      }
+    }
   </style>
 </head>
 <body>
-  <div class="container container-sm">
+  <div class="container">
 
     <!-- LOGIN SQUADRA -->
     <div id="loginSquadra">
-      <header class="text-center">
-        <div class="logo-container" style="font-size: 2rem;">
-          <span class="logo-l">L</span>
-          <span class="logo-o1">o</span>
-          <span class="logo-g">g</span>
-          <span class="logo-sand">&#8987;</span>
-          <span class="logo-k">K</span>
-          <span class="logo-r">r</span>
-          <span class="logo-o2">o</span>
-          <span class="logo-n">n</span>
-        </div>
-        <h1 style="font-size: 1.25rem;">Accesso Squadra</h1>
-      </header>
+      <div style="max-width: 450px; margin: 0 auto;">
+        <header class="text-center">
+          <div class="logo-container" style="font-size: 2rem;">
+            <span class="logo-l">L</span>
+            <span class="logo-o1">o</span>
+            <span class="logo-g">g</span>
+            <span class="logo-sand">&#8987;</span>
+            <span class="logo-k">K</span>
+            <span class="logo-r">r</span>
+            <span class="logo-o2">o</span>
+            <span class="logo-n">n</span>
+          </div>
+          <h1 style="font-size: 1.25rem;">Accesso Squadra</h1>
+        </header>
 
-      <div class="card mt-3">
-        <div class="form-group">
-          <label class="form-label">Codice Squadra</label>
-          <input type="text" id="codiceSquadra" class="form-control risposta-input"
-                 placeholder="ABC123" maxlength="6" style="text-transform: uppercase;">
-          <p class="form-hint">Inserisci il codice ricevuto dal docente</p>
+        <div class="card mt-3">
+          <div class="form-group">
+            <label class="form-label">Codice Squadra</label>
+            <input type="text" id="codiceSquadra" class="form-control risposta-input"
+                   placeholder="ABC123" maxlength="6" style="text-transform: uppercase; font-size: 2rem;">
+            <p class="form-hint">Inserisci il codice ricevuto dal docente</p>
+          </div>
+          <button onclick="accessoSquadra()" class="btn btn-success btn-lg btn-block">
+            Entra
+          </button>
         </div>
-        <button onclick="accessoSquadra()" class="btn btn-success btn-lg btn-block">
-          Entra
-        </button>
       </div>
     </div>
 
     <!-- PANNELLO GARA (nascosto) -->
     <div id="pannelloGara" class="hidden">
 
-      <!-- HEADER GARA -->
+      <!-- HEADER COMPATTO: nome SX | timer CENTRO | punti DX -->
       <div class="gara-header">
-        <p style="margin: 0; opacity: 0.9;">Squadra</p>
-        <h2 id="nomeSquadraDisplay" style="margin: 0.25rem 0;">4-A-GT</h2>
-        <div class="timer" id="timer">90:00</div>
-        <p style="margin: 0; font-size: 0.9rem;">Tempo rimanente</p>
+        <div class="gara-header-left">
+          <p>Squadra</p>
+          <h2 id="nomeSquadraDisplay">4-A-GT</h2>
+        </div>
+        <div class="gara-header-center">
+          <div class="timer" id="timer">90:00</div>
+          <p>Tempo rimanente</p>
+        </div>
+        <div class="gara-header-right">
+          <p>Punteggio</p>
+          <div class="score" id="scoreDisplay">0</div>
+        </div>
       </div>
 
-      <!-- PLACEHOLDER GARA -->
-      <div class="card text-center" style="padding: 2rem;">
-        <div style="font-size: 3rem; margin-bottom: 1rem;">🎮</div>
-        <h2>Pannello Gara</h2>
-        <p class="text-muted mb-2">
-          Durante la gara qui appariranno i quesiti e potrai inserire le risposte.
-        </p>
-        <p>
-          <strong>Funzionalita previste:</strong>
-        </p>
-        <ul style="text-align: left; max-width: 350px; margin: 1rem auto;">
-          <li>Lista quesiti con stato (risposto/non risposto)</li>
-          <li>Inserimento risposta (0000-9999)</li>
-          <li>Selezione Jolly (x2 punti)</li>
-          <li>Feedback immediato risposta</li>
-          <li>Punteggio attuale squadra</li>
-          <li>Sincronizzazione real-time</li>
-        </ul>
-      </div>
+      <!-- 2 COLONNE: Jolly/Stato a SX | Domanda a DX -->
+      <div class="gara-columns">
 
-      <!-- ESEMPIO DOMANDA -->
-      <div class="card domanda-card">
-        <div style="display: flex; align-items: center; gap: 1rem; margin-bottom: 1rem;">
-          <div class="domanda-numero">1</div>
-          <div>
-            <strong>Quesito di esempio</strong>
-            <span class="jolly-badge">JOLLY</span>
+        <!-- COLONNA SINISTRA: Jolly + Stato quesiti -->
+        <div class="card jolly-panel">
+          <h3 style="font-size: 1rem; color: var(--lk-primary-dark); margin-bottom: 0.5rem;">Scegli il Jolly</h3>
+          <div class="jolly-timer">
+            <span>&#127183;</span>
+            Tempo: <span class="jolly-timer-value" id="timerJollyGara">15:00</span>
+          </div>
+          <p style="font-size: 0.8rem; color: var(--lk-text-muted); margin-bottom: 0.5rem;">
+            Clicca su una domanda per sceglierla come Jolly (x2 punti).
+          </p>
+
+          <!-- Griglia 15 quesiti -->
+          <div class="quesiti-grid">
+            <button class="q-btn q-jolly" title="Q1 - JOLLY">1</button>
+            <button class="q-btn q-answered" title="Q2 - Risposto">2</button>
+            <button class="q-btn q-answered" title="Q3 - Risposto">3</button>
+            <button class="q-btn q-wrong" title="Q4 - Sbagliato">4</button>
+            <button class="q-btn q-selected" title="Q5 - Selezionato">5</button>
+            <button class="q-btn" title="Q6">6</button>
+            <button class="q-btn" title="Q7">7</button>
+            <button class="q-btn" title="Q8">8</button>
+            <button class="q-btn" title="Q9">9</button>
+            <button class="q-btn" title="Q10">10</button>
+            <button class="q-btn" title="Q11">11</button>
+            <button class="q-btn" title="Q12">12</button>
+            <button class="q-btn" title="Q13">13</button>
+            <button class="q-btn" title="Q14">14</button>
+            <button class="q-btn" title="Q15">15</button>
+          </div>
+
+          <!-- Legenda mini -->
+          <div style="margin-top: 0.75rem; font-size: 0.7rem; color: var(--lk-text-muted);">
+            <span style="color: #fbbf24;">&#9632;</span> Jolly
+            <span style="color: #10b981; margin-left: 6px;">&#9632;</span> Corretto
+            <span style="color: #ef4444; margin-left: 6px;">&#9632;</span> Errato
+            <span style="color: var(--lk-primary); margin-left: 6px;">&#9632;</span> Aperto
           </div>
         </div>
-        <p class="mb-2">
-          Un treno parte alle 8:45 e arriva a destinazione alle 11:20.
-          Quanti minuti dura il viaggio?
-        </p>
-        <div class="form-group mb-0">
-          <input type="text" class="form-control risposta-input"
-                 placeholder="0000" maxlength="4" pattern="[0-9]*">
+
+        <!-- COLONNA DESTRA: Domanda attuale -->
+        <div class="card domanda-panel">
+          <div class="valore-attuale">
+            Valore attuale di ogni risposta corretta: <strong id="valoreAttuale">20</strong> punti
+          </div>
+
+          <div class="domanda-header">
+            <div class="domanda-numero">1</div>
+            <div>
+              <strong style="font-size: 1.1rem;">Quesito 1</strong>
+              <span class="jolly-badge" style="margin-left: 6px;">JOLLY x2</span>
+            </div>
+          </div>
+
+          <p class="mb-2" style="font-size: 1rem; line-height: 1.6; color: var(--lk-text-dark);">
+            Un treno parte alle 8:45 e arriva a destinazione alle 11:20.
+            Quanti minuti dura il viaggio?
+          </p>
+
+          <div class="form-group mb-0">
+            <label class="form-label" style="font-size: 0.85rem;">La tua risposta (numero intero 0000-9999)</label>
+            <input type="text" class="form-control risposta-input"
+                   placeholder="0000" maxlength="4" pattern="[0-9]*" inputmode="numeric">
+          </div>
+          <button class="btn btn-primary btn-lg btn-block mt-2">
+            Invia Risposta
+          </button>
+
+          <!-- Navigazione quesiti -->
+          <div style="display: flex; justify-content: space-between; margin-top: 1rem;">
+            <button class="btn btn-outline" style="padding: 6px 16px; font-size: 0.85rem;" disabled>
+              Precedente
+            </button>
+            <span style="color: var(--lk-text-muted); font-size: 0.85rem; align-self: center;">1 / 15</span>
+            <button class="btn btn-outline" style="padding: 6px 16px; font-size: 0.85rem;">
+              Successivo
+            </button>
+          </div>
         </div>
-        <button class="btn btn-primary btn-block mt-2">
-          Invia Risposta
-        </button>
+
       </div>
 
     </div>

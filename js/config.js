@@ -12,6 +12,19 @@ const LOGIKRON_CONFIG = {
   annoScolastico: '2025-2026',
 
   // ==========================================
+  // NUMERI EDIZIONE PRECEDENTE (riquadro pubblicitario)
+  // ==========================================
+  // Aggiornare ogni anno con i dati della stagione conclusa
+  edizionePrecedente: {
+    anno: '2024-2025',
+    edizione: '10a',
+    istituti: 6,       // Da compilare con dato reale
+    classi: 0,         // Da compilare con dato reale
+    squadre: 0,        // Da compilare con dato reale
+    alunni: 0          // Da compilare con dato reale
+  },
+
+  // ==========================================
   // GOOGLE APPS SCRIPT - WEB APP URLs
   // ==========================================
   // Questi URL vengono generati dopo il deploy degli script
