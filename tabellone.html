@@ -42,6 +42,11 @@
       border-radius: 50%;
     }
 
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.7; }
+    }
+
     .timer-big {
       font-size: 4rem;
       font-weight: bold;
@@ -64,26 +69,70 @@
       border-spacing: 3px;
     }
 
+    /* Riga header domande (numeri) */
     .tabellone th {
       background: #4f46e5;
       color: white;
-      padding: 0.75rem 0.5rem;
+      padding: 0.4rem 0.5rem;
       font-size: 0.85rem;
-      border-radius: 6px;
+      border-radius: 6px 6px 0 0;
+    }
+
+    /* Riga valori punti sotto header */
+    .valore-row td {
+      background: #6366f1;
+      color: #fcd34d;
+      font-weight: bold;
+      font-size: 0.8rem;
+      padding: 0.25rem 0.3rem;
+      text-align: center;
+      border-radius: 0 0 6px 6px;
+    }
+
+    .valore-row td:first-child {
+      background: #4f46e5;
+      color: rgba(255,255,255,0.7);
+      font-size: 0.7rem;
+      font-weight: normal;
+    }
+
+    .valore-row td:last-child {
+      background: transparent;
     }
 
     .tabellone td {
       padding: 0.5rem;
       text-align: center;
       border-radius: 6px;
-      font-weight: 500;
+      font-weight: 600;
+      font-size: 0.9rem;
     }
 
-    .tabellone .squadra-row td:first-child {
-      text-align: left;
-      font-weight: 600;
+    /* Cella posizione + nome squadra */
+    .squadra-cell {
+      text-align: left !important;
       background: #f1f5f9;
+      white-space: nowrap;
+      font-weight: 600;
     }
+
+    .pos-num {
+      display: inline-block;
+      width: 24px;
+      height: 24px;
+      line-height: 24px;
+      text-align: center;
+      border-radius: 50%;
+      font-size: 0.75rem;
+      font-weight: bold;
+      margin-right: 6px;
+      color: white;
+    }
+
+    .pos-1 { background: linear-gradient(135deg, #fbbf24, #f59e0b); }
+    .pos-2 { background: linear-gradient(135deg, #9ca3af, #6b7280); }
+    .pos-3 { background: linear-gradient(135deg, #f97316, #ea580c); }
+    .pos-other { background: #94a3b8; }
 
     .cell-correct {
       background: #10b981 !important;
@@ -97,11 +146,12 @@
 
     .cell-pending {
       background: #fef3c7;
+      color: #92400e;
     }
 
     .cell-empty {
       background: #f8fafc;
-      color: #94a3b8;
+      color: #cbd5e1;
     }
 
     .punteggio-cell {
@@ -109,11 +159,36 @@
       color: white !important;
       font-size: 1.1rem;
       font-weight: bold;
+      min-width: 70px;
     }
 
-    .posizione-1 { background: linear-gradient(135deg, #fcd34d, #f59e0b) !important; }
-    .posizione-2 { background: linear-gradient(135deg, #d1d5db, #9ca3af) !important; }
-    .posizione-3 { background: linear-gradient(135deg, #f59e0b, #d97706) !important; }
+    /* Animazione cambio posizione */
+    .squadra-row {
+      transition: transform 0.5s ease;
+    }
+
+    .legenda {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 1rem;
+      margin-top: 1rem;
+      font-size: 0.8rem;
+      color: #64748b;
+    }
+
+    .legenda-item {
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+    }
+
+    .legenda-dot {
+      width: 16px;
+      height: 16px;
+      border-radius: 4px;
+      display: inline-block;
+    }
   </style>
 </head>
 <body>
@@ -138,122 +213,307 @@
 
   <div class="tabellone-container">
     <div class="tabellone">
-      <table>
+      <table id="tabelloneTable">
         <thead>
           <tr>
-            <th style="min-width: 150px;">Squadra</th>
-            <th>1</th>
-            <th>2</th>
-            <th>3</th>
-            <th>4</th>
-            <th>5</th>
-            <th>6</th>
-            <th>7</th>
-            <th>8</th>
-            <th>9</th>
-            <th>10</th>
-            <th style="min-width: 80px;">Punti</th>
+            <th style="min-width: 160px;">Squadra</th>
+            <th>Q1</th>
+            <th>Q2</th>
+            <th>Q3</th>
+            <th>Q4</th>
+            <th>Q5</th>
+            <th>Q6</th>
+            <th>Q7</th>
+            <th>Q8</th>
+            <th>Q9</th>
+            <th>Q10</th>
+            <th>Q11</th>
+            <th>Q12</th>
+            <th>Q13</th>
+            <th>Q14</th>
+            <th>Q15</th>
+            <th style="min-width: 70px;">TOT</th>
+          </tr>
+          <!-- Riga valori punti correnti per domanda -->
+          <tr class="valore-row">
+            <td>Valore</td>
+            <td id="val-1">20</td>
+            <td id="val-2">20</td>
+            <td id="val-3">20</td>
+            <td id="val-4">20</td>
+            <td id="val-5">20</td>
+            <td id="val-6">20</td>
+            <td id="val-7">20</td>
+            <td id="val-8">20</td>
+            <td id="val-9">20</td>
+            <td id="val-10">20</td>
+            <td id="val-11">20</td>
+            <td id="val-12">20</td>
+            <td id="val-13">20</td>
+            <td id="val-14">20</td>
+            <td id="val-15">20</td>
+            <td></td>
           </tr>
         </thead>
-        <tbody>
-          <!-- Esempio righe -->
-          <tr class="squadra-row">
-            <td class="posizione-1">🥇 4-A-GT</td>
-            <td class="cell-correct">✓</td>
-            <td class="cell-correct">✓</td>
-            <td class="cell-correct">✓</td>
-            <td class="cell-wrong">✗</td>
-            <td class="cell-correct">✓</td>
-            <td class="cell-pending">...</td>
-            <td class="cell-empty">-</td>
-            <td class="cell-empty">-</td>
-            <td class="cell-empty">-</td>
-            <td class="cell-empty">-</td>
-            <td class="punteggio-cell">156</td>
-          </tr>
-          <tr class="squadra-row">
-            <td class="posizione-2">🥈 5-B-CV</td>
-            <td class="cell-correct">✓</td>
-            <td class="cell-correct">✓</td>
-            <td class="cell-wrong">✗</td>
-            <td class="cell-correct">✓</td>
-            <td class="cell-pending">...</td>
-            <td class="cell-empty">-</td>
-            <td class="cell-empty">-</td>
-            <td class="cell-empty">-</td>
-            <td class="cell-empty">-</td>
-            <td class="cell-empty">-</td>
-            <td class="punteggio-cell">142</td>
-          </tr>
-          <tr class="squadra-row">
-            <td class="posizione-3">🥉 4-A-PR</td>
-            <td class="cell-correct">✓</td>
-            <td class="cell-correct">✓</td>
-            <td class="cell-correct">✓</td>
-            <td class="cell-empty">-</td>
-            <td class="cell-empty">-</td>
-            <td class="cell-empty">-</td>
-            <td class="cell-empty">-</td>
-            <td class="cell-empty">-</td>
-            <td class="cell-empty">-</td>
-            <td class="cell-empty">-</td>
-            <td class="punteggio-cell">128</td>
-          </tr>
-          <tr class="squadra-row">
-            <td>5-A-GH</td>
-            <td class="cell-correct">✓</td>
-            <td class="cell-wrong">✗</td>
-            <td class="cell-pending">...</td>
-            <td class="cell-empty">-</td>
-            <td class="cell-empty">-</td>
-            <td class="cell-empty">-</td>
-            <td class="cell-empty">-</td>
-            <td class="cell-empty">-</td>
-            <td class="cell-empty">-</td>
-            <td class="cell-empty">-</td>
-            <td class="punteggio-cell">95</td>
-          </tr>
-          <tr class="squadra-row">
-            <td>4-B-VN</td>
-            <td class="cell-correct">✓</td>
-            <td class="cell-pending">...</td>
-            <td class="cell-empty">-</td>
-            <td class="cell-empty">-</td>
-            <td class="cell-empty">-</td>
-            <td class="cell-empty">-</td>
-            <td class="cell-empty">-</td>
-            <td class="cell-empty">-</td>
-            <td class="cell-empty">-</td>
-            <td class="cell-empty">-</td>
-            <td class="punteggio-cell">72</td>
-          </tr>
+        <tbody id="tabelloneBody">
+          <!-- Righe generate da JS -->
         </tbody>
       </table>
     </div>
 
-    <p style="text-align: center; color: #64748b; font-size: 0.85rem; margin-top: 1rem;">
-      ✓ Risposta corretta | ✗ Risposta sbagliata | ... In attesa | - Non risposto
-    </p>
+    <div class="legenda">
+      <div class="legenda-item">
+        <span class="legenda-dot" style="background: #10b981;"></span> Corretta (+punti)
+      </div>
+      <div class="legenda-item">
+        <span class="legenda-dot" style="background: #ef4444;"></span> Sbagliata (-10 per tentativo)
+      </div>
+      <div class="legenda-item">
+        <span class="legenda-dot" style="background: #fef3c7; border: 1px solid #f59e0b;"></span> In attesa
+      </div>
+      <div class="legenda-item">
+        <span class="legenda-dot" style="background: #f8fafc; border: 1px solid #e2e8f0;"></span> Non risposto
+      </div>
+    </div>
   </div>
 
   <footer style="text-align: center; color: rgba(255,255,255,0.5); font-size: 0.75rem; padding: 0.75rem; margin-top: 0.5rem;">
     <strong>LogiKron</strong> - Giochi Matematici di Interistituto | <a href="https://edutechlab-ita.github.io" target="_blank" style="color: rgba(255,255,255,0.6);">EduTechLab</a> | Powered by Vibe Coding - Fabio Rizzotto
   </footer>
 
+  <script src="js/config.js"></script>
   <script>
-    // Timer countdown
-    let secondi = 90 * 60;
-    setInterval(() => {
-      if (secondi > 0) {
-        secondi--;
-        const min = Math.floor(secondi / 60);
-        const sec = secondi % 60;
+    // ==========================================
+    // CONFIGURAZIONE PUNTEGGI
+    // ==========================================
+    const PUNTI_INIZIALI = LOGIKRON_CONFIG.gare.puntiIniziali;       // 20
+    const INCREMENTO = LOGIKRON_CONFIG.gare.incrementoPuntiOgniMinuti; // +2 ogni minuto
+    const PENALITA = LOGIKRON_CONFIG.gare.penalitaRispostaSbagliata;   // -10
+    const NUM_DOMANDE = LOGIKRON_CONFIG.gare.numeroDomande;            // 15
+    const DURATA_MINUTI = LOGIKRON_CONFIG.gare.durataMinuti;           // 90
+
+    // ==========================================
+    // DATI ESEMPIO (mockup - in produzione da Apps Script)
+    // ==========================================
+    // stato: 'correct' | 'wrong' | 'pending' | 'empty'
+    // punti: punti assegnati (positivi) o penalita accumulate (negativi)
+    // tentativi_sbagliati: numero di risposte sbagliate date
+    const squadreDemo = [
+      {
+        nome: "Squadra A",
+        risposte: [
+          { stato: 'correct', punti: 22 },
+          { stato: 'correct', punti: 24 },
+          { stato: 'correct', punti: 20 },
+          { stato: 'wrong', tentativi: 2 },
+          { stato: 'correct', punti: 26 },
+          { stato: 'correct', punti: 30 },
+          { stato: 'pending' },
+          { stato: 'empty' },
+          { stato: 'empty' },
+          { stato: 'empty' },
+          { stato: 'empty' },
+          { stato: 'empty' },
+          { stato: 'empty' },
+          { stato: 'empty' },
+          { stato: 'empty' }
+        ]
+      },
+      {
+        nome: "Squadra B",
+        risposte: [
+          { stato: 'correct', punti: 20 },
+          { stato: 'correct', punti: 22 },
+          { stato: 'wrong', tentativi: 1 },
+          { stato: 'correct', punti: 28 },
+          { stato: 'correct', punti: 30 },
+          { stato: 'pending' },
+          { stato: 'empty' },
+          { stato: 'empty' },
+          { stato: 'empty' },
+          { stato: 'empty' },
+          { stato: 'empty' },
+          { stato: 'empty' },
+          { stato: 'empty' },
+          { stato: 'empty' },
+          { stato: 'empty' }
+        ]
+      },
+      {
+        nome: "Squadra C",
+        risposte: [
+          { stato: 'correct', punti: 20 },
+          { stato: 'correct', punti: 22 },
+          { stato: 'correct', punti: 24 },
+          { stato: 'correct', punti: 26 },
+          { stato: 'empty' },
+          { stato: 'empty' },
+          { stato: 'empty' },
+          { stato: 'empty' },
+          { stato: 'empty' },
+          { stato: 'empty' },
+          { stato: 'empty' },
+          { stato: 'empty' },
+          { stato: 'empty' },
+          { stato: 'empty' },
+          { stato: 'empty' }
+        ]
+      },
+      {
+        nome: "Squadra D",
+        risposte: [
+          { stato: 'correct', punti: 24 },
+          { stato: 'wrong', tentativi: 3 },
+          { stato: 'correct', punti: 26 },
+          { stato: 'pending' },
+          { stato: 'empty' },
+          { stato: 'empty' },
+          { stato: 'empty' },
+          { stato: 'empty' },
+          { stato: 'empty' },
+          { stato: 'empty' },
+          { stato: 'empty' },
+          { stato: 'empty' },
+          { stato: 'empty' },
+          { stato: 'empty' },
+          { stato: 'empty' }
+        ]
+      },
+      {
+        nome: "Squadra E",
+        risposte: [
+          { stato: 'correct', punti: 20 },
+          { stato: 'pending' },
+          { stato: 'empty' },
+          { stato: 'empty' },
+          { stato: 'empty' },
+          { stato: 'empty' },
+          { stato: 'empty' },
+          { stato: 'empty' },
+          { stato: 'empty' },
+          { stato: 'empty' },
+          { stato: 'empty' },
+          { stato: 'empty' },
+          { stato: 'empty' },
+          { stato: 'empty' },
+          { stato: 'empty' }
+        ]
+      }
+    ];
+
+    // ==========================================
+    // CALCOLO PUNTEGGIO TOTALE
+    // ==========================================
+    function calcolaTotale(squadra) {
+      let totale = 0;
+      squadra.risposte.forEach(r => {
+        if (r.stato === 'correct') {
+          totale += r.punti;           // Punti positivi (assegnati una volta)
+        } else if (r.stato === 'wrong') {
+          totale += PENALITA * r.tentativi;  // Penalita cumulative
+        }
+      });
+      return totale;
+    }
+
+    // ==========================================
+    // ORDINA PER CLASSIFICA (punteggio decrescente)
+    // ==========================================
+    function ordinaSquadre(squadre) {
+      return [...squadre].sort((a, b) => calcolaTotale(b) - calcolaTotale(a));
+    }
+
+    // ==========================================
+    // RENDER TABELLONE
+    // ==========================================
+    function renderTabellone() {
+      const tbody = document.getElementById('tabelloneBody');
+      const squadreOrdinate = ordinaSquadre(squadreDemo);
+
+      tbody.innerHTML = '';
+
+      squadreOrdinate.forEach((sq, index) => {
+        const pos = index + 1;
+        const totale = calcolaTotale(sq);
+        const tr = document.createElement('tr');
+        tr.className = 'squadra-row';
+
+        // Cella posizione + nome
+        let posIcon = '';
+        let posClass = 'pos-other';
+        if (pos === 1) { posIcon = ''; posClass = 'pos-1'; }
+        else if (pos === 2) { posIcon = ''; posClass = 'pos-2'; }
+        else if (pos === 3) { posIcon = ''; posClass = 'pos-3'; }
+
+        let html = `<td class="squadra-cell"><span class="pos-num ${posClass}">${pos}</span>${sq.nome}</td>`;
+
+        // Celle risposte
+        sq.risposte.forEach(r => {
+          if (r.stato === 'correct') {
+            html += `<td class="cell-correct">+${r.punti}</td>`;
+          } else if (r.stato === 'wrong') {
+            const penTotale = PENALITA * r.tentativi;
+            html += `<td class="cell-wrong">${penTotale}</td>`;
+          } else if (r.stato === 'pending') {
+            html += `<td class="cell-pending">...</td>`;
+          } else {
+            html += `<td class="cell-empty">-</td>`;
+          }
+        });
+
+        // Cella totale
+        html += `<td class="punteggio-cell">${totale}</td>`;
+
+        tr.innerHTML = html;
+        tbody.appendChild(tr);
+      });
+    }
+
+    // ==========================================
+    // TIMER + AGGIORNAMENTO VALORI DOMANDE
+    // ==========================================
+    let secondiTrascorsi = 0;
+    let secondiTotali = DURATA_MINUTI * 60;
+
+    function aggiornaTimer() {
+      const rimanenti = secondiTotali - secondiTrascorsi;
+      if (rimanenti >= 0) {
+        const min = Math.floor(rimanenti / 60);
+        const sec = rimanenti % 60;
         document.getElementById('timerDisplay').textContent =
           `${min.toString().padStart(2, '0')}:${sec.toString().padStart(2, '0')}`;
       }
+    }
+
+    function aggiornaValoriDomande() {
+      const minutiTrascorsi = Math.floor(secondiTrascorsi / 60);
+      const valoreCorrente = PUNTI_INIZIALI + (minutiTrascorsi * INCREMENTO);
+
+      for (let i = 1; i <= NUM_DOMANDE; i++) {
+        const el = document.getElementById(`val-${i}`);
+        if (el) el.textContent = valoreCorrente;
+      }
+    }
+
+    // Tick ogni secondo
+    setInterval(() => {
+      if (secondiTrascorsi < secondiTotali) {
+        secondiTrascorsi++;
+        aggiornaTimer();
+        aggiornaValoriDomande();
+      }
     }, 1000);
 
-    // TODO: Polling per aggiornamento real-time da Apps Script
+    // ==========================================
+    // INIT
+    // ==========================================
+    renderTabellone();
+    aggiornaTimer();
+    aggiornaValoriDomande();
+
+    // TODO: Polling ogni 2-3 sec per aggiornamento real-time da Apps Script
+    // In produzione: fetch dati -> aggiorna squadreDemo -> renderTabellone()
+    // Le righe si riordinano automaticamente ad ogni render
   </script>
 </body>
 </html>
