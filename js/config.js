@@ -47,16 +47,19 @@ const LOGIKRON_CONFIG = {
     numeroDomande: 15,
     puntiIniziali: 20,
     incrementoPuntiOgniMinuti: 2,
-    penalitaRispostaSbagliata: -10,
-    bonusProblemaPenalita: 2,
+    penalitaRispostaSbagliata: -5,
+    bonusProblemaPenalita: 0,
     tempoJollyMinuti: 15,
     tempoDomandeMinuti: 30,
 
-    // Bonus posizionamento (primi 10 a risolvere)
-    bonusPosizionamento: [20, 15, 10, 8, 6, 5, 4, 3, 2, 1],
+    // Bonus posizionamento (primi 3 a risolvere un quesito)
+    bonusPosizionamento: [25, 20, 15],
 
-    // Bonus completamento (primi 6 a completare tutti)
-    bonusCompletamento: [100, 60, 40, 30, 20, 10],
+    // Superbonus completamento (primi 3 a completare tutti)
+    bonusCompletamento: [100, 60, 40],
+
+    // Ultimi minuti: tabellone si nasconde
+    minutiNascondimento: 5,
 
     // Formato risposte
     formatoRisposte: '0000-9999'  // Numeri interi 4 cifre

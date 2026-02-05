@@ -6,38 +6,71 @@
   <title>LogiKron - Tabellone Live</title>
   <link rel="stylesheet" href="css/style.css">
   <style>
+    * { box-sizing: border-box; }
+
     body {
       background: linear-gradient(135deg, #1e1b4b, #312e81);
       min-height: 100vh;
+      margin: 0;
+      padding: 0;
     }
 
-    .tabellone-header {
-      text-align: center;
-      padding: 1.5rem;
+    /* ===== HEADER COMPATTO: timer SX | titolo CENTRO | timer gara DX ===== */
+    .top-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0.6rem 1.2rem;
       color: white;
     }
 
-    .tabellone-header h1 {
-      font-size: 2rem;
+    .top-left {
+      display: flex;
+      flex-direction: column;
+      gap: 0.3rem;
+      min-width: 200px;
+    }
+
+    .top-center {
+      text-align: center;
+      flex: 1;
+    }
+
+    .top-center .logo-container {
+      font-size: 1.4rem;
       margin: 0;
+    }
+
+    .top-center h1 {
+      font-size: 1.2rem;
+      margin: 0.1rem 0 0 0;
+      font-weight: 600;
+    }
+
+    .top-right {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-end;
+      min-width: 200px;
     }
 
     .live-badge {
       display: inline-flex;
       align-items: center;
-      gap: 0.5rem;
+      gap: 0.4rem;
       background: #ef4444;
       color: white;
-      padding: 4px 12px;
+      padding: 2px 10px;
       border-radius: 9999px;
-      font-size: 0.85rem;
+      font-size: 0.7rem;
       font-weight: bold;
       animation: pulse 2s infinite;
+      margin-bottom: 0.2rem;
     }
 
     .live-dot {
-      width: 8px;
-      height: 8px;
+      width: 6px;
+      height: 6px;
       background: white;
       border-radius: 50%;
     }
@@ -48,43 +81,74 @@
     }
 
     .timer-big {
-      font-size: 4rem;
+      font-size: 3rem;
       font-weight: bold;
       font-family: 'Courier New', monospace;
       color: #fcd34d;
       text-shadow: 0 0 20px rgba(252, 211, 77, 0.5);
+      line-height: 1;
     }
 
+    /* Mini timers */
+    .mini-timer {
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+      background: rgba(255,255,255,0.1);
+      padding: 4px 10px;
+      border-radius: 9999px;
+      font-size: 0.75rem;
+      white-space: nowrap;
+    }
+
+    .mini-timer-label {
+      color: rgba(255,255,255,0.7);
+    }
+
+    .mini-timer-value {
+      font-family: 'Courier New', monospace;
+      font-weight: bold;
+      font-size: 0.85rem;
+      color: #fcd34d;
+    }
+
+    .mini-timer-value.scaduto {
+      color: #6b7280;
+      text-decoration: line-through;
+      font-size: 0.7rem;
+    }
+
+    /* ===== TABELLONE ===== */
     .tabellone-container {
       background: rgba(255, 255, 255, 0.95);
-      border-radius: 1rem;
-      padding: 1.5rem;
-      margin: 1rem;
+      border-radius: 0.75rem;
+      padding: 0.75rem;
+      margin: 0.4rem 0.6rem;
       overflow-x: auto;
     }
 
     .tabellone table {
       width: 100%;
       border-collapse: separate;
-      border-spacing: 3px;
+      border-spacing: 2px;
     }
 
-    /* Riga header domande (numeri) */
     .tabellone th {
       background: #4f46e5;
       color: white;
-      padding: 0.4rem 0.5rem;
-      font-size: 0.85rem;
+      padding: 0.4rem 0.3rem;
+      font-size: 1rem;
+      font-weight: 700;
       border-radius: 6px 6px 0 0;
     }
 
-    /* Riga valori punti sotto header */
+    /* Riga valori punti */
     .valore-row td {
       background: #6366f1;
       color: #fcd34d;
       font-weight: bold;
-      font-size: 0.8rem;
-      padding: 0.25rem 0.3rem;
+      font-size: 0.95rem;
+      padding: 0.2rem 0.3rem;
       text-align: center;
       border-radius: 0 0 6px 6px;
     }
@@ -100,39 +164,43 @@
       background: transparent;
     }
 
+    /* Celle dati */
     .tabellone td {
-      padding: 0.5rem;
+      padding: 0.4rem 0.3rem;
       text-align: center;
-      border-radius: 6px;
-      font-weight: 600;
-      font-size: 0.9rem;
+      border-radius: 5px;
+      font-weight: 700;
+      font-size: 1.1rem;
     }
 
-    /* Cella posizione + nome squadra */
+    /* Cella squadra */
     .squadra-cell {
       text-align: left !important;
-      background: #f1f5f9;
+      background: #1e293b !important;
+      color: white !important;
       white-space: nowrap;
-      font-weight: 600;
+      font-weight: 700;
+      font-size: 1rem;
+      padding-left: 0.5rem !important;
     }
 
     .pos-num {
-      display: inline-block;
-      width: 24px;
-      height: 24px;
-      line-height: 24px;
-      text-align: center;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 26px;
+      height: 26px;
       border-radius: 50%;
-      font-size: 0.75rem;
-      font-weight: bold;
+      font-size: 0.8rem;
+      font-weight: 900;
       margin-right: 6px;
       color: white;
     }
 
     .pos-1 { background: linear-gradient(135deg, #fbbf24, #f59e0b); color: #1e1b4b; }
-    .pos-2 { background: linear-gradient(135deg, #9ca3af, #6b7280); color: white; }
-    .pos-3 { background: linear-gradient(135deg, #f97316, #ea580c); color: white; }
-    .pos-other { background: #94a3b8; color: white; }
+    .pos-2 { background: linear-gradient(135deg, #9ca3af, #6b7280); }
+    .pos-3 { background: linear-gradient(135deg, #f97316, #ea580c); }
+    .pos-other { background: #475569; }
 
     .cell-correct {
       background: #10b981 !important;
@@ -150,55 +218,28 @@
     }
 
     .cell-empty {
-      background: #f8fafc;
+      background: #f1f5f9;
       color: #cbd5e1;
+      font-size: 0.9rem;
     }
 
     .punteggio-cell {
       background: linear-gradient(135deg, #4f46e5, #7c3aed) !important;
       color: white !important;
-      font-size: 1.1rem;
-      font-weight: bold;
-      min-width: 70px;
+      font-size: 1.3rem;
+      font-weight: 900;
+      min-width: 65px;
     }
 
-    /* Animazione cambio posizione */
-    .squadra-row {
-      transition: transform 0.5s ease;
-    }
-
-    .legenda {
-      display: flex;
-      flex-wrap: wrap;
-      justify-content: center;
-      gap: 1rem;
-      margin-top: 1rem;
-      font-size: 0.8rem;
-      color: #64748b;
-    }
-
-    .legenda-item {
-      display: flex;
-      align-items: center;
-      gap: 0.4rem;
-    }
-
-    .legenda-dot {
-      width: 16px;
-      height: 16px;
-      border-radius: 4px;
-      display: inline-block;
-    }
-
-    /* Cella Jolly - "J" in angolo */
+    /* Jolly "J" tag */
     .cell-jolly {
       position: relative;
     }
 
     .jolly-tag {
       position: absolute;
-      top: 2px;
-      right: 3px;
+      top: 1px;
+      right: 2px;
       background: #fbbf24;
       color: #1e1b4b;
       font-size: 0.55rem;
@@ -210,314 +251,236 @@
       border-radius: 3px;
     }
 
-    /* Mini-timer in alto */
-    .mini-timers {
-      display: flex;
-      justify-content: center;
-      gap: 1.5rem;
-      margin-top: 0.5rem;
-      flex-wrap: wrap;
+    /* Animazione riga */
+    .squadra-row {
+      transition: transform 0.5s ease;
     }
 
-    .mini-timer {
+    /* Legenda */
+    .legenda {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 0.8rem;
+      margin-top: 0.5rem;
+      font-size: 0.75rem;
+      color: #64748b;
+    }
+
+    .legenda-item {
       display: flex;
       align-items: center;
-      gap: 0.5rem;
-      background: rgba(255,255,255,0.1);
-      padding: 6px 14px;
-      border-radius: 9999px;
+      gap: 0.3rem;
+    }
+
+    .legenda-dot {
+      width: 14px;
+      height: 14px;
+      border-radius: 3px;
+      display: inline-block;
+    }
+
+    /* Nascondimento ultimi 5 min */
+    .tabellone-nascosto {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 300px;
       color: white;
-      font-size: 0.85rem;
+      text-align: center;
     }
 
-    .mini-timer-label {
-      opacity: 0.7;
-      font-size: 0.75rem;
+    .tabellone-nascosto h2 {
+      font-size: 2rem;
+      margin-bottom: 0.5rem;
     }
 
-    .mini-timer-value {
-      font-family: 'Courier New', monospace;
-      font-weight: bold;
-      font-size: 1rem;
-    }
-
-    .mini-timer-value.scaduto {
-      color: #6b7280;
-      text-decoration: line-through;
-    }
-
-    .mini-timer-value.attivo {
-      color: #fcd34d;
-    }
-
-    .mini-timer-icon {
-      font-size: 1rem;
+    .tabellone-nascosto p {
+      font-size: 1.2rem;
+      opacity: 0.8;
     }
   </style>
 </head>
 <body>
-  <div class="tabellone-header">
-    <div class="logo-container" style="font-size: 1.8rem; margin: 0;">
-      <span style="color: #93c5fd;">L</span>
-      <span style="color: #c4b5fd;">o</span>
-      <span style="color: #67e8f9;">g</span>
-      <span style="color: #fcd34d;">&#8987;</span>
-      <span style="color: #6ee7b7;">K</span>
-      <span style="color: #fcd34d;">r</span>
-      <span style="color: #fca5a5;">o</span>
-      <span style="color: #f9a8d4;">n</span>
+
+  <!-- ===== HEADER: timer SX | logo+titolo CENTRO | timer gara DX ===== -->
+  <div class="top-bar">
+    <div class="top-left">
+      <div class="mini-timer">
+        <span>&#127183;</span>
+        <span class="mini-timer-label">Jolly</span>
+        <span class="mini-timer-value" id="timerJolly">15:00</span>
+      </div>
+      <div class="mini-timer">
+        <span>&#10067;</span>
+        <span class="mini-timer-label">Domande</span>
+        <span class="mini-timer-value" id="timerDomande">30:00</span>
+      </div>
     </div>
-    <h1>Tabellone Live</h1>
-    <span class="live-badge">
-      <span class="live-dot"></span>
-      LIVE
-    </span>
-    <div class="timer-big" id="timerDisplay">90:00</div>
-    <div class="mini-timers">
-      <div class="mini-timer">
-        <span class="mini-timer-icon">🃏</span>
-        <span class="mini-timer-label">Scelta Jolly</span>
-        <span class="mini-timer-value attivo" id="timerJolly">15:00</span>
+
+    <div class="top-center">
+      <div class="logo-container" style="margin: 0;">
+        <span style="color: #93c5fd;">L</span><span style="color: #c4b5fd;">o</span><span style="color: #67e8f9;">g</span><span style="color: #fcd34d;">&#8987;</span><span style="color: #6ee7b7;">K</span><span style="color: #fcd34d;">r</span><span style="color: #fca5a5;">o</span><span style="color: #f9a8d4;">n</span>
       </div>
-      <div class="mini-timer">
-        <span class="mini-timer-icon">❓</span>
-        <span class="mini-timer-label">Domande sul testo</span>
-        <span class="mini-timer-value attivo" id="timerDomande">30:00</span>
-      </div>
+      <h1>Tabellone Live</h1>
+    </div>
+
+    <div class="top-right">
+      <span class="live-badge"><span class="live-dot"></span> LIVE</span>
+      <div class="timer-big" id="timerDisplay">90:00</div>
     </div>
   </div>
 
-  <div class="tabellone-container">
+  <!-- ===== TABELLONE ===== -->
+  <div class="tabellone-container" id="tabelloneVisibile">
     <div class="tabellone">
       <table id="tabelloneTable">
         <thead>
           <tr>
-            <th style="min-width: 160px;">Squadra</th>
-            <th>Q1</th>
-            <th>Q2</th>
-            <th>Q3</th>
-            <th>Q4</th>
-            <th>Q5</th>
-            <th>Q6</th>
-            <th>Q7</th>
-            <th>Q8</th>
-            <th>Q9</th>
-            <th>Q10</th>
-            <th>Q11</th>
-            <th>Q12</th>
-            <th>Q13</th>
-            <th>Q14</th>
-            <th>Q15</th>
-            <th style="min-width: 70px;">TOT</th>
+            <th style="min-width: 140px;">Squadra</th>
+            <th>Q1</th><th>Q2</th><th>Q3</th><th>Q4</th><th>Q5</th>
+            <th>Q6</th><th>Q7</th><th>Q8</th><th>Q9</th><th>Q10</th>
+            <th>Q11</th><th>Q12</th><th>Q13</th><th>Q14</th><th>Q15</th>
+            <th style="min-width: 65px;">TOT</th>
           </tr>
-          <!-- Riga valori punti correnti per domanda -->
           <tr class="valore-row">
             <td>Valore</td>
-            <td id="val-1">20</td>
-            <td id="val-2">20</td>
-            <td id="val-3">20</td>
-            <td id="val-4">20</td>
-            <td id="val-5">20</td>
-            <td id="val-6">20</td>
-            <td id="val-7">20</td>
-            <td id="val-8">20</td>
-            <td id="val-9">20</td>
-            <td id="val-10">20</td>
-            <td id="val-11">20</td>
-            <td id="val-12">20</td>
-            <td id="val-13">20</td>
-            <td id="val-14">20</td>
-            <td id="val-15">20</td>
+            <td id="val-1">20</td><td id="val-2">20</td><td id="val-3">20</td>
+            <td id="val-4">20</td><td id="val-5">20</td><td id="val-6">20</td>
+            <td id="val-7">20</td><td id="val-8">20</td><td id="val-9">20</td>
+            <td id="val-10">20</td><td id="val-11">20</td><td id="val-12">20</td>
+            <td id="val-13">20</td><td id="val-14">20</td><td id="val-15">20</td>
             <td></td>
           </tr>
         </thead>
-        <tbody id="tabelloneBody">
-          <!-- Righe generate da JS -->
-        </tbody>
+        <tbody id="tabelloneBody"></tbody>
       </table>
     </div>
 
     <div class="legenda">
-      <div class="legenda-item">
-        <span class="legenda-dot" style="background: #10b981;"></span> Corretta (+punti)
-      </div>
-      <div class="legenda-item">
-        <span class="legenda-dot" style="background: #ef4444;"></span> Sbagliata (-10 per tentativo)
-      </div>
-      <div class="legenda-item">
-        <span class="legenda-dot" style="background: #fef3c7; border: 1px solid #f59e0b;"></span> In attesa
-      </div>
-      <div class="legenda-item">
-        <span class="legenda-dot" style="background: #f8fafc; border: 1px solid #e2e8f0;"></span> Non risposto
-      </div>
-      <div class="legenda-item">
-        <span class="legenda-dot" style="background: #fbbf24; color: #1e1b4b; font-weight: 900; font-size: 0.7rem; text-align: center; line-height: 16px;">J</span> Jolly (punti x2)
-      </div>
+      <div class="legenda-item"><span class="legenda-dot" style="background: #10b981;"></span> Corretta (+punti)</div>
+      <div class="legenda-item"><span class="legenda-dot" style="background: #ef4444;"></span> Sbagliata (-5 per tentativo)</div>
+      <div class="legenda-item"><span class="legenda-dot" style="background: #fef3c7; border: 1px solid #f59e0b;"></span> In attesa</div>
+      <div class="legenda-item"><span class="legenda-dot" style="background: #f1f5f9; border: 1px solid #e2e8f0;"></span> Non risposto</div>
+      <div class="legenda-item"><span class="legenda-dot" style="background: #fbbf24; color: #1e1b4b; font-weight: 900; font-size: 0.65rem; text-align: center; line-height: 14px;">J</span> Jolly (x2)</div>
     </div>
   </div>
 
-  <footer style="text-align: center; color: rgba(255,255,255,0.5); font-size: 0.75rem; padding: 0.75rem; margin-top: 0.5rem;">
-    <strong>LogiKron</strong> - Giochi Matematici di Interistituto | <a href="https://edutechlab-ita.github.io" target="_blank" style="color: rgba(255,255,255,0.6);">EduTechLab</a> | Powered by Vibe Coding - Fabio Rizzotto
+  <!-- NASCONDIMENTO ULTIMI 5 MIN -->
+  <div class="tabellone-nascosto" id="tabelloneNascosto" style="display: none;">
+    <div>
+      <h2>&#128064; Tabellone nascosto!</h2>
+      <p>La classifica finale sarà svelata al termine della gara.</p>
+      <div class="timer-big" id="timerFinale" style="margin-top: 1rem;"></div>
+    </div>
+  </div>
+
+  <footer style="text-align: center; color: rgba(255,255,255,0.4); font-size: 0.65rem; padding: 0.4rem;">
+    <strong>LogiKron</strong> - Giochi Matematici di Interistituto | <a href="https://edutechlab-ita.github.io" target="_blank" style="color: rgba(255,255,255,0.5);">EduTechLab</a> | Powered by Vibe Coding - Fabio Rizzotto
   </footer>
 
   <script src="js/config.js"></script>
   <script>
     // ==========================================
-    // CONFIGURAZIONE PUNTEGGI
+    // CONFIGURAZIONE
     // ==========================================
-    const PUNTI_INIZIALI = LOGIKRON_CONFIG.gare.puntiIniziali;       // 20
-    const INCREMENTO = LOGIKRON_CONFIG.gare.incrementoPuntiOgniMinuti; // +2 ogni minuto
-    const PENALITA = LOGIKRON_CONFIG.gare.penalitaRispostaSbagliata;   // -10
-    const NUM_DOMANDE = LOGIKRON_CONFIG.gare.numeroDomande;            // 15
-    const DURATA_MINUTI = LOGIKRON_CONFIG.gare.durataMinuti;           // 90
+    const PUNTI_INIZIALI = LOGIKRON_CONFIG.gare.puntiIniziali;
+    const INCREMENTO = LOGIKRON_CONFIG.gare.incrementoPuntiOgniMinuti;
+    const PENALITA = LOGIKRON_CONFIG.gare.penalitaRispostaSbagliata;   // -5
+    const NUM_DOMANDE = LOGIKRON_CONFIG.gare.numeroDomande;
+    const DURATA_MINUTI = LOGIKRON_CONFIG.gare.durataMinuti;
+    const TEMPO_JOLLY = LOGIKRON_CONFIG.gare.tempoJollyMinuti * 60;
+    const TEMPO_DOMANDE = LOGIKRON_CONFIG.gare.tempoDomandeMinuti * 60;
+    const MINUTI_NASCONDIMENTO = LOGIKRON_CONFIG.gare.minutiNascondimento;
 
     // ==========================================
-    // DATI ESEMPIO (mockup - in produzione da Apps Script)
+    // DATI ESEMPIO (mockup)
     // ==========================================
-    // stato: 'correct' | 'wrong' | 'pending' | 'empty'
-    // punti: punti assegnati (positivi) o penalita accumulate (negativi)
-    // tentativi_sbagliati: numero di risposte sbagliate date
-    // jolly: indice (0-based) della domanda scelta come Jolly
-    // Se jolly + correct: punti x2 | Se jolly + wrong: penalita x2 (-20 per tentativo)
     const squadreDemo = [
       {
-        nome: "Squadra A",
-        jolly: 4,  // Q5 scelta come Jolly
+        nome: "Squadra A", jolly: 4,
         risposte: [
-          { stato: 'correct', punti: 22 },
-          { stato: 'correct', punti: 24 },
-          { stato: 'correct', punti: 20 },
-          { stato: 'wrong', tentativi: 2 },
-          { stato: 'correct', punti: 52 },   // Jolly! 26 x2 = 52
-          { stato: 'correct', punti: 30 },
-          { stato: 'pending' },
-          { stato: 'empty' },
-          { stato: 'empty' },
-          { stato: 'empty' },
-          { stato: 'empty' },
-          { stato: 'empty' },
-          { stato: 'empty' },
-          { stato: 'empty' },
-          { stato: 'empty' }
+          { stato: 'correct', punti: 22 }, { stato: 'correct', punti: 24 },
+          { stato: 'correct', punti: 20 }, { stato: 'wrong', tentativi: 2 },
+          { stato: 'correct', punti: 52 }, { stato: 'correct', punti: 30 },
+          { stato: 'pending' }, { stato: 'empty' }, { stato: 'empty' },
+          { stato: 'empty' }, { stato: 'empty' }, { stato: 'empty' },
+          { stato: 'empty' }, { stato: 'empty' }, { stato: 'empty' }
         ]
       },
       {
-        nome: "Squadra B",
-        jolly: 2,  // Q3 scelta come Jolly
+        nome: "Squadra B", jolly: 2,
         risposte: [
-          { stato: 'correct', punti: 20 },
-          { stato: 'correct', punti: 22 },
-          { stato: 'wrong', tentativi: 1 },   // Jolly sbagliato! -20 (penalita x2)
-          { stato: 'correct', punti: 28 },
-          { stato: 'correct', punti: 30 },
-          { stato: 'pending' },
-          { stato: 'empty' },
-          { stato: 'empty' },
-          { stato: 'empty' },
-          { stato: 'empty' },
-          { stato: 'empty' },
-          { stato: 'empty' },
-          { stato: 'empty' },
-          { stato: 'empty' },
-          { stato: 'empty' }
+          { stato: 'correct', punti: 20 }, { stato: 'correct', punti: 22 },
+          { stato: 'wrong', tentativi: 1 }, { stato: 'correct', punti: 28 },
+          { stato: 'correct', punti: 30 }, { stato: 'pending' },
+          { stato: 'empty' }, { stato: 'empty' }, { stato: 'empty' },
+          { stato: 'empty' }, { stato: 'empty' }, { stato: 'empty' },
+          { stato: 'empty' }, { stato: 'empty' }, { stato: 'empty' }
         ]
       },
       {
-        nome: "Squadra C",
-        jolly: 0,  // Q1 scelta come Jolly
+        nome: "Squadra C", jolly: 0,
         risposte: [
-          { stato: 'correct', punti: 40 },   // Jolly! 20 x2 = 40
-          { stato: 'correct', punti: 22 },
-          { stato: 'correct', punti: 24 },
-          { stato: 'correct', punti: 26 },
-          { stato: 'empty' },
-          { stato: 'empty' },
-          { stato: 'empty' },
-          { stato: 'empty' },
-          { stato: 'empty' },
-          { stato: 'empty' },
-          { stato: 'empty' },
-          { stato: 'empty' },
-          { stato: 'empty' },
-          { stato: 'empty' },
-          { stato: 'empty' }
+          { stato: 'correct', punti: 40 }, { stato: 'correct', punti: 22 },
+          { stato: 'correct', punti: 24 }, { stato: 'correct', punti: 26 },
+          { stato: 'empty' }, { stato: 'empty' }, { stato: 'empty' },
+          { stato: 'empty' }, { stato: 'empty' }, { stato: 'empty' },
+          { stato: 'empty' }, { stato: 'empty' }, { stato: 'empty' },
+          { stato: 'empty' }, { stato: 'empty' }
         ]
       },
       {
-        nome: "Squadra D",
-        jolly: 1,  // Q2 scelta come Jolly
+        nome: "Squadra D", jolly: 1,
         risposte: [
-          { stato: 'correct', punti: 24 },
-          { stato: 'wrong', tentativi: 3 },   // Jolly sbagliato! -60 (3 x -20)
-          { stato: 'correct', punti: 26 },
-          { stato: 'pending' },
-          { stato: 'empty' },
-          { stato: 'empty' },
-          { stato: 'empty' },
-          { stato: 'empty' },
-          { stato: 'empty' },
-          { stato: 'empty' },
-          { stato: 'empty' },
-          { stato: 'empty' },
-          { stato: 'empty' },
-          { stato: 'empty' },
-          { stato: 'empty' }
+          { stato: 'correct', punti: 24 }, { stato: 'wrong', tentativi: 3 },
+          { stato: 'correct', punti: 26 }, { stato: 'pending' },
+          { stato: 'empty' }, { stato: 'empty' }, { stato: 'empty' },
+          { stato: 'empty' }, { stato: 'empty' }, { stato: 'empty' },
+          { stato: 'empty' }, { stato: 'empty' }, { stato: 'empty' },
+          { stato: 'empty' }, { stato: 'empty' }
         ]
       },
       {
-        nome: "Squadra E",
-        jolly: null,  // Non ha ancora scelto
+        nome: "Squadra E", jolly: null,
         risposte: [
-          { stato: 'correct', punti: 20 },
-          { stato: 'pending' },
-          { stato: 'empty' },
-          { stato: 'empty' },
-          { stato: 'empty' },
-          { stato: 'empty' },
-          { stato: 'empty' },
-          { stato: 'empty' },
-          { stato: 'empty' },
-          { stato: 'empty' },
-          { stato: 'empty' },
-          { stato: 'empty' },
-          { stato: 'empty' },
-          { stato: 'empty' },
+          { stato: 'correct', punti: 20 }, { stato: 'pending' },
+          { stato: 'empty' }, { stato: 'empty' }, { stato: 'empty' },
+          { stato: 'empty' }, { stato: 'empty' }, { stato: 'empty' },
+          { stato: 'empty' }, { stato: 'empty' }, { stato: 'empty' },
+          { stato: 'empty' }, { stato: 'empty' }, { stato: 'empty' },
           { stato: 'empty' }
         ]
       }
     ];
 
     // ==========================================
-    // CALCOLO PUNTEGGIO TOTALE
+    // CALCOLO PUNTEGGIO
     // ==========================================
     function calcolaTotale(squadra) {
       let totale = 0;
       squadra.risposte.forEach((r, i) => {
         const isJolly = (squadra.jolly === i);
         if (r.stato === 'correct') {
-          totale += r.punti;  // Gia raddoppiato nei dati se Jolly
+          totale += r.punti;
         } else if (r.stato === 'wrong') {
-          const pen = isJolly ? (PENALITA * 2) : PENALITA;  // -20 se Jolly, -10 altrimenti
+          const pen = isJolly ? (PENALITA * 2) : PENALITA;
           totale += pen * r.tentativi;
         }
       });
       return totale;
     }
 
-    // ==========================================
-    // ORDINA PER CLASSIFICA (punteggio decrescente)
-    // ==========================================
     function ordinaSquadre(squadre) {
       return [...squadre].sort((a, b) => calcolaTotale(b) - calcolaTotale(a));
     }
 
     // ==========================================
-    // RENDER TABELLONE
+    // RENDER
     // ==========================================
     function renderTabellone() {
       const tbody = document.getElementById('tabelloneBody');
       const squadreOrdinate = ordinaSquadre(squadreDemo);
-
       tbody.innerHTML = '';
 
       squadreOrdinate.forEach((sq, index) => {
@@ -526,16 +489,13 @@
         const tr = document.createElement('tr');
         tr.className = 'squadra-row';
 
-        // Cella posizione + nome
-        let posIcon = '';
         let posClass = 'pos-other';
-        if (pos === 1) { posIcon = ''; posClass = 'pos-1'; }
-        else if (pos === 2) { posIcon = ''; posClass = 'pos-2'; }
-        else if (pos === 3) { posIcon = ''; posClass = 'pos-3'; }
+        if (pos === 1) posClass = 'pos-1';
+        else if (pos === 2) posClass = 'pos-2';
+        else if (pos === 3) posClass = 'pos-3';
 
         let html = `<td class="squadra-cell"><span class="pos-num ${posClass}">${pos}</span>${sq.nome}</td>`;
 
-        // Celle risposte
         sq.risposte.forEach((r, i) => {
           const isJolly = (sq.jolly === i);
           const jollyTag = isJolly ? '<span class="jolly-tag">J</span>' : '';
@@ -545,8 +505,7 @@
             html += `<td class="cell-correct${jollyClass}">${jollyTag}+${r.punti}</td>`;
           } else if (r.stato === 'wrong') {
             const pen = isJolly ? (PENALITA * 2) : PENALITA;
-            const penTotale = pen * r.tentativi;
-            html += `<td class="cell-wrong${jollyClass}">${jollyTag}${penTotale}</td>`;
+            html += `<td class="cell-wrong${jollyClass}">${jollyTag}${pen * r.tentativi}</td>`;
           } else if (r.stato === 'pending') {
             html += `<td class="cell-pending${jollyClass}">${jollyTag}...</td>`;
           } else {
@@ -554,97 +513,81 @@
           }
         });
 
-        // Cella totale
         html += `<td class="punteggio-cell">${totale}</td>`;
-
         tr.innerHTML = html;
         tbody.appendChild(tr);
       });
     }
 
     // ==========================================
-    // TIMER + AGGIORNAMENTO VALORI DOMANDE
+    // TIMERS
     // ==========================================
     let secondiTrascorsi = 0;
     let secondiTotali = DURATA_MINUTI * 60;
+    let secJolly = TEMPO_JOLLY;
+    let secDomande = TEMPO_DOMANDE;
+    let tabelloneNascosto = false;
 
-    function aggiornaTimer() {
-      const rimanenti = secondiTotali - secondiTrascorsi;
-      if (rimanenti >= 0) {
-        const min = Math.floor(rimanenti / 60);
-        const sec = rimanenti % 60;
-        document.getElementById('timerDisplay').textContent =
-          `${min.toString().padStart(2, '0')}:${sec.toString().padStart(2, '0')}`;
-      }
-    }
-
-    function aggiornaValoriDomande() {
-      const minutiTrascorsi = Math.floor(secondiTrascorsi / 60);
-      const valoreCorrente = PUNTI_INIZIALI + (minutiTrascorsi * INCREMENTO);
-
-      for (let i = 1; i <= NUM_DOMANDE; i++) {
-        const el = document.getElementById(`val-${i}`);
-        if (el) el.textContent = valoreCorrente;
-      }
-    }
-
-    // ==========================================
-    // TIMER JOLLY (15 min) + TIMER DOMANDE (30 min)
-    // ==========================================
-    const TEMPO_JOLLY = LOGIKRON_CONFIG.gare.tempoJollyMinuti * 60;       // 15 min
-    const TEMPO_DOMANDE = LOGIKRON_CONFIG.gare.tempoDomandeMinuti * 60;  // 30 min
-    let secJollyRimanenti = TEMPO_JOLLY;
-    let secDomandeRimanenti = TEMPO_DOMANDE;
-
-    function formatTimer(sec) {
+    function fmt(sec) {
       const m = Math.floor(sec / 60);
       const s = sec % 60;
-      return `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
+      return `${m.toString().padStart(2,'0')}:${s.toString().padStart(2,'0')}`;
     }
 
-    function aggiornaMiniTimers() {
-      const elJolly = document.getElementById('timerJolly');
-      const elDomande = document.getElementById('timerDomande');
+    function tick() {
+      if (secondiTrascorsi >= secondiTotali) return;
+      secondiTrascorsi++;
 
-      if (secJollyRimanenti > 0) {
-        secJollyRimanenti--;
-        elJolly.textContent = formatTimer(secJollyRimanenti);
-      } else {
-        elJolly.textContent = 'SCADUTO';
-        elJolly.classList.remove('attivo');
-        elJolly.classList.add('scaduto');
+      // Timer principale
+      const rim = secondiTotali - secondiTrascorsi;
+      document.getElementById('timerDisplay').textContent = fmt(rim);
+
+      // Valori domande
+      const minTr = Math.floor(secondiTrascorsi / 60);
+      const val = PUNTI_INIZIALI + (minTr * INCREMENTO);
+      for (let i = 1; i <= NUM_DOMANDE; i++) {
+        const el = document.getElementById(`val-${i}`);
+        if (el) el.textContent = val;
       }
 
-      if (secDomandeRimanenti > 0) {
-        secDomandeRimanenti--;
-        elDomande.textContent = formatTimer(secDomandeRimanenti);
-      } else {
-        elDomande.textContent = 'SCADUTO';
-        elDomande.classList.remove('attivo');
-        elDomande.classList.add('scaduto');
+      // Timer Jolly
+      const elJ = document.getElementById('timerJolly');
+      if (secJolly > 0) {
+        secJolly--;
+        elJ.textContent = fmt(secJolly);
+      } else if (!elJ.classList.contains('scaduto')) {
+        elJ.textContent = 'SCADUTO';
+        elJ.classList.add('scaduto');
+      }
+
+      // Timer Domande
+      const elD = document.getElementById('timerDomande');
+      if (secDomande > 0) {
+        secDomande--;
+        elD.textContent = fmt(secDomande);
+      } else if (!elD.classList.contains('scaduto')) {
+        elD.textContent = 'SCADUTO';
+        elD.classList.add('scaduto');
+      }
+
+      // Nascondimento ultimi 5 min
+      const minRimanenti = rim / 60;
+      if (minRimanenti <= MINUTI_NASCONDIMENTO && !tabelloneNascosto) {
+        tabelloneNascosto = true;
+        document.getElementById('tabelloneVisibile').style.display = 'none';
+        document.getElementById('tabelloneNascosto').style.display = 'flex';
+      }
+      if (tabelloneNascosto) {
+        document.getElementById('timerFinale').textContent = fmt(rim);
       }
     }
 
-    // Tick ogni secondo
-    setInterval(() => {
-      if (secondiTrascorsi < secondiTotali) {
-        secondiTrascorsi++;
-        aggiornaTimer();
-        aggiornaValoriDomande();
-        aggiornaMiniTimers();
-      }
-    }, 1000);
+    setInterval(tick, 1000);
 
     // ==========================================
     // INIT
     // ==========================================
     renderTabellone();
-    aggiornaTimer();
-    aggiornaValoriDomande();
-
-    // TODO: Polling ogni 2-3 sec per aggiornamento real-time da Apps Script
-    // In produzione: fetch dati -> aggiorna squadreDemo -> renderTabellone()
-    // Le righe si riordinano automaticamente ad ogni render
   </script>
 </body>
 </html>
