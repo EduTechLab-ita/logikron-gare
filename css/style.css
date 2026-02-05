@@ -83,26 +83,38 @@ body::before {
   z-index: 0;
 }
 
-/* Particelle fluttuanti animate */
-body::after {
-  content: '+ × ÷ = π √ ∑ ∞';
+/* Sfondo animato: simboli matematici fluttuanti (generato da js/math-bg.js) */
+.math-bg-container {
   position: fixed;
   top: 0;
   left: 0;
   right: 0;
   bottom: 0;
-  font-size: 100px;
-  color: rgba(255, 255, 255, 0.02);
-  word-spacing: 100px;
-  line-height: 200px;
+  overflow: hidden;
   pointer-events: none;
   z-index: 0;
-  animation: floatSymbols 60s linear infinite;
 }
 
-@keyframes floatSymbols {
-  0% { transform: translateY(0) rotate(0deg); }
-  100% { transform: translateY(-500px) rotate(10deg); }
+.math-bg-symbol {
+  position: absolute;
+  bottom: -50px;
+  color: rgba(255, 255, 255, 0.04);
+  font-family: 'Space Mono', 'Courier New', monospace;
+  font-weight: 700;
+  animation: mathFloat linear infinite;
+}
+
+@keyframes mathFloat {
+  0% {
+    transform: translateY(0) rotate(0deg);
+    opacity: 0;
+  }
+  5% { opacity: 1; }
+  95% { opacity: 1; }
+  100% {
+    transform: translateY(calc(-100vh - 100px)) rotate(360deg);
+    opacity: 0;
+  }
 }
 
 /* ==========================================

@@ -184,16 +184,23 @@
       padding-left: 0.5rem !important;
     }
 
+    /* Cella posizione (colonna # fissa) */
+    .pos-cell {
+      width: 40px !important;
+      min-width: 40px;
+      max-width: 40px;
+      padding: 0.3rem !important;
+    }
+
     .pos-num {
       display: inline-flex;
       align-items: center;
       justify-content: center;
-      width: 26px;
-      height: 26px;
+      width: 30px;
+      height: 30px;
       border-radius: 50%;
-      font-size: 0.8rem;
+      font-size: 0.9rem;
       font-weight: 900;
-      margin-right: 6px;
       color: white;
     }
 
@@ -337,13 +344,15 @@
       <table id="tabelloneTable">
         <thead>
           <tr>
-            <th style="min-width: 140px;">Squadra</th>
+            <th style="width: 40px;">#</th>
+            <th style="min-width: 130px;">Squadra</th>
             <th>Q1</th><th>Q2</th><th>Q3</th><th>Q4</th><th>Q5</th>
             <th>Q6</th><th>Q7</th><th>Q8</th><th>Q9</th><th>Q10</th>
             <th>Q11</th><th>Q12</th><th>Q13</th><th>Q14</th><th>Q15</th>
             <th style="min-width: 65px;">TOT</th>
           </tr>
           <tr class="valore-row">
+            <td></td>
             <td>Valore</td>
             <td id="val-1">20</td><td id="val-2">20</td><td id="val-3">20</td>
             <td id="val-4">20</td><td id="val-5">20</td><td id="val-6">20</td>
@@ -380,6 +389,7 @@
   </footer>
 
   <script src="js/config.js"></script>
+  <script src="js/math-bg.js"></script>
   <script>
     // ==========================================
     // CONFIGURAZIONE
@@ -494,7 +504,8 @@
         else if (pos === 2) posClass = 'pos-2';
         else if (pos === 3) posClass = 'pos-3';
 
-        let html = `<td class="squadra-cell"><span class="pos-num ${posClass}">${pos}</span>${sq.nome}</td>`;
+        let html = `<td class="pos-cell"><span class="pos-num ${posClass}">${pos}</span></td>`;
+        html += `<td class="squadra-cell">${sq.nome}</td>`;
 
         sq.risposte.forEach((r, i) => {
           const isJolly = (sq.jolly === i);
