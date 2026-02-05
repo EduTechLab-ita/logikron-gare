@@ -122,12 +122,20 @@ const LOGIKRON_CONFIG = {
   // ==========================================
   // CLASSI AMMESSE
   // ==========================================
-  classi: [
-    { nome: "4^", codice: "4" },
-    { nome: "5^", codice: "5" },
-    { nome: "Pluriclasse 3^-4^", codice: "4P" },
-    { nome: "Pluriclasse 4^-5^", codice: "5P" }
-  ],
+  classi: {
+    primaria: [
+      { nome: "3^", codice: "3" },
+      { nome: "4^", codice: "4" },
+      { nome: "5^", codice: "5" },
+      { nome: "Pluriclasse 3^-4^", codice: "3P" },
+      { nome: "Pluriclasse 4^-5^", codice: "4P" }
+    ],
+    secondaria: [
+      { nome: "1^", codice: "1S" },
+      { nome: "2^", codice: "2S" },
+      { nome: "3^", codice: "3S" }
+    ]
+  },
 
   // ==========================================
   // TEMPLATE ATTESTATI

@@ -28,7 +28,7 @@
       <h1 class="mb-1" style="font-size: 1.5rem; color: var(--lk-primary);">
         Giochi Matematici di Interistituto
       </h1>
-      <p class="text-muted">Gare a squadre per le scuole primarie</p>
+      <p class="text-muted">Gare a squadre tra Istituti Comprensivi</p>
     </header>
 
     <!-- INFO GARE -->
@@ -38,48 +38,40 @@
       </div>
       <p class="mb-2">
         I <strong>Giochi Matematici LogiKron</strong> sono gare a squadre che coinvolgono
-        le classi 4^ e 5^ delle scuole primarie di diversi Istituti Comprensivi della zona.
+        le classi di diversi Istituti Comprensivi della zona.
       </p>
       <p class="mb-2">
         Ogni squadra, composta da <strong>5-9 studenti</strong>, affronta una serie di
-        quesiti logico-matematici. Il punteggio varia in base alla velocita e alla
+        quesiti logico-matematici. Il punteggio varia in base alla velocità e alla
         correttezza delle risposte.
       </p>
       <p>
-        L'obiettivo e promuovere il <strong>lavoro di squadra</strong> e l'interesse
+        L'obiettivo è promuovere il <strong>lavoro di squadra</strong> e l'interesse
         per la matematica in modo divertente e stimolante.
       </p>
     </section>
 
-    <!-- ISTITUTI PARTECIPANTI -->
+    <!-- NUMERI PARTECIPANTI -->
     <section class="card">
       <div class="card-header">
-        <h2 class="card-title">Istituti Partecipanti</h2>
+        <h2 class="card-title">I numeri dell'edizione 2025-2026</h2>
       </div>
-      <div class="admin-grid" style="grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem;">
-        <div class="text-center">
-          <strong>IC Gottolengo</strong>
-          <p class="text-muted" style="font-size: 0.85rem;">Gottolengo, Gambara, Fiesse</p>
+      <div class="admin-grid" style="grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 1rem;">
+        <div class="text-center" style="padding: 1rem;">
+          <div style="font-size: 2.5rem; font-weight: bold; color: var(--lk-primary);" id="numIstituti">6</div>
+          <div class="text-muted" style="font-size: 0.85rem;">Istituti Comprensivi</div>
         </div>
-        <div class="text-center">
-          <strong>IC Calvisano</strong>
-          <p class="text-muted" style="font-size: 0.85rem;">Calvisano, Isorella, Viadana</p>
+        <div class="text-center" style="padding: 1rem;">
+          <div style="font-size: 2.5rem; font-weight: bold; color: var(--lk-secondary);" id="numClassi">-</div>
+          <div class="text-muted" style="font-size: 0.85rem;">Classi coinvolte</div>
         </div>
-        <div class="text-center">
-          <strong>IC Pralboino</strong>
-          <p class="text-muted" style="font-size: 0.85rem;">Pralboino, Pavone, Milzano, Cigole, Seniga</p>
+        <div class="text-center" style="padding: 1rem;">
+          <div style="font-size: 2.5rem; font-weight: bold; color: var(--lk-success);" id="numSquadre">-</div>
+          <div class="text-muted" style="font-size: 0.85rem;">Squadre iscritte</div>
         </div>
-        <div class="text-center">
-          <strong>IC Ghedi</strong>
-          <p class="text-muted" style="font-size: 0.85rem;">Ghedi</p>
-        </div>
-        <div class="text-center">
-          <strong>IC Verolanuova</strong>
-          <p class="text-muted" style="font-size: 0.85rem;">Verolanuova, Verolavecchia, Bassano B., Cadignano</p>
-        </div>
-        <div class="text-center">
-          <strong>IC Orzinuovi</strong>
-          <p class="text-muted" style="font-size: 0.85rem;">Orzinuovi, Orzivecchi, Pompiano, Villachiara</p>
+        <div class="text-center" style="padding: 1rem;">
+          <div style="font-size: 2.5rem; font-weight: bold; color: var(--lk-warning);" id="numAlunni">-</div>
+          <div class="text-muted" style="font-size: 0.85rem;">Alunni partecipanti</div>
         </div>
       </div>
     </section>
@@ -91,7 +83,7 @@
       </div>
       <ul style="padding-left: 1.5rem;">
         <li class="mb-1"><strong>Squadre:</strong> da 5 a 9 studenti per squadra</li>
-        <li class="mb-1"><strong>Classi:</strong> 4^ e 5^ primaria (anche pluriclassi)</li>
+        <li class="mb-1"><strong>Classi:</strong> primaria e secondaria di primo grado</li>
         <li class="mb-1"><strong>Durata:</strong> 60 minuti circa</li>
         <li class="mb-1"><strong>Quesiti:</strong> 20 problemi logico-matematici</li>
         <li class="mb-1"><strong>Risposte:</strong> numeri interi da 0000 a 9999</li>
@@ -109,15 +101,15 @@
         Sei un docente e vuoi partecipare con la tua classe? Segui questi passaggi:
       </p>
       <div class="admin-grid" style="margin-top: 1rem;">
-        <a href="intenzioni.html" class="btn btn-primary btn-lg btn-block">
+        <a href="intenzioni.html" id="btnStep1" class="btn btn-primary btn-lg btn-block">
           1. Esprimi Intenzione
         </a>
-        <a href="iscrizioni.html" class="btn btn-secondary btn-lg btn-block">
-          2. Iscrivi la Squadra
+        <a href="iscrizioni.html" id="btnStep2" class="btn btn-secondary btn-lg btn-block btn-disabled" onclick="return false;" style="opacity: 0.5; pointer-events: none;">
+          2. Iscrivi la Squadra 🔒
         </a>
       </div>
       <p class="text-muted mt-2" style="font-size: 0.85rem;">
-        Prima esprimi l'intenzione di partecipare, poi potrai iscrivere la squadra con i nomi degli studenti.
+        Gli step si attivano in sequenza. Completa il passaggio 1 per sbloccare il passaggio 2.
       </p>
     </section>
 
@@ -140,7 +132,6 @@
     <footer class="footer">
       <p>
         <strong>LogiKron</strong> - Giochi Matematici di Interistituto<br>
-        Organizzato da IC Gottolengo<br>
         <a href="https://edutechlab-ita.github.io" target="_blank">EduTechLab</a> |
         Powered by Vibe Coding - Fabio Rizzotto
       </p>

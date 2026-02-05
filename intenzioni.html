@@ -67,13 +67,30 @@
         </div>
 
         <div class="form-group">
+          <label class="form-label">Ordine Scolastico *</label>
+          <select id="ordine" class="form-control" required onchange="updateClassi()">
+            <option value="">Seleziona l'ordine</option>
+            <option value="primaria">Scuola Primaria</option>
+            <option value="secondaria">Scuola Secondaria di I grado</option>
+          </select>
+        </div>
+
+        <div class="form-group">
           <label class="form-label">Classe *</label>
-          <select id="classe" class="form-control" required>
-            <option value="">Seleziona la classe</option>
-            <option value="4^">Classe 4^</option>
-            <option value="5^">Classe 5^</option>
-            <option value="Pluriclasse 3^-4^">Pluriclasse 3^-4^</option>
-            <option value="Pluriclasse 4^-5^">Pluriclasse 4^-5^</option>
+          <select id="classe" class="form-control" required disabled>
+            <option value="">Prima seleziona l'ordine scolastico</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Sezione *</label>
+          <select id="sezione" class="form-control" required>
+            <option value="">Seleziona la sezione</option>
+            <option value="A">A</option>
+            <option value="B">B</option>
+            <option value="C">C</option>
+            <option value="D">D</option>
+            <option value="Unica">Unica</option>
           </select>
         </div>
 
@@ -112,8 +129,12 @@
     <!-- FOOTER -->
     <footer class="footer">
       <p>
-        <a href="index.html">Torna alla Home</a> |
-        <a href="https://edutechlab-ita.github.io" target="_blank">EduTechLab</a>
+        <a href="index.html">Torna alla Home</a>
+      </p>
+      <p style="font-size: 0.75rem; margin-top: 0.5rem;">
+        <strong>LogiKron</strong> - Giochi Matematici di Interistituto |
+        <a href="https://edutechlab-ita.github.io" target="_blank">EduTechLab</a> |
+        Powered by Vibe Coding - Fabio Rizzotto
       </p>
     </footer>
 
@@ -155,6 +176,26 @@
       }
     }
 
+    // Aggiorna classi quando cambia ordine scolastico
+    function updateClassi() {
+      const ordine = document.getElementById('ordine').value;
+      const classeSelect = document.getElementById('classe');
+
+      classeSelect.innerHTML = '<option value="">Seleziona la classe</option>';
+
+      if (ordine && LOGIKRON_CONFIG.classi[ordine]) {
+        LOGIKRON_CONFIG.classi[ordine].forEach(cl => {
+          const option = document.createElement('option');
+          option.value = cl.nome;
+          option.textContent = cl.nome;
+          classeSelect.appendChild(option);
+        });
+        classeSelect.disabled = false;
+      } else {
+        classeSelect.disabled = true;
+      }
+    }
+
     // Submit form
     document.getElementById('formIntenzioni').addEventListener('submit', function(e) {
       e.preventDefault();
@@ -167,7 +208,9 @@
         nome: document.getElementById('nomeDocente').value,
         istituto: document.getElementById('istituto').value,
         plesso: document.getElementById('plesso').value,
+        ordine: document.getElementById('ordine').value,
         classe: document.getElementById('classe').value,
+        sezione: document.getElementById('sezione').value,
         numeroSquadre: document.getElementById('numeroSquadre').value,
         note: document.getElementById('note').value,
         timestamp: new Date().toISOString()
