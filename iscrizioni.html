@@ -164,7 +164,7 @@
 
         <div class="form-group">
           <label class="form-label">Plesso *</label>
-          <select id="plesso" class="form-control" required disabled>
+          <select id="plesso" class="form-control" required disabled onchange="aggiornaNoiSquadre()">
             <option value="">Prima seleziona l'Istituto</option>
           </select>
         </div>
@@ -180,14 +180,14 @@
 
         <div class="form-group">
           <label class="form-label">Classe *</label>
-          <select id="classe" class="form-control" required disabled>
+          <select id="classe" class="form-control" required disabled onchange="aggiornaNoiSquadre()">
             <option value="">Prima seleziona l'ordine</option>
           </select>
         </div>
 
         <div class="form-group">
           <label class="form-label">Sezione *</label>
-          <select id="sezione" class="form-control" required>
+          <select id="sezione" class="form-control" required onchange="aggiornaNoiSquadre()">
             <option value="">Seleziona la sezione</option>
             <option>A</option><option>B</option><option>C</option>
             <option>D</option><option>Unica</option>
@@ -254,6 +254,98 @@
     // Dati IC/Plessi caricati dalle Intenzioni
     let istitutiDaIntenzioni = [];
 
+    // Mappe abbreviazioni per nomi squadra univoci
+    let icAbbr = {};      // "Gottolengo" → "GO"
+    let plessiAbbr = {};  // "Gottolengo" → { "Fiesse": "FI", "Gambara": "GA", ... }
+
+    /**
+     * Costruisce un mapping nome→abbreviazione univoca.
+     * Parte da 2 lettere, estende finché non ci sono conflitti.
+     */
+    function buildAbbreviazioni(nomi) {
+      const clean = s => s.toUpperCase().replace(/[^A-Z0-9]/g, '');
+      const result = {};
+      for (let len = 2; len <= 8; len++) {
+        const remaining = nomi.filter(n => !result[n]);
+        if (remaining.length === 0) break;
+        const groups = {};
+        remaining.forEach(n => {
+          const prefix = clean(n).substring(0, len);
+          if (!groups[prefix]) groups[prefix] = [];
+          groups[prefix].push(n);
+        });
+        Object.entries(groups).forEach(([prefix, group]) => {
+          if (group.length === 1) result[group[0]] = prefix;
+        });
+      }
+      // Fallback estremo: usa i primi 2 char + indice
+      nomi.forEach((n, i) => {
+        if (!result[n]) result[n] = clean(n).substring(0, 2) + (i + 1);
+      });
+      return result;
+    }
+
+    function estraiCittaIC(label) {
+      return label.replace(/^IC di /i, '').replace(/^IC /i, '').trim();
+    }
+    function estraiCittaPlesso(label) {
+      return label.replace(/^Plesso di /i, '').trim();
+    }
+    function abbreviaClasse(nome) {
+      if (nome.toLowerCase().includes('pluriclasse')) {
+        return 'P' + nome.replace(/[^0-9]/g, '');  // "Pluriclasse 3^-4^" → "P34"
+      }
+      return nome.replace(/[^0-9]/g, '');           // "4^" → "4"
+    }
+
+    function generaNomeSquadra(posizione) {
+      const icVal     = document.getElementById('istituto').value;
+      const plessoVal = document.getElementById('plesso').value;
+      const ordine    = document.getElementById('ordine').value;
+      const classe    = document.getElementById('classe').value;
+      const sezione   = document.getElementById('sezione').value;
+      if (!icVal || !plessoVal || !ordine || !classe || !sezione) return '—';
+
+      const icCitta     = estraiCittaIC(icVal);
+      const plessoCitta = estraiCittaPlesso(plessoVal);
+      const icCode      = icAbbr[icCitta] || icCitta.substring(0, 2).toUpperCase();
+      const pAbbrMap    = plessiAbbr[icCitta] || {};
+      const plessoCode  = pAbbrMap[plessoCitta] || plessoCitta.substring(0, 2).toUpperCase();
+
+      // Se plesso = IC (sede unica), non ripetere il codice
+      const scuolaPart  = icCitta.toUpperCase() === plessoCitta.toUpperCase()
+                          ? icCode
+                          : icCode + plessoCode;
+      const ordinePart  = ordine === 'primaria' ? 'PRI' : 'SEC';
+      const classePart  = abbreviaClasse(classe);
+      const sezionePart = sezione === 'Unica' ? 'U' : sezione;
+
+      return scuolaPart + ordinePart + classePart + sezionePart + posizione;
+    }
+
+    function aggiornaNoiSquadre() {
+      document.querySelectorAll('.squadra-card').forEach((card, idx) => {
+        const cardId = card.id.replace('squadra-', '');
+        const pos = idx + 1;
+        // Aggiorna badge numero posizione
+        const badge = card.querySelector('.squadra-numero');
+        if (badge) badge.textContent = pos;
+        // Aggiorna codice auto-generato
+        const nomeEl = document.getElementById('nomeSquadra-' + cardId);
+        if (nomeEl) nomeEl.textContent = generaNomeSquadra(pos);
+      });
+    }
+
+    function buildMappeAbbreviazioni() {
+      const icCitta = istitutiDaIntenzioni.map(ic => estraiCittaIC(ic.nome));
+      icAbbr = buildAbbreviazioni(icCitta);
+      istitutiDaIntenzioni.forEach(ic => {
+        const citta = estraiCittaIC(ic.nome);
+        const plessiCitta = ic.plessi.map(p => estraiCittaPlesso(p));
+        plessiAbbr[citta] = buildAbbreviazioni(plessiCitta);
+      });
+    }
+
     function initIstituti() {
       const sel = document.getElementById('istituto');
       sel.innerHTML = '<option value="">Caricamento...</option>';
@@ -262,6 +354,7 @@
       lkApi(LOGIKRON_CONFIG.webAppUrls.iscrizioni, { action: 'getIstitutiDaIntenzioni' })
         .then(data => {
           istitutiDaIntenzioni = Array.isArray(data) ? data : [];
+          buildMappeAbbreviazioni();
           sel.innerHTML = '<option value="">Seleziona l\'Istituto</option>';
           if (istitutiDaIntenzioni.length === 0) {
             sel.innerHTML += '<option value="" disabled>Nessun istituto iscritto</option>';
@@ -281,6 +374,7 @@
             nome: ic.nome,
             plessi: ic.plessi.map(p => 'Plesso di ' + p.nome)
           }));
+          buildMappeAbbreviazioni();
           sel.innerHTML = '<option value="">Seleziona l\'Istituto</option>';
           istitutiDaIntenzioni.forEach(ic => {
             const opt = document.createElement('option');
@@ -308,6 +402,7 @@
       } else {
         sel.disabled = true;
       }
+      aggiornaNoiSquadre();
     }
 
     function updateClassi() {
@@ -325,6 +420,7 @@
       } else {
         sel.disabled = true;
       }
+      aggiornaNoiSquadre();
     }
 
     function aggiungiSquadra() {
@@ -343,9 +439,10 @@
       div.innerHTML = `
         <div class="squadra-card-header">
           <div class="squadra-numero">${n}</div>
-          <input type="text" class="form-control" id="nomeSquadra-${n}"
-                 placeholder="Nome squadra (es. Squadra Alfa)"
-                 style="margin: 0; flex: 1;">
+          <div style="flex:1; display:flex; flex-direction:column; gap:0.1rem;">
+            <span style="font-size:0.7rem; color:#6b7280; text-transform:uppercase; letter-spacing:0.04em;">Codice squadra (auto)</span>
+            <code id="nomeSquadra-${n}" style="font-size:1.1rem; font-weight:800; color:#4f46e5; letter-spacing:0.08em;">—</code>
+          </div>
           <button type="button" class="btn-rimuovi-squadra"
                   onclick="rimuoviSquadra(${n})" title="Rimuovi squadra">✕ Rimuovi</button>
         </div>
@@ -365,6 +462,7 @@
       document.getElementById('squadreContainer').appendChild(div);
       aggiornaCount(n);
       aggiornaBottoneAggiungi();
+      aggiornaNoiSquadre();
     }
 
     function rowStudente(squadraId, num) {
@@ -411,6 +509,7 @@
       const el = document.getElementById('squadra-' + n);
       if (el) el.remove();
       aggiornaBottoneAggiungi();
+      aggiornaNoiSquadre();
     }
 
     function aggiornaBottoneAggiungi() {
@@ -424,10 +523,11 @@
       const teams = [];
       cards.forEach(card => {
         const id = card.id.replace('squadra-', '');
-        const nome = (document.getElementById('nomeSquadra-' + id).value || '').trim();
+        const nomeEl = document.getElementById('nomeSquadra-' + id);
+        const nome = (nomeEl ? nomeEl.textContent : '').trim();
         const inputs = card.querySelectorAll('.studente-input');
         const studenti = Array.from(inputs).map(i => i.value.trim()).filter(v => v !== '');
-        teams.push({ nome: nome || ('Squadra ' + id), studenti: studenti });
+        teams.push({ nome: nome || ('SQUADRA' + id), studenti: studenti });
       });
       return teams;
     }
