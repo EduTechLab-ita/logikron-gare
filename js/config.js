@@ -56,14 +56,14 @@ const LOGIKRON_CONFIG = {
   // ==========================================
   gare: {
     // Parametri di default (modificabili da admin)
-    durataMinuti: 90,
-    numeroDomande: 15,
+    durataMinuti: 60,
+    numeroDomande: 10,
     puntiIniziali: 20,
     incrementoPuntiOgniMinuti: 2,
     penalitaRispostaSbagliata: -5,
     bonusProblemaPenalita: 0,
-    tempoJollyMinuti: 15,
-    tempoDomandeMinuti: 30,
+    tempoJollyMinuti: 10,
+    tempoDomandeMinuti: 20,
 
     // Bonus posizionamento (primi 3 a risolvere un quesito)
     bonusPosizionamento: [25, 20, 15],

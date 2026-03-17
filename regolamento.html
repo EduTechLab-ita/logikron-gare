@@ -1,0 +1,399 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>LogiKron - Regolamento Ufficiale 2025-2026</title>
+  <link rel="stylesheet" href="css/style.css">
+  <style>
+    /* ===== STILE PAGINA ===== */
+    .reg-header {
+      background: linear-gradient(135deg, #4f46e5, #7c3aed);
+      color: white;
+      padding: 2rem 1.5rem;
+      border-radius: var(--lk-radius-lg);
+      text-align: center;
+      margin-bottom: 1.5rem;
+    }
+    .reg-header .logo-container { font-size: 2.2rem; margin-bottom: 0.5rem; }
+    .reg-header h1 { font-size: 1.6rem; margin: 0.25rem 0; }
+    .reg-header .subtitle { font-size: 0.95rem; opacity: 0.85; margin: 0; }
+    .reg-header .anno { background: rgba(255,255,255,0.2); padding: 3px 14px; border-radius: 9999px; font-size: 0.85rem; display: inline-block; margin-top: 0.5rem; }
+
+    .reg-section {
+      margin-bottom: 1.5rem;
+    }
+    .reg-section-title {
+      font-size: 1.1rem;
+      font-weight: 700;
+      color: #4f46e5;
+      border-bottom: 2px solid #4f46e5;
+      padding-bottom: 0.4rem;
+      margin-bottom: 1rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    .reg-section-title .icon { font-size: 1.2rem; }
+
+    /* Tabella parametri */
+    .params-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.95rem;
+    }
+    .params-table th {
+      background: #4f46e5;
+      color: white;
+      padding: 0.5rem 0.75rem;
+      text-align: left;
+      font-weight: 600;
+    }
+    .params-table td {
+      padding: 0.5rem 0.75rem;
+      border-bottom: 1px solid #e2e8f0;
+    }
+    .params-table tr:nth-child(even) td { background: #f8fafc; }
+    .params-table td:last-child { font-weight: 600; color: #4f46e5; }
+
+    /* Box ordini scolastici */
+    .ordine-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1rem;
+    }
+    .ordine-box {
+      border-radius: var(--lk-radius-md);
+      padding: 1rem;
+      border: 2px solid;
+    }
+    .ordine-primaria { border-color: #f59e0b; background: #fffbeb; }
+    .ordine-secondaria { border-color: #3b82f6; background: #eff6ff; }
+    .ordine-box h3 { font-size: 1rem; margin: 0 0 0.5rem 0; }
+    .ordine-primaria h3 { color: #92400e; }
+    .ordine-secondaria h3 { color: #1e40af; }
+    .ordine-box ul { margin: 0; padding-left: 1.25rem; font-size: 0.9rem; }
+    .ordine-box li { margin-bottom: 0.2rem; }
+
+    /* Fasi gara */
+    .fase-timeline {
+      display: flex;
+      flex-direction: column;
+      gap: 0.75rem;
+    }
+    .fase-item {
+      display: flex;
+      gap: 0.75rem;
+      align-items: flex-start;
+    }
+    .fase-badge-time {
+      background: #4f46e5;
+      color: white;
+      border-radius: 9999px;
+      padding: 4px 12px;
+      font-size: 0.8rem;
+      font-weight: 700;
+      white-space: nowrap;
+      flex-shrink: 0;
+      min-width: 80px;
+      text-align: center;
+    }
+    .fase-desc { font-size: 0.9rem; line-height: 1.5; }
+    .fase-desc strong { color: #1e293b; }
+
+    /* Punteggio */
+    .score-box {
+      background: linear-gradient(135deg, #ede9fe, #ddd6fe);
+      border-radius: var(--lk-radius-md);
+      padding: 1rem;
+      margin-bottom: 0.75rem;
+    }
+    .score-box h4 { margin: 0 0 0.5rem 0; color: #4f46e5; font-size: 0.95rem; }
+    .score-box p { margin: 0; font-size: 0.9rem; line-height: 1.6; }
+
+    .jolly-box {
+      background: linear-gradient(135deg, #fef3c7, #fde68a);
+      border-radius: var(--lk-radius-md);
+      padding: 1rem;
+      border: 2px solid #f59e0b;
+    }
+    .jolly-box h4 { margin: 0 0 0.5rem 0; color: #92400e; font-size: 0.95rem; display: flex; align-items: center; gap: 0.4rem; }
+    .jolly-box p { margin: 0; font-size: 0.9rem; line-height: 1.6; }
+
+    .bonus-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0.75rem;
+    }
+    .bonus-box {
+      border-radius: var(--lk-radius-md);
+      padding: 0.75rem;
+      font-size: 0.85rem;
+    }
+    .bonus-pos { background: #d1fae5; border: 1px solid #10b981; }
+    .bonus-pos h5 { color: #065f46; margin: 0 0 0.4rem 0; }
+    .bonus-comp { background: #fee2e2; border: 1px solid #ef4444; }
+    .bonus-comp h5 { color: #991b1b; margin: 0 0 0.4rem 0; }
+    .bonus-box ul { margin: 0; padding-left: 1.1rem; }
+    .bonus-box li { margin-bottom: 0.15rem; }
+
+    /* Note finali */
+    .nota-box {
+      background: #f1f5f9;
+      border-left: 4px solid #64748b;
+      padding: 0.75rem 1rem;
+      border-radius: 0 var(--lk-radius-sm) var(--lk-radius-sm) 0;
+      font-size: 0.85rem;
+      color: #475569;
+      margin-bottom: 0.5rem;
+    }
+
+    /* Pulsante stampa */
+    .print-bar {
+      display: flex;
+      justify-content: flex-end;
+      gap: 0.75rem;
+      margin-bottom: 1.5rem;
+    }
+
+    /* ===== STAMPA ===== */
+    @media print {
+      .print-bar, footer, .math-bg-canvas { display: none !important; }
+      body { background: white; font-size: 11pt; }
+      .reg-header { background: #4f46e5 !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+      .params-table th { background: #4f46e5 !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+      .card { box-shadow: none; border: 1px solid #e2e8f0; }
+      .reg-section { page-break-inside: avoid; }
+      .ordine-grid { grid-template-columns: 1fr 1fr; }
+      .bonus-grid { grid-template-columns: 1fr 1fr; }
+    }
+
+    @media (max-width: 600px) {
+      .ordine-grid, .bonus-grid { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <div class="container container-sm">
+
+    <!-- BARRA STAMPA -->
+    <div class="print-bar">
+      <a href="index.html" class="btn btn-outline" style="padding: 6px 16px; font-size: 0.85rem;">← Home</a>
+      <button onclick="window.print()" class="btn btn-primary" style="padding: 6px 16px; font-size: 0.85rem;">
+        🖨️ Scarica / Stampa PDF
+      </button>
+    </div>
+
+    <!-- HEADER -->
+    <div class="reg-header">
+      <div class="logo-container">
+        <span class="logo-l">L</span><span class="logo-o1">o</span><span class="logo-g">g</span><span class="logo-sand">⏳</span><span class="logo-k">K</span><span class="logo-r">r</span><span class="logo-o2">o</span><span class="logo-n">n</span>
+      </div>
+      <h1>Regolamento Ufficiale</h1>
+      <p class="subtitle">Giochi Matematici di Interistituto</p>
+      <span class="anno" id="annoHeader">2025-2026</span>
+    </div>
+
+    <!-- 1. PRESENTAZIONE -->
+    <div class="card reg-section">
+      <h2 class="reg-section-title"><span class="icon">🏆</span> Presentazione</h2>
+      <p>
+        I <strong>Giochi Matematici LogiKron</strong> sono gare a squadre che coinvolgono le classi
+        di diversi Istituti Comprensivi della zona. L'obiettivo è promuovere il <strong>lavoro di squadra</strong>,
+        il pensiero logico e l'interesse per la matematica in modo coinvolgente e competitivo.
+      </p>
+      <p class="mt-2">
+        Ogni squadra affronta una serie di quesiti logico-matematici in un tempo limite.
+        Il punteggio dipende dalla velocità e dalla correttezza delle risposte.
+      </p>
+    </div>
+
+    <!-- 2. PARTECIPANTI -->
+    <div class="card reg-section">
+      <h2 class="reg-section-title"><span class="icon">🏫</span> Chi può partecipare</h2>
+
+      <div class="ordine-grid">
+        <div class="ordine-box ordine-primaria">
+          <h3>🟡 Scuola Primaria</h3>
+          <ul>
+            <li>Classe 3ª</li>
+            <li>Classe 4ª</li>
+            <li>Classe 5ª</li>
+            <li>Pluriclasse 3ª-4ª</li>
+            <li>Pluriclasse 4ª-5ª</li>
+          </ul>
+        </div>
+        <div class="ordine-box ordine-secondaria">
+          <h3>🔵 Scuola Secondaria di I grado</h3>
+          <ul>
+            <li>Classe 1ª</li>
+            <li>Classe 2ª</li>
+            <li>Classe 3ª</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="nota-box mt-2">
+        <strong>Composizione squadra:</strong> da 5 a 9 studenti per squadra.
+        Ogni classe può iscrivere più squadre. Le gare di primaria e secondaria si svolgono separatamente.
+      </div>
+    </div>
+
+    <!-- 3. PARAMETRI GARA -->
+    <div class="card reg-section">
+      <h2 class="reg-section-title"><span class="icon">⚙️</span> Parametri della gara</h2>
+      <table class="params-table">
+        <thead>
+          <tr><th>Parametro</th><th>Valore</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>Durata gara</td><td id="paramDurata">60 minuti</td></tr>
+          <tr><td>Numero quesiti</td><td id="paramQuesiti">10</td></tr>
+          <tr><td>Formato risposte</td><td>Numeri interi da 0000 a 9999</td></tr>
+          <tr><td>Punteggio iniziale per quesito</td><td id="paramPuntiIniziali">20 punti</td></tr>
+          <tr><td>Incremento valore quesiti</td><td id="paramIncremento">+2 punti ogni minuto</td></tr>
+          <tr><td>Penalità risposta errata</td><td id="paramPenalita">-5 punti (per tentativo)</td></tr>
+          <tr><td>Tempo scelta Jolly</td><td id="paramJolly">10 minuti dall'inizio</td></tr>
+          <tr><td>Tabellone nascosto</td><td id="paramNascondimento">Ultimi 5 minuti</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- 4. SVOLGIMENTO -->
+    <div class="card reg-section">
+      <h2 class="reg-section-title"><span class="icon">⏱️</span> Svolgimento della gara</h2>
+      <div class="fase-timeline">
+        <div class="fase-item">
+          <span class="fase-badge-time">0 – 10'</span>
+          <div class="fase-desc">
+            <strong>Scelta del Jolly.</strong> Ogni squadra sceglie una domanda come Jolly entro i primi 10 minuti.
+            Il Jolly raddoppia il punteggio (positivo o negativo) per quella domanda. Dopo 10 minuti il Jolly si blocca automaticamente.
+          </div>
+        </div>
+        <div class="fase-item">
+          <span class="fase-badge-time">0 – 20'</span>
+          <div class="fase-desc">
+            <strong>Lettura quesiti.</strong> I primi 20 minuti sono dedicati alla lettura e comprensione dei problemi.
+            Le risposte possono essere inviate in qualsiasi momento durante l'intera durata della gara.
+          </div>
+        </div>
+        <div class="fase-item">
+          <span class="fase-badge-time">0 – 60'</span>
+          <div class="fase-desc">
+            <strong>Gara in corso.</strong> Ogni squadra invia le risposte tramite la piattaforma digitale.
+            Il valore di ogni quesito aumenta di 2 punti ogni minuto: rispondere prima conviene.
+            È possibile rispondere più volte allo stesso quesito (con penalità ad ogni risposta errata).
+          </div>
+        </div>
+        <div class="fase-item">
+          <span class="fase-badge-time" style="background: #ef4444;">55 – 60'</span>
+          <div class="fase-desc">
+            <strong>Tabellone nascosto.</strong> Negli ultimi 5 minuti la classifica viene nascosta per mantenere
+            la suspense fino alla fine. Al termine viene rivelata la classifica definitiva.
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 5. PUNTEGGIO -->
+    <div class="card reg-section">
+      <h2 class="reg-section-title"><span class="icon">📊</span> Sistema di punteggio</h2>
+
+      <div class="score-box">
+        <h4>Valore dei quesiti (dinamico)</h4>
+        <p>
+          Il valore di ogni quesito inizia a <strong>20 punti</strong> e cresce di <strong>+2 punti ogni minuto</strong>.
+          Questo premia le squadre che rispondono correttamente più tardi (più punti disponibili),
+          bilanciandolo con il bonus velocità del sistema di classifica.
+        </p>
+      </div>
+
+      <div class="score-box">
+        <h4>Risposta errata</h4>
+        <p>
+          Ogni risposta errata sottrae <strong>5 punti</strong> al punteggio totale della squadra.
+          È possibile ritentare lo stesso quesito più volte, ma ogni tentativo errato costa 5 punti.
+          Se il quesito è il Jolly, la penalità è <strong>-10 punti</strong> (doppia).
+        </p>
+      </div>
+
+      <div class="jolly-box mt-2">
+        <h4>⭐ Il Jolly</h4>
+        <p>
+          Ogni squadra può designare <strong>un solo quesito</strong> come Jolly entro i primi 10 minuti.
+          Per il Jolly, tutto è raddoppiato: i punti in caso di risposta corretta, e la penalità in caso di errore.
+          Scegliere bene il Jolly è fondamentale per la strategia di gara.
+        </p>
+      </div>
+
+      <div class="bonus-grid mt-2">
+        <div class="bonus-box bonus-pos">
+          <h5>🥇 Bonus posizionamento (per quesito)</h5>
+          <ul>
+            <li>1° a rispondere correttamente: +25 punti</li>
+            <li>2° a rispondere correttamente: +20 punti</li>
+            <li>3° a rispondere correttamente: +15 punti</li>
+          </ul>
+        </div>
+        <div class="bonus-box bonus-comp">
+          <h5>🏅 Superbonus completamento (finale)</h5>
+          <ul>
+            <li>1ª squadra a completare tutti i quesiti: +100 punti</li>
+            <li>2ª squadra a completare tutti i quesiti: +60 punti</li>
+            <li>3ª squadra a completare tutti i quesiti: +40 punti</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <!-- 6. NOTE TECNICHE -->
+    <div class="card reg-section">
+      <h2 class="reg-section-title"><span class="icon">💻</span> Modalità digitale</h2>
+      <p class="mb-2">
+        La gara si svolge interamente tramite la piattaforma <strong>LogiKron</strong>, accessibile da qualsiasi
+        browser su PC, tablet o LIM. Ogni squadra riceve un <strong>codice di accesso univoco</strong> (6 caratteri)
+        da inserire nella pagina "Pannello Squadra".
+      </p>
+      <div class="nota-box">
+        <strong>Pannello Squadra:</strong> ciascuna squadra usa un dispositivo (tablet o PC) per inviare le risposte.
+        Il docente ha a disposizione il Tabellone Live da proiettare in aula sulla LIM.
+      </div>
+      <div class="nota-box">
+        <strong>Formato risposte:</strong> tutte le risposte sono numeri interi da <code>0000</code> a <code>9999</code>.
+        I quesiti sono progettati per avere soluzioni numeriche in questo intervallo.
+      </div>
+      <div class="nota-box">
+        <strong>Connessione internet:</strong> è richiesta una connessione stabile durante tutta la durata della gara.
+        Si consiglia di testare la connessione del dispositivo prima dell'inizio.
+      </div>
+    </div>
+
+    <!-- FOOTER -->
+    <footer class="footer">
+      <p>
+        <strong>LogiKron</strong> - Giochi Matematici di Interistituto |
+        <a href="https://edutechlab.it" target="_blank">EduTechLab</a> |
+        Powered by Vibe Coding - Fabio Rizzotto
+      </p>
+      <p style="font-size: 0.75rem; margin-top: 0.3rem; opacity: 0.7;" id="footerAnno">Edizione 2025-2026</p>
+    </footer>
+
+  </div>
+
+  <script src="js/config.js"></script>
+  <script src="js/math-bg.js"></script>
+  <script>
+    // Popola valori dalla config (fonte della verità)
+    const g = LOGIKRON_CONFIG.gare;
+    document.getElementById('annoHeader').textContent = LOGIKRON_CONFIG.annoScolastico;
+    document.getElementById('footerAnno').textContent = 'Edizione ' + LOGIKRON_CONFIG.annoScolastico;
+    document.getElementById('paramDurata').textContent = g.durataMinuti + ' minuti';
+    document.getElementById('paramQuesiti').textContent = g.numeroDomande;
+    document.getElementById('paramPuntiIniziali').textContent = g.puntiIniziali + ' punti';
+    document.getElementById('paramIncremento').textContent = '+' + g.incrementoPuntiOgniMinuti + ' punti ogni minuto';
+    document.getElementById('paramPenalita').textContent = g.penalitaRispostaSbagliata + ' punti (per tentativo)';
+    document.getElementById('paramJolly').textContent = g.tempoJollyMinuti + ' minuti dall\'inizio';
+    document.getElementById('paramNascondimento').textContent = 'Ultimi ' + g.minutiNascondimento + ' minuti';
+  </script>
+</body>
+</html>
