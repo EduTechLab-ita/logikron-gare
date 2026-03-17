@@ -236,6 +236,7 @@
   </div>
 
   <script src="js/config.js"></script>
+  <script src="js/api.js"></script>
   <script src="js/math-bg.js"></script>
   <script>
     // Popola numeri edizione precedente dalla config
@@ -253,8 +254,6 @@
     document.getElementById('currentTitle').textContent =
       `Edizione ${LOGIKRON_CONFIG.annoScolastico} - Iscrizioni in corso`;
 
-    // Gestione fasi — abilita/disabilita pulsanti in base a faseAttiva
-    const fase = LOGIKRON_CONFIG.faseAttiva;
     const btn1 = document.getElementById('btnStep1');
     const btn2 = document.getElementById('btnStep2');
 
@@ -265,14 +264,20 @@
       if (testo) btn.textContent = testo;
     }
 
-    if (fase < 1) {
-      disabilita(btn1, '1. Iscrizioni non ancora aperte');
-      disabilita(btn2, '2. Iscrivi la Squadra');
-    } else if (fase === 1) {
-      // Fase 1: solo intenzioni attive
-      disabilita(btn2, '2. Iscrivi la Squadra (disponibile dopo le intenzioni)');
+    function applicaFase(fase) {
+      if (fase < 1) {
+        disabilita(btn1, '1. Iscrizioni non ancora aperte');
+        disabilita(btn2, '2. Iscrivi la Squadra');
+      } else if (fase === 1) {
+        disabilita(btn2, '2. Iscrivi la Squadra (apre dopo le intenzioni)');
+      }
+      // fase >= 2: entrambi attivi
     }
-    // fase >= 2: entrambi i pulsanti attivi (già abilitati di default)
+
+    // Legge fase dal backend, con fallback a config.js
+    lkApi(LOGIKRON_CONFIG.webAppUrls.gare, { action: 'getFase' })
+      .then(r => applicaFase(r.fase))
+      .catch(() => applicaFase(LOGIKRON_CONFIG.faseAttiva));
   </script>
 </body>
 </html>

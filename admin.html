@@ -203,28 +203,39 @@
         <h3 class="admin-section-title">
           <span class="phase-badge phase-2">Fase 1</span>
           Raccolta Intenzioni
+          <span id="badge-fase1" style="margin-left:auto; font-size:0.75rem;"></span>
         </h3>
         <div class="admin-grid">
           <div class="admin-card">
             <div class="admin-card-icon">📝</div>
             <h4 class="admin-card-title">Form Intenzioni</h4>
             <p class="admin-card-desc">Link da condividere con i docenti</p>
-            <button class="btn btn-primary" onclick="copyLink('intenzioni')">
-              Copia Link
-            </button>
-            <a href="intenzioni.html" target="_blank" class="btn btn-outline mt-1" style="display: block;">
-              Apri Form
-            </a>
+            <button class="btn btn-primary" onclick="copyLink('intenzioni')">Copia Link</button>
+            <a href="intenzioni.html" target="_blank" class="btn btn-outline mt-1" style="display:block;">Apri Form</a>
           </div>
           <div class="admin-card">
             <div class="admin-card-icon">📊</div>
-            <h4 class="admin-card-title">Visualizza Intenzioni</h4>
-            <p class="admin-card-desc">Vedi chi ha espresso interesse</p>
-            <button class="btn btn-outline" onclick="viewIntenzioni()">
-              Visualizza
-            </button>
+            <h4 class="admin-card-title">Intenzioni ricevute</h4>
+            <p class="admin-card-desc">Docenti che hanno espresso interesse</p>
+            <button class="btn btn-outline" onclick="viewIntenzioni()">Visualizza lista</button>
+          </div>
+          <div class="admin-card">
+            <div class="admin-card-icon">✅</div>
+            <h4 class="admin-card-title">Apri Iscrizioni</h4>
+            <p class="admin-card-desc">Invia mail a tutti i docenti e abilita il form iscrizioni</p>
+            <button class="btn btn-primary" onclick="apriIscrizioni()">Apri Fase 2 + Invia mail</button>
+          </div>
+          <div class="admin-card">
+            <div class="admin-card-icon">↩️</div>
+            <h4 class="admin-card-title">Gestione Fasi</h4>
+            <p class="admin-card-desc">Torna indietro o chiudi una fase</p>
+            <button class="btn btn-outline" style="margin-bottom:0.5rem;" onclick="setFase(1)">Solo Intenzioni attive</button>
+            <button class="btn btn-outline" onclick="setFase(0)">Chiudi tutto</button>
           </div>
         </div>
+
+        <!-- LISTA INTENZIONI -->
+        <div id="listaIntenzioni" class="hidden" style="margin-top:1rem;"></div>
       </section>
 
       <!-- FASE 2: ISCRIZIONI -->
@@ -232,26 +243,21 @@
         <h3 class="admin-section-title">
           <span class="phase-badge phase-3">Fase 2</span>
           Iscrizioni Squadre
+          <span id="badge-fase2" style="margin-left:auto; font-size:0.75rem;"></span>
         </h3>
         <div class="admin-grid">
           <div class="admin-card">
             <div class="admin-card-icon">👥</div>
             <h4 class="admin-card-title">Form Iscrizioni</h4>
             <p class="admin-card-desc">Link per registrare le squadre</p>
-            <button class="btn btn-primary" onclick="copyLink('iscrizioni')">
-              Copia Link
-            </button>
-            <a href="iscrizioni.html" target="_blank" class="btn btn-outline mt-1" style="display: block;">
-              Apri Form
-            </a>
+            <button class="btn btn-primary" onclick="copyLink('iscrizioni')">Copia Link</button>
+            <a href="iscrizioni.html" target="_blank" class="btn btn-outline mt-1" style="display:block;">Apri Form</a>
           </div>
           <div class="admin-card">
-            <div class="admin-card-icon">📋</div>
-            <h4 class="admin-card-title">Gestisci Squadre</h4>
-            <p class="admin-card-desc">Modifica, elimina, esporta squadre</p>
-            <button class="btn btn-outline" onclick="manageSquadre()">
-              Gestisci
-            </button>
+            <div class="admin-card-icon">🔒</div>
+            <h4 class="admin-card-title">Chiudi Iscrizioni</h4>
+            <p class="admin-card-desc">Torna alla sola raccolta intenzioni</p>
+            <button class="btn btn-outline" onclick="setFase(1)">Chiudi Fase 2</button>
           </div>
         </div>
       </section>
@@ -382,6 +388,7 @@
   </div>
 
   <script src="js/config.js"></script>
+  <script src="js/api.js"></script>
   <script src="js/math-bg.js"></script>
   <script>
     // Password admin (in produzione usare hash)
@@ -414,12 +421,105 @@
       loadDashboard();
     }
 
-    function loadDashboard() {
-      // Carica anno scolastico dalla config
-      document.getElementById('annoScolastico').textContent = LOGIKRON_CONFIG.annoScolastico;
+    const API = LOGIKRON_CONFIG.webAppUrls.admin;
+    let adminPwd = '';
 
-      // TODO: Caricare statistiche reali da Apps Script
-      // Per ora placeholder
+    function loadDashboard() {
+      document.getElementById('annoScolastico').textContent = LOGIKRON_CONFIG.annoScolastico;
+      adminPwd = document.getElementById('adminPassword').value;
+      caricaFase();
+      caricaStatIntenzioni();
+    }
+
+    function caricaFase() {
+      lkApi(API, { action: 'getFase' }).then(r => {
+        aggiornaIndicatoriFase(r.fase);
+      }).catch(() => {});
+    }
+
+    function aggiornaIndicatoriFase(fase) {
+      const b1 = document.getElementById('badge-fase1');
+      const b2 = document.getElementById('badge-fase2');
+      b1.innerHTML = fase === 1
+        ? '<span style="background:#d1fae5;color:#065f46;padding:2px 10px;border-radius:9999px;font-weight:700;">● ATTIVA</span>'
+        : '<span style="background:#f1f5f9;color:#64748b;padding:2px 10px;border-radius:9999px;">○ non attiva</span>';
+      b2.innerHTML = fase >= 2
+        ? '<span style="background:#d1fae5;color:#065f46;padding:2px 10px;border-radius:9999px;font-weight:700;">● ATTIVA</span>'
+        : '<span style="background:#f1f5f9;color:#64748b;padding:2px 10px;border-radius:9999px;">○ non attiva</span>';
+    }
+
+    function caricaStatIntenzioni() {
+      lkApi(API, { action: 'getIntenzioni' }).then(lista => {
+        if (!Array.isArray(lista)) return;
+        document.getElementById('statIntenzioni').textContent = lista.length;
+        const emailUniche = new Set(lista.map(i => i.email)).size;
+        document.getElementById('statIstituti').textContent = emailUniche;
+      }).catch(() => {});
+    }
+
+    function setFase(n) {
+      const label = ['Chiudi tutto (fase 0)', 'Solo Intenzioni (fase 1)', 'Apri Iscrizioni (fase 2)', 'Gara (fase 3)', 'Post-gara (fase 4)'];
+      if (!confirm('Confermi: ' + (label[n] || 'fase ' + n) + '?')) return;
+      lkApi(API, { action: 'setFase', fase: n, pwd: adminPwd })
+        .then(r => {
+          if (r.error) { alert('Errore: ' + r.error); return; }
+          alert('Fase aggiornata a ' + r.fase);
+          aggiornaIndicatoriFase(r.fase);
+        })
+        .catch(err => alert('Errore: ' + err.message));
+    }
+
+    function apriIscrizioni() {
+      if (!confirm('Questa azione:\n1. Abilita il pulsante Iscrizioni sul sito\n2. Invia una mail a TUTTI i docenti con le intenzioni\n\nConfermi?')) return;
+      const btn = event.target;
+      btn.disabled = true;
+      btn.textContent = 'Invio in corso...';
+      lkApi(API, { action: 'inviaMailIscrizioni', pwd: adminPwd })
+        .then(r => {
+          btn.disabled = false;
+          btn.textContent = 'Apri Fase 2 + Invia mail';
+          if (r.error) { alert('Errore: ' + r.error); return; }
+          alert('✅ Fase 2 aperta!\nEmail inviate: ' + r.inviati + ' / ' + r.totale);
+          aggiornaIndicatoriFase(2);
+        })
+        .catch(err => {
+          btn.disabled = false;
+          btn.textContent = 'Apri Fase 2 + Invia mail';
+          alert('Errore: ' + err.message);
+        });
+    }
+
+    function viewIntenzioni() {
+      const div = document.getElementById('listaIntenzioni');
+      if (!div.classList.contains('hidden')) {
+        div.classList.add('hidden');
+        return;
+      }
+      div.innerHTML = '<p style="color:var(--lk-text-muted)">Caricamento...</p>';
+      div.classList.remove('hidden');
+
+      lkApi(API, { action: 'getIntenzioni' }).then(lista => {
+        if (!Array.isArray(lista) || lista.length === 0) {
+          div.innerHTML = '<p style="color:var(--lk-text-muted)">Nessuna intenzione registrata.</p>';
+          return;
+        }
+        let html = '<div class="card" style="padding:1rem;overflow-x:auto;">';
+        html += '<table style="width:100%;border-collapse:collapse;font-size:0.85rem;">';
+        html += '<tr style="background:#4f46e5;color:white;"><th style="padding:6px 10px;text-align:left;">Docente</th><th style="padding:6px 10px;text-align:left;">Istituto / Plesso</th><th style="padding:6px 10px;text-align:left;">Classe</th><th style="padding:6px 10px;text-align:left;">Squadre</th></tr>';
+        lista.forEach((i, idx) => {
+          const bg = idx % 2 === 0 ? '#f8fafc' : 'white';
+          html += `<tr style="background:${bg};">
+            <td style="padding:6px 10px;">${i.nome}<br><span style="color:#94a3b8;font-size:0.75rem;">${i.email}</span></td>
+            <td style="padding:6px 10px;">${i.istituto}<br><span style="color:#94a3b8;font-size:0.75rem;">${i.plesso}</span></td>
+            <td style="padding:6px 10px;">${i.classe} ${i.sezione} <span style="color:#94a3b8;">(${i.ordine})</span></td>
+            <td style="padding:6px 10px;text-align:center;">${i.nSquadre}</td>
+          </tr>`;
+        });
+        html += '</table></div>';
+        div.innerHTML = html;
+      }).catch(err => {
+        div.innerHTML = '<p style="color:#dc2626;">Errore: ' + err.message + '</p>';
+      });
     }
 
     function copyLink(type) {
@@ -441,10 +541,9 @@
       });
     }
 
-    // Placeholder functions - da implementare
+    // Placeholder functions - da implementare nelle fasi successive
     function setupNuovoAnno() { alert('Setup Nuovo Anno - Da implementare'); }
     function openConfig() { alert('Configurazione - Da implementare'); }
-    function viewIntenzioni() { alert('Visualizza Intenzioni - Da implementare'); }
     function manageSquadre() { alert('Gestisci Squadre - Da implementare'); }
     function createGara() { alert('Crea Gara - Da implementare'); }
     function viewClassifica() { alert('Classifica - Da implementare'); }
