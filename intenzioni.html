@@ -201,7 +201,7 @@
       .catch(err => {
         btn.disabled = false;
         btn.textContent = 'Invia Intenzione';
-        alert('Errore durante l\'invio: ' + err.message + '\nRiprova tra qualche istante.');
+        alert('Errore durante l\'invio:\n' + err.message);
       });
     });
 
