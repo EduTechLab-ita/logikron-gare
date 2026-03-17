@@ -147,7 +147,6 @@ const LOGIKRON_CONFIG = {
   // ==========================================
   classi: {
     primaria: [
-      { nome: "3^", codice: "3" },
       { nome: "4^", codice: "4" },
       { nome: "5^", codice: "5" },
       { nome: "Pluriclasse 3^-4^", codice: "3P" },
