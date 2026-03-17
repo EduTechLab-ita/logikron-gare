@@ -220,7 +220,15 @@
       <h2 style="color: #065f46;">Iscrizioni Registrate!</h2>
       <p id="successText">Le tue squadre sono state iscritte con successo.</p>
       <p>Riceverai una email di conferma con il riepilogo delle squadre.</p>
-      <a href="index.html" class="btn btn-outline mt-2">Torna alla Home</a>
+      <p style="font-size: 0.85rem; color: #065f46; margin-top: 0.5rem;">
+        Hai squadre da iscrivere per un'altra classe o plesso?
+      </p>
+      <div style="display: flex; gap: 0.75rem; justify-content: center; flex-wrap: wrap; margin-top: 1rem;">
+        <button onclick="resetForm()" class="btn btn-primary">
+          Registra un'altra classe
+        </button>
+        <a href="index.html" class="btn btn-outline">Torna alla Home</a>
+      </div>
     </div>
 
     <!-- FOOTER -->
@@ -450,6 +458,22 @@
         alert('Errore:\n' + err.message);
       });
     });
+
+    function resetForm() {
+      // Resetta il form e torna alla schermata di inserimento
+      document.getElementById('formIscrizioni').reset();
+      document.getElementById('plesso').disabled = true;
+      document.getElementById('classe').disabled = true;
+      document.getElementById('squadreContainer').innerHTML = '';
+      squadraCount = 0;
+      aggiungiSquadra();
+      document.getElementById('formIscrizioni').classList.remove('hidden');
+      document.getElementById('successMessage').classList.add('hidden');
+      const btn = document.querySelector('#formIscrizioni button[type="submit"]');
+      btn.disabled = false;
+      btn.textContent = 'Invia Iscrizioni';
+      window.scrollTo(0, 0);
+    }
 
     // Init
     initIstituti();
