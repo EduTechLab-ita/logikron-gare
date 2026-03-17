@@ -250,9 +250,14 @@
         if (!Array.isArray(gare)) throw new Error(gare.error || 'Risposta non valida');
         renderListaGare(gare);
       })
-      .catch(err => {
-        document.getElementById('listaGare').innerHTML =
-          '<div class="card"><p style="color:#dc2626;">Impossibile caricare le gare: ' + err.message + '</p></div>';
+      .catch(() => {
+        document.getElementById('listaGare').innerHTML = `
+          <div class="card empty-state">
+            <div class="empty-icon">🏁</div>
+            <p style="font-weight:600;">Nessuna gara disponibile</p>
+            <p style="font-size:0.85rem;">Le classifiche appariranno qui al termine di ogni gara.</p>
+          </div>
+        `;
       });
   </script>
 </body>
