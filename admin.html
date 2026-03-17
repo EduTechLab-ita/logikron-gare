@@ -314,79 +314,6 @@
         </div>
       </div>
 
-      <!-- ==================== COMUNICAZIONI ==================== -->
-      <section class="admin-section">
-        <h3 class="admin-section-title">
-          <span class="phase-badge phase-comm">✉️</span>
-          Comunicazioni ai Docenti
-          <button class="btn-info-toggle" onclick="toggleInfo('info-comm')" title="Informazioni">i</button>
-        </h3>
-        <div class="info-panel" id="info-comm">
-          <strong>A cosa serve:</strong> invia una mail personalizzata a un sottoinsieme dei docenti che hanno compilato le intenzioni.
-          <ul>
-            <li><strong>Filtra per ordine:</strong> scrivi solo ai docenti della primaria o solo alla secondaria.</li>
-            <li><strong>Filtra per classe:</strong> es. solo ai docenti delle classi quarte, o solo delle quinte.</li>
-            <li><strong>Filtra per istituto:</strong> scrivi solo ai docenti di un IC specifico.</li>
-          </ul>
-          Puoi combinare i filtri. Usa <em>Vedi destinatari</em> per verificare prima di inviare.
-          <br><strong>Nota:</strong> la mail arriverà sempre con il logo LogiKron e firmata da EduTechLab.
-        </div>
-        <div class="card mt-1">
-          <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:0.75rem; margin-bottom:0.75rem;">
-            <div class="form-group" style="margin:0;">
-              <label class="form-label">Ordine</label>
-              <select id="filtroOrdine" class="form-control" onchange="aggiornaFiltroClassi()">
-                <option value="">Tutti</option>
-                <option value="primaria">Primaria</option>
-                <option value="secondaria">Secondaria</option>
-              </select>
-            </div>
-            <div class="form-group" style="margin:0;">
-              <label class="form-label">Classe</label>
-              <select id="filtroClasse" class="form-control">
-                <option value="">Tutte</option>
-              </select>
-            </div>
-            <div class="form-group" style="margin:0;">
-              <label class="form-label">Istituto</label>
-              <select id="filtroIstituto" class="form-control">
-                <option value="">Tutti</option>
-              </select>
-            </div>
-          </div>
-          <div class="form-group">
-            <label class="form-label">Oggetto email *</label>
-            <input type="text" id="mailOggetto" class="form-control"
-                   placeholder="es. Aggiornamento sulla gara del 15 marzo">
-          </div>
-          <div class="form-group">
-            <label class="form-label">Testo email *</label>
-            <div style="background:#f8fafc; border:1px solid var(--lk-border); border-bottom:none; border-radius:8px 8px 0 0; padding:10px 14px; font-size:0.9rem; color:#94a3b8; font-style:italic; pointer-events:none;">
-              Gentile <strong style="color:#64748b;">[Nome Cognome docente]</strong>,
-            </div>
-            <textarea id="mailCorpo" class="form-control" rows="5"
-                      style="border-radius:0 0 8px 8px; border-top:none;"
-                      placeholder="scrivi qui il testo del messaggio...&#10;&#10;(Il saluto iniziale è già incluso automaticamente, non ripeterlo.)"></textarea>
-          </div>
-          <div class="form-group">
-            <label class="form-label">Allegati (opzionale)</label>
-            <div id="allegatiList" style="display:flex; flex-direction:column; gap:0.4rem; margin-bottom:0.5rem;"></div>
-            <button type="button" class="btn btn-outline" style="font-size:0.82rem; padding:4px 12px;"
-                    onclick="aggiungiAllegato()">+ Aggiungi link Google Drive</button>
-            <p class="form-hint" style="margin-top:0.4rem;">
-              Carica i file su Google Drive, condividili con
-              <strong>edutechlab.ita@gmail.com</strong> (o rendili pubblici),
-              poi incolla qui il link. Formati supportati: PDF, DOCX, XLSX, immagini, ecc.
-            </p>
-          </div>
-          <div style="display:flex; gap:0.75rem; flex-wrap:wrap; margin-top:0.5rem; align-items:center;">
-            <button class="btn btn-outline" onclick="vediDestinatari()">👁 Vedi destinatari</button>
-            <button class="btn btn-primary" onclick="inviaMailFiltrata()">📤 Invia comunicazione</button>
-          </div>
-          <div id="destinatariPreview" class="hidden" style="margin-top:0.75rem;"></div>
-        </div>
-      </section>
-
       <!-- ==================== FASE 3: GARA ==================== -->
       <section class="admin-section">
         <h3 class="admin-section-title">
@@ -485,6 +412,79 @@
               </td>
             </tr>
           </table>
+        </div>
+      </section>
+
+      <!-- ==================== COMUNICAZIONI ==================== -->
+      <section class="admin-section">
+        <h3 class="admin-section-title">
+          <span class="phase-badge phase-comm">✉️</span>
+          Comunicazioni ai Docenti
+          <button class="btn-info-toggle" onclick="toggleInfo('info-comm')" title="Informazioni">i</button>
+        </h3>
+        <div class="info-panel" id="info-comm">
+          <strong>A cosa serve:</strong> invia una mail personalizzata a un sottoinsieme dei docenti che hanno compilato le intenzioni.
+          <ul>
+            <li><strong>Filtra per ordine:</strong> scrivi solo ai docenti della primaria o solo alla secondaria.</li>
+            <li><strong>Filtra per classe:</strong> es. solo ai docenti delle classi quarte, o solo delle quinte.</li>
+            <li><strong>Filtra per istituto:</strong> scrivi solo ai docenti di un IC specifico.</li>
+          </ul>
+          Puoi combinare i filtri. Usa <em>Vedi destinatari</em> per verificare prima di inviare.
+          <br><strong>Nota:</strong> la mail arriverà sempre con il logo LogiKron e firmata da EduTechLab.
+        </div>
+        <div class="card mt-1">
+          <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:0.75rem; margin-bottom:0.75rem;">
+            <div class="form-group" style="margin:0;">
+              <label class="form-label">Ordine</label>
+              <select id="filtroOrdine" class="form-control" onchange="aggiornaFiltroClassi()">
+                <option value="">Tutti</option>
+                <option value="primaria">Primaria</option>
+                <option value="secondaria">Secondaria</option>
+              </select>
+            </div>
+            <div class="form-group" style="margin:0;">
+              <label class="form-label">Classe</label>
+              <select id="filtroClasse" class="form-control">
+                <option value="">Tutte</option>
+              </select>
+            </div>
+            <div class="form-group" style="margin:0;">
+              <label class="form-label">Istituto</label>
+              <select id="filtroIstituto" class="form-control">
+                <option value="">Tutti</option>
+              </select>
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Oggetto email *</label>
+            <input type="text" id="mailOggetto" class="form-control"
+                   placeholder="es. Aggiornamento sulla gara del 15 marzo">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Testo email *</label>
+            <div style="background:#f8fafc; border:1px solid var(--lk-border); border-bottom:none; border-radius:8px 8px 0 0; padding:10px 14px; font-size:0.9rem; color:#94a3b8; font-style:italic; pointer-events:none;">
+              Gentile <strong style="color:#64748b;">[Nome Cognome docente]</strong>,
+            </div>
+            <textarea id="mailCorpo" class="form-control" rows="5"
+                      style="border-radius:0 0 8px 8px; border-top:none;"
+                      placeholder="scrivi qui il testo del messaggio...&#10;&#10;(Il saluto iniziale è già incluso automaticamente, non ripeterlo.)"></textarea>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Allegati (opzionale)</label>
+            <div id="allegatiList" style="display:flex; flex-direction:column; gap:0.4rem; margin-bottom:0.5rem;"></div>
+            <button type="button" class="btn btn-outline" style="font-size:0.82rem; padding:4px 12px;"
+                    onclick="aggiungiAllegato()">+ Aggiungi link Google Drive</button>
+            <p class="form-hint" style="margin-top:0.4rem;">
+              Carica i file su Google Drive, condividili con
+              <strong>edutechlab.ita@gmail.com</strong> (o rendili pubblici),
+              poi incolla qui il link. Formati supportati: PDF, DOCX, XLSX, immagini, ecc.
+            </p>
+          </div>
+          <div style="display:flex; gap:0.75rem; flex-wrap:wrap; margin-top:0.5rem; align-items:center;">
+            <button class="btn btn-outline" onclick="vediDestinatari()">👁 Vedi destinatari</button>
+            <button class="btn btn-primary" onclick="inviaMailFiltrata()">📤 Invia comunicazione</button>
+          </div>
+          <div id="destinatariPreview" class="hidden" style="margin-top:0.75rem;"></div>
         </div>
       </section>
 
