@@ -330,6 +330,8 @@
     }
 
     function _renderNoiSquadre() {
+      const notaAttesa = document.getElementById('notaAttesaCodici');
+      if (notaAttesa) notaAttesa.style.display = 'none';
       document.querySelectorAll('.squadra-card').forEach((card, idx) => {
         const cardId = card.id.replace('squadra-', '');
         const pos = idx + 1;
@@ -366,10 +368,21 @@
           el.textContent = '...';
           el.style.opacity = '0.45';
         });
-        lkApi(LOGIKRON_CONFIG.webAppUrls.iscrizioni, { action: 'getMaxSquadra', prefisso: prefisso })
+        // Nota di attesa
+        let notaAttesa = document.getElementById('notaAttesaCodici');
+        if (!notaAttesa) {
+          notaAttesa = document.createElement('p');
+          notaAttesa.id = 'notaAttesaCodici';
+          notaAttesa.style.cssText = 'font-size:0.78rem;color:#6b7280;margin:0.25rem 0 0 0;';
+          notaAttesa.textContent = 'Verifica codici sul server...';
+          const container = document.getElementById('squadreContainer');
+          if (container) container.parentNode.insertBefore(notaAttesa, container);
+        }
+        notaAttesa.style.display = 'block';
+        lkApi(LOGIKRON_CONFIG.webAppUrls.iscrizioni, { action: 'getMaxSquadra', prefisso: prefisso }, 30000)
           .then(r => {
             if (prefisso !== prefissoCorrente) return; // dropdown cambiati nel frattempo
-            baseNumero = (r && r.max) ? r.max : 0;
+            baseNumero = (r && typeof r.max === 'number') ? r.max : 0;
             _renderNoiSquadre();
           })
           .catch(() => {

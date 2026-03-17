@@ -4,14 +4,14 @@
  * fetch() fallisce a causa dei redirect Google; <script> injection no.
  */
 
-function lkApi(url, params) {
+function lkApi(url, params, timeoutMs) {
   return new Promise((resolve, reject) => {
     const cbName = '_lkCb_' + Date.now();
 
     const timer = setTimeout(() => {
       cleanup();
       reject(new Error('Timeout risposta server'));
-    }, 15000);
+    }, timeoutMs || 15000);
 
     function cleanup() {
       clearTimeout(timer);
