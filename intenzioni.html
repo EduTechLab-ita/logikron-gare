@@ -54,16 +54,22 @@
 
         <div class="form-group">
           <label class="form-label">Istituto Comprensivo *</label>
-          <select id="istituto" class="form-control" required onchange="updatePlessi()">
-            <option value="">Seleziona un Istituto</option>
-          </select>
+          <div style="display: flex; align-items: center; gap: 0.5rem;">
+            <span style="white-space: nowrap; font-weight: 600; color: var(--lk-text-muted);">IC di</span>
+            <input type="text" id="istituto" class="form-control" required
+                   placeholder="es. Gottolengo, Calvisano, Orzinuovi...">
+          </div>
+          <p class="form-hint">Scrivi solo il nome del comune sede dell'Istituto.</p>
         </div>
 
         <div class="form-group">
           <label class="form-label">Plesso *</label>
-          <select id="plesso" class="form-control" required disabled>
-            <option value="">Prima seleziona l'Istituto</option>
-          </select>
+          <div style="display: flex; align-items: center; gap: 0.5rem;">
+            <span style="white-space: nowrap; font-weight: 600; color: var(--lk-text-muted);">Plesso di</span>
+            <input type="text" id="plesso" class="form-control" required
+                   placeholder="es. Gottolengo, Gambara, Fiesse...">
+          </div>
+          <p class="form-hint">Se la sede è unica, ripeti il nome dell'Istituto.</p>
         </div>
 
         <div class="form-group">
@@ -143,40 +149,6 @@
   <script src="js/config.js"></script>
   <script src="js/math-bg.js"></script>
   <script>
-    // Popola istituti dalla config
-    function initForm() {
-      const select = document.getElementById('istituto');
-      LOGIKRON_CONFIG.istituti.forEach(ist => {
-        const option = document.createElement('option');
-        option.value = ist.nome;
-        option.textContent = ist.nome;
-        select.appendChild(option);
-      });
-    }
-
-    // Aggiorna plessi quando cambia istituto
-    function updatePlessi() {
-      const istitutoNome = document.getElementById('istituto').value;
-      const plessoSelect = document.getElementById('plesso');
-
-      plessoSelect.innerHTML = '<option value="">Seleziona un Plesso</option>';
-
-      if (istitutoNome) {
-        const istituto = LOGIKRON_CONFIG.istituti.find(i => i.nome === istitutoNome);
-        if (istituto) {
-          istituto.plessi.forEach(pl => {
-            const option = document.createElement('option');
-            option.value = pl.nome;
-            option.textContent = pl.nome;
-            plessoSelect.appendChild(option);
-          });
-          plessoSelect.disabled = false;
-        }
-      } else {
-        plessoSelect.disabled = true;
-      }
-    }
-
     // Aggiorna classi quando cambia ordine scolastico
     function updateClassi() {
       const ordine = document.getElementById('ordine').value;
@@ -209,8 +181,8 @@
         action: 'salvaIntenzione',
         email: document.getElementById('emailDocente').value,
         nome: document.getElementById('nomeDocente').value,
-        istituto: document.getElementById('istituto').value,
-        plesso: document.getElementById('plesso').value,
+        istituto: 'IC di ' + document.getElementById('istituto').value.trim(),
+        plesso: 'Plesso di ' + document.getElementById('plesso').value.trim(),
         ordine: document.getElementById('ordine').value,
         classe: document.getElementById('classe').value,
         sezione: document.getElementById('sezione').value,
@@ -236,8 +208,6 @@
       });
     });
 
-    // Init
-    initForm();
-  </script>
+</script>
 </body>
 </html>

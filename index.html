@@ -161,7 +161,7 @@
           <a href="intenzioni.html" id="btnStep1" class="btn btn-primary btn-lg btn-block">
             1. Esprimi Intenzione
           </a>
-          <a href="iscrizioni.html" id="btnStep2" class="btn btn-secondary btn-lg btn-block btn-disabled" onclick="return false;" style="opacity: 0.5; pointer-events: none;">
+          <a href="iscrizioni.html" id="btnStep2" class="btn btn-secondary btn-lg btn-block">
             2. Iscrivi la Squadra
           </a>
         </div>
@@ -249,6 +249,27 @@
     // Titolo edizione corrente
     document.getElementById('currentTitle').textContent =
       `Edizione ${LOGIKRON_CONFIG.annoScolastico} - Iscrizioni in corso`;
+
+    // Gestione fasi — abilita/disabilita pulsanti in base a faseAttiva
+    const fase = LOGIKRON_CONFIG.faseAttiva;
+    const btn1 = document.getElementById('btnStep1');
+    const btn2 = document.getElementById('btnStep2');
+
+    function disabilita(btn, testo) {
+      btn.style.opacity = '0.4';
+      btn.style.pointerEvents = 'none';
+      btn.onclick = e => e.preventDefault();
+      if (testo) btn.textContent = testo;
+    }
+
+    if (fase < 1) {
+      disabilita(btn1, '1. Iscrizioni non ancora aperte');
+      disabilita(btn2, '2. Iscrivi la Squadra');
+    } else if (fase === 1) {
+      // Fase 1: solo intenzioni attive
+      disabilita(btn2, '2. Iscrivi la Squadra (disponibile dopo le intenzioni)');
+    }
+    // fase >= 2: entrambi i pulsanti attivi (già abilitati di default)
   </script>
 </body>
 </html>

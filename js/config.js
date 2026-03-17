@@ -12,6 +12,12 @@ const LOGIKRON_CONFIG = {
   annoScolastico: '2025-2026',
 
   // ==========================================
+  // FASE ATTIVA (cambiare per aprire/chiudere le fasi)
+  // 1 = Intenzioni aperte | 2 = Iscrizioni aperte | 3 = Gara | 4 = Post-gara
+  // ==========================================
+  faseAttiva: 1,
+
+  // ==========================================
   // NUMERI EDIZIONE PRECEDENTE (riquadro pubblicitario)
   // ==========================================
   // Aggiornare ogni anno con i dati della stagione conclusa
