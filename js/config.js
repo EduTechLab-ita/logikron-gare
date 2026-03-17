@@ -29,10 +29,10 @@ const LOGIKRON_CONFIG = {
   // ==========================================
   // Questi URL vengono generati dopo il deploy degli script
   webAppUrls: {
-    intenzioni: '',      // Da compilare dopo deploy
-    iscrizioni: '',      // Da compilare dopo deploy (ex LogiKron2025)
-    gare: '',            // Da compilare dopo deploy
-    admin: ''            // Da compilare dopo deploy
+    intenzioni: 'https://script.google.com/macros/s/AKfycbzeTmZnD9PIDXFwSvzYZV1rNOSQXciulEvw14CIXnQgVsUZ9P8mNrsl4De0Vn7ha8v7GQ/exec',
+    iscrizioni: 'https://script.google.com/macros/s/AKfycbzeTmZnD9PIDXFwSvzYZV1rNOSQXciulEvw14CIXnQgVsUZ9P8mNrsl4De0Vn7ha8v7GQ/exec',
+    gare: 'https://script.google.com/macros/s/AKfycbzeTmZnD9PIDXFwSvzYZV1rNOSQXciulEvw14CIXnQgVsUZ9P8mNrsl4De0Vn7ha8v7GQ/exec',
+    admin: 'https://script.google.com/macros/s/AKfycbzeTmZnD9PIDXFwSvzYZV1rNOSQXciulEvw14CIXnQgVsUZ9P8mNrsl4De0Vn7ha8v7GQ/exec'
   },
 
   // ==========================================

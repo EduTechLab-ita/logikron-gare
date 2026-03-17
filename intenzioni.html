@@ -201,10 +201,12 @@
     document.getElementById('formIntenzioni').addEventListener('submit', function(e) {
       e.preventDefault();
 
-      // TODO: Inviare dati a Google Apps Script
-      // Per ora mostra solo il messaggio di successo
+      const btn = e.target.querySelector('button[type="submit"]');
+      btn.disabled = true;
+      btn.textContent = 'Invio in corso...';
 
       const formData = {
+        action: 'salvaIntenzione',
         email: document.getElementById('emailDocente').value,
         nome: document.getElementById('nomeDocente').value,
         istituto: document.getElementById('istituto').value,
@@ -217,11 +219,21 @@
         timestamp: new Date().toISOString()
       };
 
-      console.log('Dati intenzione:', formData);
-
-      // Mostra successo
-      document.getElementById('formIntenzioni').parentElement.classList.add('hidden');
-      document.getElementById('successMessage').classList.remove('hidden');
+      fetch(LOGIKRON_CONFIG.webAppUrls.intenzioni, {
+        method: 'POST',
+        body: JSON.stringify(formData)
+      })
+      .then(r => r.json())
+      .then(result => {
+        if (result.error) throw new Error(result.error);
+        document.getElementById('formIntenzioni').parentElement.classList.add('hidden');
+        document.getElementById('successMessage').classList.remove('hidden');
+      })
+      .catch(err => {
+        btn.disabled = false;
+        btn.textContent = 'Invia Intenzione';
+        alert('Errore durante l\'invio: ' + err.message + '\nRiprova tra qualche istante.');
+      });
     });
 
     // Init
