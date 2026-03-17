@@ -251,27 +251,57 @@
     const MAX_STUDENTI = 9;
     let squadraCount = 0;
 
-    // Popola dropdown Istituti da config
+    // Dati IC/Plessi caricati dalle Intenzioni
+    let istitutiDaIntenzioni = [];
+
     function initIstituti() {
       const sel = document.getElementById('istituto');
-      LOGIKRON_CONFIG.istituti.forEach(ic => {
-        const opt = document.createElement('option');
-        opt.value = ic.nome;
-        opt.textContent = ic.nome;
-        sel.appendChild(opt);
-      });
+      sel.innerHTML = '<option value="">Caricamento...</option>';
+      sel.disabled = true;
+
+      lkApi(LOGIKRON_CONFIG.webAppUrls.iscrizioni, { action: 'getIstitutiDaIntenzioni' })
+        .then(data => {
+          istitutiDaIntenzioni = Array.isArray(data) ? data : [];
+          sel.innerHTML = '<option value="">Seleziona l\'Istituto</option>';
+          if (istitutiDaIntenzioni.length === 0) {
+            sel.innerHTML += '<option value="" disabled>Nessun istituto iscritto</option>';
+          } else {
+            istitutiDaIntenzioni.forEach(ic => {
+              const opt = document.createElement('option');
+              opt.value = ic.nome;
+              opt.textContent = ic.nome;
+              sel.appendChild(opt);
+            });
+          }
+          sel.disabled = false;
+        })
+        .catch(() => {
+          // Fallback alla lista statica di config
+          istitutiDaIntenzioni = LOGIKRON_CONFIG.istituti.map(ic => ({
+            nome: ic.nome,
+            plessi: ic.plessi.map(p => 'Plesso di ' + p.nome)
+          }));
+          sel.innerHTML = '<option value="">Seleziona l\'Istituto</option>';
+          istitutiDaIntenzioni.forEach(ic => {
+            const opt = document.createElement('option');
+            opt.value = ic.nome;
+            opt.textContent = ic.nome;
+            sel.appendChild(opt);
+          });
+          sel.disabled = false;
+        });
     }
 
     function updatePlessi() {
       const icNome = document.getElementById('istituto').value;
       const sel = document.getElementById('plesso');
       sel.innerHTML = '<option value="">Seleziona il plesso</option>';
-      const ic = LOGIKRON_CONFIG.istituti.find(i => i.nome === icNome);
-      if (ic) {
+      const ic = istitutiDaIntenzioni.find(i => i.nome === icNome);
+      if (ic && ic.plessi && ic.plessi.length > 0) {
         ic.plessi.forEach(p => {
           const opt = document.createElement('option');
-          opt.value = 'Plesso di ' + p.nome;
-          opt.textContent = p.nome;
+          opt.value = p;
+          opt.textContent = p.replace('Plesso di ', '');
           sel.appendChild(opt);
         });
         sel.disabled = false;
