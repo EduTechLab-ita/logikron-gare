@@ -147,6 +147,7 @@
   </div>
 
   <script src="js/config.js"></script>
+  <script src="js/api.js"></script>
   <script src="js/math-bg.js"></script>
   <script>
     // Aggiorna classi quando cambia ordine scolastico
@@ -191,9 +192,7 @@
         timestamp: new Date().toISOString()
       };
 
-      const params = new URLSearchParams(formData);
-      fetch(LOGIKRON_CONFIG.webAppUrls.intenzioni + '?' + params.toString())
-      .then(r => r.json())
+      lkApi(LOGIKRON_CONFIG.webAppUrls.intenzioni, formData)
       .then(result => {
         if (result.error) throw new Error(result.error);
         document.getElementById('formIntenzioni').parentElement.classList.add('hidden');
