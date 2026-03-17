@@ -13,23 +13,18 @@
       border-radius: var(--lk-radius-lg);
       margin-bottom: var(--lk-spacing-xl);
     }
-
-    .admin-section {
-      margin-bottom: var(--lk-spacing-xl);
-    }
-
+    .admin-section { margin-bottom: var(--lk-spacing-xl); }
     .admin-section-title {
       font-size: 1.1rem;
       font-weight: 600;
       color: var(--lk-text);
-      margin-bottom: var(--lk-spacing-md);
+      margin-bottom: var(--lk-spacing-sm);
       padding-bottom: var(--lk-spacing-sm);
       border-bottom: 2px solid var(--lk-primary);
       display: flex;
       align-items: center;
       gap: var(--lk-spacing-sm);
     }
-
     .phase-badge {
       display: inline-block;
       padding: 2px 8px;
@@ -38,32 +33,63 @@
       font-weight: 600;
       text-transform: uppercase;
     }
-
+    .phase-0 { background: #f1f5f9; color: #475569; }
     .phase-1 { background: #dbeafe; color: #1e40af; }
     .phase-2 { background: #fef3c7; color: #92400e; }
     .phase-3 { background: #d1fae5; color: #065f46; }
     .phase-4 { background: #fce7f3; color: #9d174d; }
     .phase-5 { background: #e0e7ff; color: #3730a3; }
+    .phase-comm { background: #ecfdf5; color: #065f46; }
 
-    .status-indicator {
-      width: 10px;
-      height: 10px;
+    /* Pulsante info ⓘ */
+    .btn-info-toggle {
+      background: none;
+      border: 1.5px solid var(--lk-primary);
+      color: var(--lk-primary);
       border-radius: 50%;
-      display: inline-block;
-      margin-right: 8px;
+      width: 22px;
+      height: 22px;
+      font-size: 0.75rem;
+      font-weight: 700;
+      cursor: pointer;
+      line-height: 1;
+      padding: 0;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      opacity: 0.7;
+      transition: opacity 0.15s;
     }
+    .btn-info-toggle:hover { opacity: 1; }
 
-    .status-active { background: var(--lk-success); }
-    .status-pending { background: var(--lk-warning); }
-    .status-inactive { background: var(--lk-text-muted); }
+    /* Pannello info espandibile */
+    .info-panel {
+      display: none;
+      background: #eff6ff;
+      border: 1px solid #bfdbfe;
+      border-radius: 8px;
+      padding: 12px 16px;
+      margin-bottom: 0.75rem;
+      font-size: 0.87rem;
+      color: #1e40af;
+      line-height: 1.65;
+    }
+    .info-panel.visible { display: block; }
+    .info-panel strong { color: #1e3a8a; }
+    .info-panel ul { margin: 6px 0 0 0; padding-left: 1.2rem; }
+    .info-panel li { margin-bottom: 4px; }
+
+    /* Badge fase attiva */
+    .badge-on  { background:#d1fae5; color:#065f46; padding:2px 10px; border-radius:9999px; font-weight:700; font-size:0.75rem; }
+    .badge-off { background:#f1f5f9; color:#64748b; padding:2px 10px; border-radius:9999px; font-size:0.75rem; }
 
     .quick-stats {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+      grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
       gap: var(--lk-spacing-md);
       margin-bottom: var(--lk-spacing-xl);
     }
-
     .quick-stat {
       background: white;
       border-radius: var(--lk-radius-md);
@@ -71,32 +97,28 @@
       text-align: center;
       border: 1px solid var(--lk-border);
     }
+    .quick-stat-value { font-size: 2rem; font-weight: bold; color: var(--lk-primary); }
+    .quick-stat-label { font-size: 0.8rem; color: var(--lk-text-muted); }
 
-    .quick-stat-value {
-      font-size: 2rem;
-      font-weight: bold;
-      color: var(--lk-primary);
-    }
-
-    .quick-stat-label {
-      font-size: 0.8rem;
-      color: var(--lk-text-muted);
-    }
-
-    .login-container {
-      max-width: 400px;
-      margin: 100px auto;
-    }
-
+    .login-container { max-width: 400px; margin: 100px auto; }
     #adminPanel { display: none; }
     #loginPanel { display: block; }
-
     .anno-scolastico {
       background: rgba(255,255,255,0.2);
       padding: 4px 12px;
       border-radius: 9999px;
       font-size: 0.9rem;
     }
+
+    /* Sezione strumenti/pericolo */
+    .danger-zone {
+      background: #fff5f5;
+      border: 1px solid #fecaca;
+      border-radius: var(--lk-radius-md);
+      padding: 1rem;
+      margin-top: 0.5rem;
+    }
+    .danger-zone h4 { color: #dc2626; margin: 0 0 0.5rem 0; font-size: 0.9rem; }
   </style>
 </head>
 <body>
@@ -106,25 +128,17 @@
     <div id="loginPanel" class="login-container">
       <div class="card text-center">
         <div class="logo-container" style="font-size: 2rem;">
-          <span class="logo-l">L</span>
-          <span class="logo-o1">o</span>
-          <span class="logo-g">g</span>
+          <span class="logo-l">L</span><span class="logo-o1">o</span><span class="logo-g">g</span>
           <span class="logo-sand">&#8987;</span>
-          <span class="logo-k">K</span>
-          <span class="logo-r">r</span>
-          <span class="logo-o2">o</span>
-          <span class="logo-n">n</span>
+          <span class="logo-k">K</span><span class="logo-r">r</span><span class="logo-o2">o</span><span class="logo-n">n</span>
         </div>
         <h2 class="mb-2">Accesso Admin</h2>
         <p class="text-muted mb-3">Inserisci la password per accedere al pannello di controllo</p>
-
         <div class="form-group">
           <input type="password" id="adminPassword" class="form-control" placeholder="Password"
                  onkeypress="if(event.key==='Enter') checkPassword()">
         </div>
-        <button onclick="checkPassword()" class="btn btn-primary btn-block">
-          Accedi
-        </button>
+        <button onclick="checkPassword()" class="btn btn-primary btn-block">Accedi</button>
         <p id="loginError" class="form-error mt-2 hidden">Password non corretta</p>
       </div>
     </div>
@@ -135,28 +149,28 @@
       <!-- HEADER -->
       <div class="admin-header text-center">
         <div class="logo-container" style="font-size: 2rem; margin: 0;">
-          <span class="logo-l" style="color: white;">L</span>
-          <span class="logo-o1" style="color: #c4b5fd;">o</span>
-          <span class="logo-g" style="color: #a5f3fc;">g</span>
-          <span class="logo-sand" style="color: #fcd34d;">&#8987;</span>
-          <span class="logo-k" style="color: #6ee7b7;">K</span>
-          <span class="logo-r" style="color: #fcd34d;">r</span>
-          <span class="logo-o2" style="color: #fca5a5;">o</span>
-          <span class="logo-n" style="color: #f9a8d4;">n</span>
+          <span class="logo-l" style="color:white;">L</span>
+          <span class="logo-o1" style="color:#c4b5fd;">o</span>
+          <span class="logo-g" style="color:#a5f3fc;">g</span>
+          <span class="logo-sand" style="color:#fcd34d;">&#8987;</span>
+          <span class="logo-k" style="color:#6ee7b7;">K</span>
+          <span class="logo-r" style="color:#fcd34d;">r</span>
+          <span class="logo-o2" style="color:#fca5a5;">o</span>
+          <span class="logo-n" style="color:#f9a8d4;">n</span>
         </div>
-        <h1 style="font-size: 1.5rem; margin: 0.5rem 0;">Pannello Admin</h1>
+        <h1 style="font-size:1.5rem;margin:0.5rem 0;">Pannello Admin</h1>
         <span class="anno-scolastico" id="annoScolastico">2025-2026</span>
       </div>
 
       <!-- QUICK STATS -->
       <div class="quick-stats">
         <div class="quick-stat">
-          <div class="quick-stat-value" id="statIstituti">6</div>
-          <div class="quick-stat-label">Istituti</div>
-        </div>
-        <div class="quick-stat">
           <div class="quick-stat-value" id="statIntenzioni">-</div>
           <div class="quick-stat-label">Intenzioni</div>
+        </div>
+        <div class="quick-stat">
+          <div class="quick-stat-value" id="statDocenti">-</div>
+          <div class="quick-stat-label">Docenti</div>
         </div>
         <div class="quick-stat">
           <div class="quick-stat-value" id="statSquadre">-</div>
@@ -172,39 +186,58 @@
         </div>
       </div>
 
-      <!-- FASE 0: SETUP ANNO -->
+      <!-- ==================== SETUP ANNO ==================== -->
       <section class="admin-section">
         <h3 class="admin-section-title">
-          <span class="phase-badge phase-1">Setup</span>
+          <span class="phase-badge phase-0">Setup</span>
           Configurazione Anno Scolastico
+          <button class="btn-info-toggle" onclick="toggleInfo('info-setup')" title="Informazioni">i</button>
         </h3>
+        <div class="info-panel" id="info-setup">
+          <strong>Quando usare questa sezione:</strong> una sola volta all'inizio di ogni anno scolastico.
+          <ul>
+            <li><strong>Crea Cartelle:</strong> prepara le cartelle su Google Drive per l'anno corrente. Fallo prima di aprire le intenzioni.</li>
+            <li><strong>Configura:</strong> modifica parametri come durata gara, numero quesiti, istituti partecipanti.</li>
+          </ul>
+        </div>
         <div class="admin-grid">
           <div class="admin-card">
             <div class="admin-card-icon">📅</div>
             <h4 class="admin-card-title">Nuovo Anno</h4>
             <p class="admin-card-desc">Crea le cartelle per il nuovo anno scolastico</p>
-            <button class="btn btn-primary" onclick="setupNuovoAnno()">
-              Crea Cartelle
-            </button>
+            <button class="btn btn-primary" onclick="setupNuovoAnno()">Crea Cartelle</button>
           </div>
           <div class="admin-card">
             <div class="admin-card-icon">⚙️</div>
             <h4 class="admin-card-title">Configurazione</h4>
             <p class="admin-card-desc">Modifica parametri gare e istituti</p>
-            <button class="btn btn-outline" onclick="openConfig()">
-              Configura
-            </button>
+            <button class="btn btn-outline" onclick="openConfig()">Configura</button>
           </div>
         </div>
       </section>
 
-      <!-- FASE 1: INTENZIONI -->
+      <!-- ==================== FASE 1: INTENZIONI ==================== -->
       <section class="admin-section">
         <h3 class="admin-section-title">
           <span class="phase-badge phase-2">Fase 1</span>
           Raccolta Intenzioni
-          <span id="badge-fase1" style="margin-left:auto; font-size:0.75rem;"></span>
+          <button class="btn-info-toggle" onclick="toggleInfo('info-fase1')" title="Informazioni">i</button>
+          <span id="badge-fase1" style="margin-left:auto;"></span>
         </h3>
+        <div class="info-panel" id="info-fase1">
+          <strong>Cosa fare:</strong>
+          <ul>
+            <li>Condividi il <strong>Link Intenzioni</strong> ai docenti (email, WhatsApp, registro).</li>
+            <li>Aspetta che compilino il form. Visualizza chi si è iscritto con <em>Visualizza lista</em>.</li>
+            <li>Quando sei pronto, usa <strong>Apri Fase 2 + Invia mail</strong>: abilita il form iscrizioni e invia automaticamente una mail a tutti i docenti con il link.</li>
+          </ul>
+          <strong>Tornare indietro / resettare:</strong>
+          <ul>
+            <li><em>Solo Intenzioni attive</em> → riporta alla fase 1 disabilitando le iscrizioni (non cancella dati).</li>
+            <li><em>Chiudi tutto</em> → disabilita anche il form intenzioni.</li>
+            <li>Per cancellare i dati di test usa i pulsanti nella sezione <strong>Strumenti di Test</strong> in fondo alla pagina.</li>
+          </ul>
+        </div>
         <div class="admin-grid">
           <div class="admin-card">
             <div class="admin-card-icon">📝</div>
@@ -222,7 +255,7 @@
           <div class="admin-card">
             <div class="admin-card-icon">✅</div>
             <h4 class="admin-card-title">Apri Iscrizioni</h4>
-            <p class="admin-card-desc">Invia mail a tutti i docenti e abilita il form iscrizioni</p>
+            <p class="admin-card-desc">Abilita il form iscrizioni e invia mail a tutti i docenti</p>
             <button class="btn btn-primary" onclick="apriIscrizioni()">Apri Fase 2 + Invia mail</button>
           </div>
           <div class="admin-card">
@@ -233,18 +266,30 @@
             <button class="btn btn-outline" onclick="setFase(0)">Chiudi tutto</button>
           </div>
         </div>
-
-        <!-- LISTA INTENZIONI -->
         <div id="listaIntenzioni" class="hidden" style="margin-top:1rem;"></div>
       </section>
 
-      <!-- FASE 2: ISCRIZIONI -->
+      <!-- ==================== FASE 2: ISCRIZIONI ==================== -->
       <section class="admin-section">
         <h3 class="admin-section-title">
           <span class="phase-badge phase-3">Fase 2</span>
           Iscrizioni Squadre
-          <span id="badge-fase2" style="margin-left:auto; font-size:0.75rem;"></span>
+          <button class="btn-info-toggle" onclick="toggleInfo('info-fase2')" title="Informazioni">i</button>
+          <span id="badge-fase2" style="margin-left:auto;"></span>
         </h3>
+        <div class="info-panel" id="info-fase2">
+          <strong>Come funziona:</strong>
+          <ul>
+            <li>I docenti aprono il form e registrano i nomi dei loro studenti per ogni squadra.</li>
+            <li>Il sistema assegna automaticamente un <strong>codice univoco</strong> a ogni squadra (es. <code>GTFIPRI4A1</code>). Questo è anche il <strong>codice di accesso il giorno della gara</strong>.</li>
+            <li>I docenti ricevono una mail di conferma con tutti i codici squadra.</li>
+            <li>Puoi visualizzare le squadre iscritte aprendo direttamente il Google Sheet.</li>
+          </ul>
+          <strong>Tornare indietro:</strong>
+          <ul>
+            <li><em>Chiudi Fase 2</em> → riporta alla fase 1 senza cancellare le iscrizioni già registrate.</li>
+          </ul>
+        </div>
         <div class="admin-grid">
           <div class="admin-card">
             <div class="admin-card-icon">👥</div>
@@ -262,112 +307,192 @@
         </div>
       </section>
 
-      <!-- FASE 3: GARA -->
+      <!-- ==================== COMUNICAZIONI ==================== -->
+      <section class="admin-section">
+        <h3 class="admin-section-title">
+          <span class="phase-badge phase-comm">✉️</span>
+          Comunicazioni ai Docenti
+          <button class="btn-info-toggle" onclick="toggleInfo('info-comm')" title="Informazioni">i</button>
+        </h3>
+        <div class="info-panel" id="info-comm">
+          <strong>A cosa serve:</strong> invia una mail personalizzata a un sottoinsieme dei docenti che hanno compilato le intenzioni.
+          <ul>
+            <li><strong>Filtra per ordine:</strong> scrivi solo ai docenti della primaria o solo alla secondaria.</li>
+            <li><strong>Filtra per classe:</strong> es. solo ai docenti delle classi quarte, o solo delle quinte.</li>
+            <li><strong>Filtra per istituto:</strong> scrivi solo ai docenti di un IC specifico.</li>
+          </ul>
+          Puoi combinare i filtri. Usa <em>Vedi destinatari</em> per verificare prima di inviare.
+          <br><strong>Nota:</strong> la mail arriverà sempre con il logo LogiKron e firmata da EduTechLab.
+        </div>
+        <div class="card mt-1">
+          <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:0.75rem; margin-bottom:0.75rem;">
+            <div class="form-group" style="margin:0;">
+              <label class="form-label">Ordine</label>
+              <select id="filtroOrdine" class="form-control" onchange="aggiornaFiltroClassi()">
+                <option value="">Tutti</option>
+                <option value="primaria">Primaria</option>
+                <option value="secondaria">Secondaria</option>
+              </select>
+            </div>
+            <div class="form-group" style="margin:0;">
+              <label class="form-label">Classe</label>
+              <select id="filtroClasse" class="form-control">
+                <option value="">Tutte</option>
+              </select>
+            </div>
+            <div class="form-group" style="margin:0;">
+              <label class="form-label">Istituto</label>
+              <select id="filtroIstituto" class="form-control">
+                <option value="">Tutti</option>
+              </select>
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Oggetto email *</label>
+            <input type="text" id="mailOggetto" class="form-control"
+                   placeholder="es. Aggiornamento sulla gara del 15 marzo">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Testo email *</label>
+            <textarea id="mailCorpo" class="form-control" rows="5"
+                      placeholder="Scrivi qui il testo del messaggio...&#10;&#10;Puoi andare a capo normalmente: le interruzioni di riga vengono rispettate."></textarea>
+          </div>
+          <div style="display:flex; gap:0.75rem; flex-wrap:wrap; margin-top:0.5rem; align-items:center;">
+            <button class="btn btn-outline" onclick="vediDestinatari()">👁 Vedi destinatari</button>
+            <button class="btn btn-primary" onclick="inviaMailFiltrata()">📤 Invia comunicazione</button>
+          </div>
+          <div id="destinatariPreview" class="hidden" style="margin-top:0.75rem;"></div>
+        </div>
+      </section>
+
+      <!-- ==================== FASE 3: GARA ==================== -->
       <section class="admin-section">
         <h3 class="admin-section-title">
           <span class="phase-badge phase-4">Fase 3</span>
           Gestione Gara
+          <button class="btn-info-toggle" onclick="toggleInfo('info-fase3')" title="Informazioni">i</button>
         </h3>
+        <div class="info-panel" id="info-fase3">
+          <strong>Il giorno della gara:</strong>
+          <ul>
+            <li><strong>Crea Nuova Gara:</strong> imposta il nome, la data e inserisci i 10 quesiti con le risposte corrette.</li>
+            <li><strong>Pannello Squadre:</strong> copia il link e distribuiscilo a ogni classe. I bambini aprono il link, inseriscono il codice squadra (es. <code>GTFIPRI4A1</code>) e sono pronti a rispondere.</li>
+            <li><strong>Tabellone Live:</strong> aprilo sul proiettore. Mostra la classifica in tempo reale. Negli ultimi 5 minuti si oscura automaticamente per il colpo di scena finale.</li>
+          </ul>
+        </div>
         <div class="admin-grid">
           <div class="admin-card">
             <div class="admin-card-icon">🎮</div>
             <h4 class="admin-card-title">Crea Nuova Gara</h4>
             <p class="admin-card-desc">Imposta quesiti e parametri</p>
-            <button class="btn btn-primary" onclick="createGara()">
-              Nuova Gara
-            </button>
+            <button class="btn btn-primary" onclick="createGara()">Nuova Gara</button>
           </div>
           <div class="admin-card">
             <div class="admin-card-icon">🖥️</div>
             <h4 class="admin-card-title">Tabellone Live</h4>
             <p class="admin-card-desc">Visualizza punteggi in tempo reale</p>
-            <a href="tabellone.html" target="_blank" class="btn btn-success">
-              Apri Tabellone
-            </a>
+            <a href="tabellone.html" target="_blank" class="btn btn-success">Apri Tabellone</a>
           </div>
           <div class="admin-card">
             <div class="admin-card-icon">🎯</div>
             <h4 class="admin-card-title">Pannello Squadre</h4>
             <p class="admin-card-desc">Link per le squadre durante la gara</p>
-            <button class="btn btn-outline" onclick="copyLink('gara')">
-              Copia Link
-            </button>
+            <button class="btn btn-outline" onclick="copyLink('gara')">Copia Link</button>
           </div>
         </div>
       </section>
 
-      <!-- FASE 4: POST-GARA -->
+      <!-- ==================== FASE 4: POST-GARA ==================== -->
       <section class="admin-section">
         <h3 class="admin-section-title">
           <span class="phase-badge phase-5">Fase 4</span>
           Post-Gara
+          <button class="btn-info-toggle" onclick="toggleInfo('info-fase4')" title="Informazioni">i</button>
         </h3>
+        <div class="info-panel" id="info-fase4">
+          <strong>Dopo la gara:</strong>
+          <ul>
+            <li><strong>Classifica Finale:</strong> visualizza i risultati definitivi e pubblicali nell'Archivio pubblico (visibile a tutti sul sito).</li>
+            <li><strong>Genera Attestati:</strong> crea i PDF di partecipazione per ogni studente e invia tutto via email ai docenti in un colpo solo.</li>
+            <li><strong>Statistiche:</strong> grafici e dati aggregati utili per la rendicontazione verso il Comune o l'Ufficio Scolastico Territoriale.</li>
+          </ul>
+        </div>
         <div class="admin-grid">
           <div class="admin-card">
             <div class="admin-card-icon">🏆</div>
             <h4 class="admin-card-title">Classifica Finale</h4>
             <p class="admin-card-desc">Visualizza e pubblica i risultati</p>
-            <button class="btn btn-primary" onclick="viewClassifica()">
-              Classifica
-            </button>
+            <button class="btn btn-primary" onclick="viewClassifica()">Classifica</button>
           </div>
           <div class="admin-card">
             <div class="admin-card-icon">📜</div>
             <h4 class="admin-card-title">Genera Attestati</h4>
             <p class="admin-card-desc">Crea PDF e invia via email</p>
-            <button class="btn btn-secondary" onclick="generateAttestati()">
-              Genera
-            </button>
+            <button class="btn btn-secondary" onclick="generateAttestati()">Genera</button>
           </div>
           <div class="admin-card">
             <div class="admin-card-icon">📈</div>
             <h4 class="admin-card-title">Statistiche</h4>
             <p class="admin-card-desc">Grafici e dati per rendicontazione</p>
-            <button class="btn btn-outline" onclick="viewStatistiche()">
-              Statistiche
-            </button>
+            <button class="btn btn-outline" onclick="viewStatistiche()">Statistiche</button>
           </div>
         </div>
       </section>
 
-      <!-- LINK RAPIDI -->
+      <!-- ==================== LINK RAPIDI ==================== -->
       <section class="admin-section">
-        <h3 class="admin-section-title">
-          Link Rapidi
-        </h3>
+        <h3 class="admin-section-title">Link Rapidi</h3>
         <div class="card">
-          <table style="width: 100%; border-collapse: collapse;">
+          <table style="width:100%;border-collapse:collapse;">
             <tr>
-              <td style="padding: 8px; border-bottom: 1px solid var(--lk-border);">
-                <strong>Google Sheet Master</strong>
-              </td>
-              <td style="padding: 8px; border-bottom: 1px solid var(--lk-border); text-align: right;">
-                <a href="#" id="linkSheetMaster" target="_blank" class="btn btn-outline" style="padding: 4px 12px; font-size: 0.85rem;">
-                  Apri
-                </a>
+              <td style="padding:8px;border-bottom:1px solid var(--lk-border);"><strong>Google Sheet Master</strong></td>
+              <td style="padding:8px;border-bottom:1px solid var(--lk-border);text-align:right;">
+                <a href="#" id="linkSheetMaster" target="_blank" class="btn btn-outline" style="padding:4px 12px;font-size:0.85rem;">Apri</a>
               </td>
             </tr>
             <tr>
-              <td style="padding: 8px; border-bottom: 1px solid var(--lk-border);">
-                <strong>Cartella Drive Anno</strong>
-              </td>
-              <td style="padding: 8px; border-bottom: 1px solid var(--lk-border); text-align: right;">
-                <a href="#" id="linkDriveAnno" target="_blank" class="btn btn-outline" style="padding: 4px 12px; font-size: 0.85rem;">
-                  Apri
-                </a>
+              <td style="padding:8px;border-bottom:1px solid var(--lk-border);"><strong>Cartella Drive Anno</strong></td>
+              <td style="padding:8px;border-bottom:1px solid var(--lk-border);text-align:right;">
+                <a href="#" id="linkDriveAnno" target="_blank" class="btn btn-outline" style="padding:4px 12px;font-size:0.85rem;">Apri</a>
               </td>
             </tr>
             <tr>
-              <td style="padding: 8px;">
-                <strong>Pagina Pubblica</strong>
-              </td>
-              <td style="padding: 8px; text-align: right;">
-                <a href="index.html" target="_blank" class="btn btn-outline" style="padding: 4px 12px; font-size: 0.85rem;">
-                  Apri
-                </a>
+              <td style="padding:8px;"><strong>Pagina Pubblica</strong></td>
+              <td style="padding:8px;text-align:right;">
+                <a href="index.html" target="_blank" class="btn btn-outline" style="padding:4px 12px;font-size:0.85rem;">Apri</a>
               </td>
             </tr>
           </table>
+        </div>
+      </section>
+
+      <!-- ==================== STRUMENTI DI TEST ==================== -->
+      <section class="admin-section">
+        <h3 class="admin-section-title">
+          <span class="phase-badge phase-0">🔧</span>
+          Strumenti di Test
+          <button class="btn-info-toggle" onclick="toggleInfo('info-tools')" title="Informazioni">i</button>
+        </h3>
+        <div class="info-panel" id="info-tools">
+          <strong>Solo per prove e test — usare con cautela.</strong>
+          <ul>
+            <li><strong>Reset Iscrizioni:</strong> svuota il foglio Iscrizioni nello Sheet. Utile dopo aver fatto prove per ricominciare da capo. Non cancella le intenzioni.</li>
+            <li><strong>Reset Intenzioni:</strong> svuota il foglio Intenzioni. Rimuove anche la base per i dropdown del form Iscrizioni. Usare solo se vuoi ripartire completamente da zero.</li>
+            <li>Dopo il reset, ricorda di rimpostare la fase corretta con i pulsanti nella sezione Fase 1.</li>
+          </ul>
+        </div>
+        <div class="danger-zone">
+          <h4>⚠️ Zone di pericolo — azioni irreversibili</h4>
+          <div style="display:flex; gap:0.75rem; flex-wrap:wrap;">
+            <button class="btn btn-outline" style="border-color:#fca5a5;color:#dc2626;"
+                    onclick="resetDati('Iscrizioni')">
+              🗑 Reset Iscrizioni
+            </button>
+            <button class="btn btn-outline" style="border-color:#fca5a5;color:#dc2626;"
+                    onclick="resetDati('Intenzioni')">
+              🗑 Reset Intenzioni
+            </button>
+          </div>
         </div>
       </section>
 
@@ -378,28 +503,30 @@
           <a href="https://edutechlab.it" target="_blank">EduTechLab</a> |
           Powered by Vibe Coding - Fabio Rizzotto
         </p>
-        <button onclick="logout()" class="btn btn-outline mt-2" style="padding: 4px 16px; font-size: 0.85rem;">
+        <button onclick="logout()" class="btn btn-outline mt-2" style="padding:4px 16px;font-size:0.85rem;">
           Esci
         </button>
       </footer>
 
-    </div>
-
-  </div>
+    </div><!-- /adminPanel -->
+  </div><!-- /container -->
 
   <script src="js/config.js"></script>
   <script src="js/api.js"></script>
   <script src="js/math-bg.js"></script>
   <script>
-    // Password admin (in produzione usare hash)
-    // Per ora password semplice: "logikron2025"
     const ADMIN_PASSWORD = 'logikron2025';
+    const API = LOGIKRON_CONFIG.webAppUrls.admin;
+    let adminPwd = '';
+
+    // ==================== LOGIN ====================
 
     function checkPassword() {
       const input = document.getElementById('adminPassword').value;
       if (input === ADMIN_PASSWORD) {
         document.getElementById('loginPanel').style.display = 'none';
         document.getElementById('adminPanel').style.display = 'block';
+        adminPwd = input;
         sessionStorage.setItem('logikronAdmin', 'true');
         loadDashboard();
       } else {
@@ -414,48 +541,45 @@
       document.getElementById('adminPassword').value = '';
     }
 
-    // Check if already logged in
     if (sessionStorage.getItem('logikronAdmin') === 'true') {
+      adminPwd = ADMIN_PASSWORD;
       document.getElementById('loginPanel').style.display = 'none';
       document.getElementById('adminPanel').style.display = 'block';
       loadDashboard();
     }
 
-    const API = LOGIKRON_CONFIG.webAppUrls.admin;
-    let adminPwd = '';
+    // ==================== DASHBOARD ====================
 
     function loadDashboard() {
       document.getElementById('annoScolastico').textContent = LOGIKRON_CONFIG.annoScolastico;
-      adminPwd = document.getElementById('adminPassword').value;
       caricaFase();
       caricaStatIntenzioni();
+      caricaFiltroIstituti();
+      aggiornaFiltroClassi();
     }
 
     function caricaFase() {
-      lkApi(API, { action: 'getFase' }).then(r => {
-        aggiornaIndicatoriFase(r.fase);
-      }).catch(() => {});
+      lkApi(API, { action: 'getFase' }).then(r => aggiornaIndicatoriFase(r.fase)).catch(() => {});
     }
 
     function aggiornaIndicatoriFase(fase) {
-      const b1 = document.getElementById('badge-fase1');
-      const b2 = document.getElementById('badge-fase2');
-      b1.innerHTML = fase === 1
-        ? '<span style="background:#d1fae5;color:#065f46;padding:2px 10px;border-radius:9999px;font-weight:700;">● ATTIVA</span>'
-        : '<span style="background:#f1f5f9;color:#64748b;padding:2px 10px;border-radius:9999px;">○ non attiva</span>';
-      b2.innerHTML = fase >= 2
-        ? '<span style="background:#d1fae5;color:#065f46;padding:2px 10px;border-radius:9999px;font-weight:700;">● ATTIVA</span>'
-        : '<span style="background:#f1f5f9;color:#64748b;padding:2px 10px;border-radius:9999px;">○ non attiva</span>';
+      document.getElementById('badge-fase1').innerHTML = fase === 1
+        ? '<span class="badge-on">● ATTIVA</span>'
+        : '<span class="badge-off">○ non attiva</span>';
+      document.getElementById('badge-fase2').innerHTML = fase >= 2
+        ? '<span class="badge-on">● ATTIVA</span>'
+        : '<span class="badge-off">○ non attiva</span>';
     }
 
     function caricaStatIntenzioni() {
       lkApi(API, { action: 'getIntenzioni' }).then(lista => {
         if (!Array.isArray(lista)) return;
         document.getElementById('statIntenzioni').textContent = lista.length;
-        const emailUniche = new Set(lista.map(i => i.email)).size;
-        document.getElementById('statIstituti').textContent = emailUniche;
+        document.getElementById('statDocenti').textContent = new Set(lista.map(i => i.email)).size;
       }).catch(() => {});
     }
+
+    // ==================== FASI ====================
 
     function setFase(n) {
       const label = ['Chiudi tutto (fase 0)', 'Solo Intenzioni (fase 1)', 'Apri Iscrizioni (fase 2)', 'Gara (fase 3)', 'Post-gara (fase 4)'];
@@ -474,7 +598,7 @@
       const btn = event.target;
       btn.disabled = true;
       btn.textContent = 'Invio in corso...';
-      lkApi(API, { action: 'inviaMailIscrizioni', pwd: adminPwd })
+      lkApi(API, { action: 'inviaMailIscrizioni', pwd: adminPwd }, 60000)
         .then(r => {
           btn.disabled = false;
           btn.textContent = 'Apri Fase 2 + Invia mail';
@@ -489,15 +613,13 @@
         });
     }
 
+    // ==================== INTENZIONI ====================
+
     function viewIntenzioni() {
       const div = document.getElementById('listaIntenzioni');
-      if (!div.classList.contains('hidden')) {
-        div.classList.add('hidden');
-        return;
-      }
+      if (!div.classList.contains('hidden')) { div.classList.add('hidden'); return; }
       div.innerHTML = '<p style="color:var(--lk-text-muted)">Caricamento...</p>';
       div.classList.remove('hidden');
-
       lkApi(API, { action: 'getIntenzioni' }).then(lista => {
         if (!Array.isArray(lista) || lista.length === 0) {
           div.innerHTML = '<p style="color:var(--lk-text-muted)">Nessuna intenzione registrata.</p>';
@@ -505,7 +627,7 @@
         }
         let html = '<div class="card" style="padding:1rem;overflow-x:auto;">';
         html += '<table style="width:100%;border-collapse:collapse;font-size:0.85rem;">';
-        html += '<tr style="background:#4f46e5;color:white;"><th style="padding:6px 10px;text-align:left;">Docente</th><th style="padding:6px 10px;text-align:left;">Istituto / Plesso</th><th style="padding:6px 10px;text-align:left;">Classe</th><th style="padding:6px 10px;text-align:left;">Squadre</th></tr>';
+        html += '<tr style="background:#4f46e5;color:white;"><th style="padding:6px 10px;text-align:left;">Docente</th><th style="padding:6px 10px;text-align:left;">Istituto / Plesso</th><th style="padding:6px 10px;text-align:left;">Classe</th><th style="padding:6px 10px;text-align:center;">Squadre</th></tr>';
         lista.forEach((i, idx) => {
           const bg = idx % 2 === 0 ? '#f8fafc' : 'white';
           html += `<tr style="background:${bg};">
@@ -522,33 +644,151 @@
       });
     }
 
-    function copyLink(type) {
-      const baseUrl = window.location.origin + window.location.pathname.replace('admin.html', '');
-      let url = '';
-      switch(type) {
-        case 'intenzioni':
-          url = baseUrl + 'intenzioni.html';
-          break;
-        case 'iscrizioni':
-          url = baseUrl + 'iscrizioni.html';
-          break;
-        case 'gara':
-          url = baseUrl + 'gara.html';
-          break;
-      }
-      navigator.clipboard.writeText(url).then(() => {
-        alert('Link copiato: ' + url);
+    // ==================== COMUNICAZIONI ====================
+
+    function aggiornaFiltroClassi() {
+      const ordine = document.getElementById('filtroOrdine').value;
+      const sel = document.getElementById('filtroClasse');
+      sel.innerHTML = '<option value="">Tutte</option>';
+      const classi = ordine
+        ? (LOGIKRON_CONFIG.classi[ordine] || [])
+        : [...(LOGIKRON_CONFIG.classi.primaria || []), ...(LOGIKRON_CONFIG.classi.secondaria || [])];
+      classi.forEach(cl => {
+        const opt = document.createElement('option');
+        opt.value = cl.nome;
+        opt.textContent = cl.nome + (ordine ? '' : (' — ' + (LOGIKRON_CONFIG.classi.primaria.includes(cl) ? 'Primaria' : 'Secondaria')));
+        sel.appendChild(opt);
       });
     }
 
-    // Placeholder functions - da implementare nelle fasi successive
-    function setupNuovoAnno() { alert('Setup Nuovo Anno - Da implementare'); }
-    function openConfig() { alert('Configurazione - Da implementare'); }
-    function manageSquadre() { alert('Gestisci Squadre - Da implementare'); }
-    function createGara() { alert('Crea Gara - Da implementare'); }
-    function viewClassifica() { alert('Classifica - Da implementare'); }
-    function generateAttestati() { alert('Genera Attestati - Da implementare'); }
-    function viewStatistiche() { alert('Statistiche - Da implementare'); }
+    function caricaFiltroIstituti() {
+      lkApi(API, { action: 'getIntenzioni' }).then(lista => {
+        if (!Array.isArray(lista)) return;
+        const sel = document.getElementById('filtroIstituto');
+        const istituti = [...new Set(lista.map(i => i.istituto))].sort();
+        istituti.forEach(ic => {
+          const opt = document.createElement('option');
+          opt.value = ic;
+          opt.textContent = ic;
+          sel.appendChild(opt);
+        });
+      }).catch(() => {});
+    }
+
+    function filtraDocenti(lista, filtri) {
+      return lista.filter(i => {
+        if (filtri.ordine && i.ordine !== filtri.ordine) return false;
+        if (filtri.classe && i.classe !== filtri.classe) return false;
+        if (filtri.istituto && i.istituto !== filtri.istituto) return false;
+        return true;
+      });
+    }
+
+    function vediDestinatari() {
+      const filtri = {
+        ordine: document.getElementById('filtroOrdine').value,
+        classe: document.getElementById('filtroClasse').value,
+        istituto: document.getElementById('filtroIstituto').value
+      };
+      const div = document.getElementById('destinatariPreview');
+      div.innerHTML = '<p style="color:var(--lk-text-muted);font-size:0.85rem;">Calcolo destinatari...</p>';
+      div.classList.remove('hidden');
+
+      lkApi(API, { action: 'getIntenzioni' }).then(lista => {
+        if (!Array.isArray(lista)) return;
+        const filtrati = filtraDocenti(lista, filtri);
+        const emails = [...new Set(filtrati.map(i => i.email))];
+        if (emails.length === 0) {
+          div.innerHTML = '<p style="color:#dc2626;font-size:0.85rem;">Nessun destinatario con questi filtri.</p>';
+          return;
+        }
+        div.innerHTML = `<div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:8px;padding:10px 14px;">
+          <strong style="font-size:0.9rem;">${emails.length} destinatar${emails.length === 1 ? 'io' : 'i'}:</strong><br>
+          <span style="font-size:0.82rem;color:#374151;">${emails.join(', ')}</span>
+        </div>`;
+      }).catch(err => {
+        div.innerHTML = '<p style="color:#dc2626;font-size:0.85rem;">Errore: ' + err.message + '</p>';
+      });
+    }
+
+    function inviaMailFiltrata() {
+      const oggetto = document.getElementById('mailOggetto').value.trim();
+      const corpo = document.getElementById('mailCorpo').value.trim();
+      if (!oggetto || !corpo) { alert('Compila oggetto e testo email.'); return; }
+
+      const filtri = {
+        ordine: document.getElementById('filtroOrdine').value,
+        classe: document.getElementById('filtroClasse').value,
+        istituto: document.getElementById('filtroIstituto').value
+      };
+      const desc = [
+        filtri.ordine ? filtri.ordine : '',
+        filtri.classe ? 'classe ' + filtri.classe : '',
+        filtri.istituto ? filtri.istituto : ''
+      ].filter(Boolean).join(', ') || 'TUTTI i docenti';
+
+      if (!confirm('Invierà la mail a: ' + desc + '\n\nOggetto: ' + oggetto + '\n\nConfermi?')) return;
+
+      const btn = event.target;
+      btn.disabled = true;
+      btn.textContent = 'Invio...';
+
+      lkApi(API, {
+        action: 'inviaMailFiltrata',
+        pwd: adminPwd,
+        filtroOrdine: filtri.ordine,
+        filtroClasse: filtri.classe,
+        filtroIstituto: filtri.istituto,
+        oggetto: oggetto,
+        corpo: corpo
+      }, 60000)
+        .then(r => {
+          btn.disabled = false;
+          btn.textContent = '📤 Invia comunicazione';
+          if (r.error) { alert('Errore: ' + r.error); return; }
+          alert('✅ Email inviate: ' + r.inviati + ' / ' + r.totale);
+        })
+        .catch(err => {
+          btn.disabled = false;
+          btn.textContent = '📤 Invia comunicazione';
+          alert('Errore: ' + err.message);
+        });
+    }
+
+    // ==================== RESET DATI TEST ====================
+
+    function resetDati(foglio) {
+      if (!confirm('⚠️ Stai per cancellare TUTTI i dati del foglio "' + foglio + '".\nQuesta operazione NON è reversibile.\n\nConfermi?')) return;
+      if (!confirm('Ultima conferma: cancellare "' + foglio + '"?')) return;
+      lkApi(API, { action: 'resetFoglio', foglio: foglio, pwd: adminPwd })
+        .then(r => {
+          if (r.error) { alert('Errore: ' + r.error); return; }
+          alert('✅ Foglio "' + foglio + '" svuotato. ' + r.cancellate + ' righe rimosse.');
+          caricaStatIntenzioni();
+        })
+        .catch(err => alert('Errore: ' + err.message));
+    }
+
+    // ==================== UTILITÀ ====================
+
+    function toggleInfo(id) {
+      document.getElementById(id).classList.toggle('visible');
+    }
+
+    function copyLink(type) {
+      const base = window.location.origin + window.location.pathname.replace('admin.html', '');
+      const urls = { intenzioni: 'intenzioni.html', iscrizioni: 'iscrizioni.html', gara: 'gara.html' };
+      const url = base + (urls[type] || '');
+      navigator.clipboard.writeText(url).then(() => alert('Link copiato:\n' + url));
+    }
+
+    // Placeholder — da implementare nelle fasi successive
+    function setupNuovoAnno() { alert('Setup Nuovo Anno — Da implementare'); }
+    function openConfig()     { alert('Configurazione — Da implementare'); }
+    function createGara()     { alert('Crea Gara — Da implementare'); }
+    function viewClassifica() { alert('Classifica — Da implementare'); }
+    function generateAttestati() { alert('Genera Attestati — Da implementare'); }
+    function viewStatistiche()   { alert('Statistiche — Da implementare'); }
   </script>
 </body>
 </html>
