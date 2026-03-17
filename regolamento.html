@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>LogiKron - Regolamento Ufficiale 2025-2026</title>
+  <title>LogiKron - Regolamento Ufficiale</title>
   <link rel="stylesheet" href="css/style.css">
   <style>
     /* ===== STILE PAGINA ===== */
@@ -158,14 +158,16 @@
 
     /* ===== STAMPA ===== */
     @media print {
-      .print-bar, footer, .math-bg-canvas { display: none !important; }
-      body { background: white; font-size: 11pt; }
-      .reg-header { background: #4f46e5 !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-      .params-table th { background: #4f46e5 !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-      .card { box-shadow: none; border: 1px solid #e2e8f0; }
+      * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+      .print-bar, footer { display: none !important; }
+      body { background: white !important; font-size: 11pt; margin: 0; }
+      .container { max-width: 100% !important; padding: 0 !important; }
+      .reg-header { border-radius: 0 !important; margin: 0 0 1rem 0 !important; }
+      .card { box-shadow: none !important; border: 1px solid #e2e8f0 !important; page-break-inside: avoid; }
       .reg-section { page-break-inside: avoid; }
       .ordine-grid { grid-template-columns: 1fr 1fr; }
       .bonus-grid { grid-template-columns: 1fr 1fr; }
+      @page { margin: 1.5cm; }
     }
 
     @media (max-width: 600px) {
@@ -191,7 +193,6 @@
       </div>
       <h1>Regolamento Ufficiale</h1>
       <p class="subtitle">Giochi Matematici di Interistituto</p>
-      <span class="anno" id="annoHeader">2025-2026</span>
     </div>
 
     <!-- 1. PRESENTAZIONE -->
@@ -216,12 +217,14 @@
         <div class="ordine-box ordine-primaria">
           <h3>🟡 Scuola Primaria</h3>
           <ul>
-            <li>Classe 3ª</li>
             <li>Classe 4ª</li>
             <li>Classe 5ª</li>
             <li>Pluriclasse 3ª-4ª</li>
             <li>Pluriclasse 4ª-5ª</li>
           </ul>
+          <p style="font-size:0.8rem; margin: 0.5rem 0 0 0; color: #92400e;">
+            La classe 3ª partecipa solo in formazione di pluriclasse.
+          </p>
         </div>
         <div class="ordine-box ordine-secondaria">
           <h3>🔵 Scuola Secondaria di I grado</h3>
@@ -375,18 +378,14 @@
         <a href="https://edutechlab.it" target="_blank">EduTechLab</a> |
         Powered by Vibe Coding - Fabio Rizzotto
       </p>
-      <p style="font-size: 0.75rem; margin-top: 0.3rem; opacity: 0.7;" id="footerAnno">Edizione 2025-2026</p>
     </footer>
 
   </div>
 
   <script src="js/config.js"></script>
-  <script src="js/math-bg.js"></script>
   <script>
     // Popola valori dalla config (fonte della verità)
     const g = LOGIKRON_CONFIG.gare;
-    document.getElementById('annoHeader').textContent = LOGIKRON_CONFIG.annoScolastico;
-    document.getElementById('footerAnno').textContent = 'Edizione ' + LOGIKRON_CONFIG.annoScolastico;
     document.getElementById('paramDurata').textContent = g.durataMinuti + ' minuti';
     document.getElementById('paramQuesiti').textContent = g.numeroDomande;
     document.getElementById('paramPuntiIniziali').textContent = g.puntiIniziali + ' punti';
