@@ -5,6 +5,112 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>LogiKron - Iscrizione Squadre</title>
   <link rel="stylesheet" href="css/style.css">
+  <style>
+    .squadra-card {
+      background: #f5f3ff;
+      border: 2px solid #a5b4fc;
+      border-radius: var(--lk-radius-md);
+      padding: 1.25rem;
+      margin-bottom: 1rem;
+      position: relative;
+    }
+    .squadra-card-header {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      margin-bottom: 1rem;
+    }
+    .squadra-numero {
+      background: #4f46e5;
+      color: white;
+      font-weight: 700;
+      font-size: 0.85rem;
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+    .btn-rimuovi-squadra {
+      margin-left: auto;
+      background: none;
+      border: 1px solid #fca5a5;
+      color: #dc2626;
+      border-radius: 6px;
+      padding: 3px 10px;
+      font-size: 0.8rem;
+      cursor: pointer;
+    }
+    .studenti-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0.5rem;
+      margin-bottom: 0.75rem;
+    }
+    .studente-row {
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+    }
+    .studente-num {
+      font-size: 0.75rem;
+      color: #6b7280;
+      width: 18px;
+      text-align: right;
+      flex-shrink: 0;
+    }
+    .studente-input {
+      flex: 1;
+      padding: 0.35rem 0.6rem;
+      font-size: 0.9rem;
+      border: 1px solid #c7d2fe;
+      border-radius: 8px;
+      font-family: inherit;
+      background: white;
+    }
+    .studente-input:focus {
+      outline: none;
+      border-color: #6366f1;
+      box-shadow: 0 0 0 2px rgba(99,102,241,0.15);
+    }
+    .squadra-footer {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+      margin-top: 0.5rem;
+    }
+    .studenti-count {
+      font-size: 0.8rem;
+      color: #6b7280;
+    }
+    .studenti-count.ok { color: #059669; font-weight: 600; }
+    .studenti-count.warn { color: #dc2626; }
+    .btn-studente {
+      background: none;
+      border: 1px dashed #a5b4fc;
+      color: #4f46e5;
+      border-radius: 6px;
+      padding: 3px 10px;
+      font-size: 0.8rem;
+      cursor: pointer;
+    }
+    .btn-studente:disabled { opacity: 0.4; cursor: default; }
+    #btnAggiungiSquadra {
+      width: 100%;
+      margin-top: 0.25rem;
+      border: 2px dashed #a5b4fc;
+      background: transparent;
+      color: #4f46e5;
+      font-weight: 600;
+    }
+    @media (max-width: 480px) {
+      .studenti-grid { grid-template-columns: 1fr; }
+    }
+  </style>
 </head>
 <body>
   <div class="container container-md">
@@ -12,54 +118,114 @@
     <!-- HEADER -->
     <header class="text-center">
       <div class="logo-container" style="font-size: 2rem;">
-        <span class="logo-l">L</span>
-        <span class="logo-o1">o</span>
-        <span class="logo-g">g</span>
+        <span class="logo-l">L</span><span class="logo-o1">o</span><span class="logo-g">g</span>
         <span class="logo-sand">&#8987;</span>
-        <span class="logo-k">K</span>
-        <span class="logo-r">r</span>
-        <span class="logo-o2">o</span>
-        <span class="logo-n">n</span>
+        <span class="logo-k">K</span><span class="logo-r">r</span><span class="logo-o2">o</span><span class="logo-n">n</span>
       </div>
-      <h1 style="font-size: 1.25rem; color: var(--lk-primary);">
-        Iscrizione Squadre
-      </h1>
-      <p class="text-muted">Giochi Matematici di Interistituto 2025-2026</p>
+      <h1 style="font-size: 1.25rem; color: var(--lk-primary);">Iscrizione Squadre</h1>
+      <p class="text-muted">Giochi Matematici di Interistituto</p>
     </header>
 
     <!-- INFO -->
     <div class="card mt-3" style="background: #d1fae5; border-left: 4px solid #10b981;">
       <p style="margin: 0;">
-        <strong>Fase 2:</strong> Registra la tua squadra inserendo i nomi degli studenti.
-        Ogni squadra deve avere da 5 a 9 componenti.
+        <strong>Fase 2:</strong> Registra le tue squadre inserendo i nomi degli studenti.
+        Ogni squadra deve avere da <strong>5 a 9 componenti</strong>.
+        Puoi iscrivere più squadre in un solo invio.
       </p>
     </div>
 
-    <!-- PLACEHOLDER - Qui verra caricato il form da Apps Script -->
-    <div class="card mt-2 text-center" style="padding: 3rem;">
-      <div style="font-size: 4rem; margin-bottom: 1rem;">🚧</div>
-      <h2>Form Iscrizioni</h2>
-      <p class="text-muted mb-3">
-        Questa pagina sara collegata al sistema LogiKron2025 esistente,
-        con le modifiche per l'integrazione con lo Sheet Master.
-      </p>
-      <p>
-        <strong>Funzionalita previste:</strong>
-      </p>
-      <ul style="text-align: left; max-width: 400px; margin: 1rem auto;">
-        <li>Selezione Istituto/Plesso/Classe (da intenzioni)</li>
-        <li>Inserimento 5-9 studenti per squadra</li>
-        <li>Generazione automatica nome squadra</li>
-        <li>Salvataggio su Sheet Master</li>
-        <li>Conferma via email al docente</li>
-      </ul>
+    <!-- FORM -->
+    <form id="formIscrizioni" novalidate>
+
+      <!-- SEZIONE 1: DOCENTE E CLASSE -->
+      <div class="card mt-2">
+        <div class="card-header">
+          <h2 class="card-title">Docente e Classe</h2>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Email Docente *</label>
+          <input type="email" id="emailDocente" class="form-control" required
+                 placeholder="nome.cognome@ictuascuola.edu.it">
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Nome e Cognome Docente *</label>
+          <input type="text" id="nomeDocente" class="form-control" required placeholder="Mario Rossi">
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Istituto Comprensivo *</label>
+          <select id="istituto" class="form-control" required onchange="updatePlessi()">
+            <option value="">Seleziona l'Istituto</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Plesso *</label>
+          <select id="plesso" class="form-control" required disabled>
+            <option value="">Prima seleziona l'Istituto</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Ordine Scolastico *</label>
+          <select id="ordine" class="form-control" required onchange="updateClassi()">
+            <option value="">Seleziona l'ordine</option>
+            <option value="primaria">Scuola Primaria</option>
+            <option value="secondaria">Scuola Secondaria di I grado</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Classe *</label>
+          <select id="classe" class="form-control" required disabled>
+            <option value="">Prima seleziona l'ordine</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Sezione *</label>
+          <select id="sezione" class="form-control" required>
+            <option value="">Seleziona la sezione</option>
+            <option>A</option><option>B</option><option>C</option>
+            <option>D</option><option>Unica</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- SEZIONE 2: SQUADRE -->
+      <div class="card mt-2">
+        <div class="card-header">
+          <h2 class="card-title">Squadre</h2>
+        </div>
+
+        <div id="squadreContainer"></div>
+
+        <button type="button" id="btnAggiungiSquadra" class="btn btn-outline btn-lg"
+                onclick="aggiungiSquadra()">
+          + Aggiungi un'altra squadra
+        </button>
+      </div>
+
+      <button type="submit" class="btn btn-primary btn-lg btn-block mt-3">
+        Invia Iscrizioni
+      </button>
+
+    </form>
+
+    <!-- SUCCESSO -->
+    <div id="successMessage" class="card mt-3 hidden" style="background: #d1fae5; text-align: center;">
+      <h2 style="color: #065f46;">Iscrizioni Registrate!</h2>
+      <p id="successText">Le tue squadre sono state iscritte con successo.</p>
+      <p>Riceverai una email di conferma con il riepilogo delle squadre.</p>
+      <a href="index.html" class="btn btn-outline mt-2">Torna alla Home</a>
     </div>
 
     <!-- FOOTER -->
     <footer class="footer">
-      <p>
-        <a href="index.html">Torna alla Home</a>
-      </p>
+      <p><a href="index.html">Torna alla Home</a></p>
       <p style="font-size: 0.75rem; margin-top: 0.5rem;">
         <strong>LogiKron</strong> - Giochi Matematici di Interistituto |
         <a href="https://edutechlab.it" target="_blank">EduTechLab</a> |
@@ -70,6 +236,224 @@
   </div>
 
   <script src="js/config.js"></script>
+  <script src="js/api.js"></script>
   <script src="js/math-bg.js"></script>
+  <script>
+    const MIN_STUDENTI = 5;
+    const MAX_STUDENTI = 9;
+    let squadraCount = 0;
+
+    // Popola dropdown Istituti da config
+    function initIstituti() {
+      const sel = document.getElementById('istituto');
+      LOGIKRON_CONFIG.istituti.forEach(ic => {
+        const opt = document.createElement('option');
+        opt.value = ic.nome;
+        opt.textContent = ic.nome;
+        sel.appendChild(opt);
+      });
+    }
+
+    function updatePlessi() {
+      const icNome = document.getElementById('istituto').value;
+      const sel = document.getElementById('plesso');
+      sel.innerHTML = '<option value="">Seleziona il plesso</option>';
+      const ic = LOGIKRON_CONFIG.istituti.find(i => i.nome === icNome);
+      if (ic) {
+        ic.plessi.forEach(p => {
+          const opt = document.createElement('option');
+          opt.value = 'Plesso di ' + p.nome;
+          opt.textContent = p.nome;
+          sel.appendChild(opt);
+        });
+        sel.disabled = false;
+      } else {
+        sel.disabled = true;
+      }
+    }
+
+    function updateClassi() {
+      const ordine = document.getElementById('ordine').value;
+      const sel = document.getElementById('classe');
+      sel.innerHTML = '<option value="">Seleziona la classe</option>';
+      if (ordine && LOGIKRON_CONFIG.classi[ordine]) {
+        LOGIKRON_CONFIG.classi[ordine].forEach(cl => {
+          const opt = document.createElement('option');
+          opt.value = cl.nome;
+          opt.textContent = cl.nome;
+          sel.appendChild(opt);
+        });
+        sel.disabled = false;
+      } else {
+        sel.disabled = true;
+      }
+    }
+
+    function aggiungiSquadra() {
+      squadraCount++;
+      const n = squadraCount;
+      const div = document.createElement('div');
+      div.className = 'squadra-card';
+      div.id = 'squadra-' + n;
+
+      let studentiHtml = '<div class="studenti-grid" id="studenti-grid-' + n + '">';
+      for (let i = 1; i <= MIN_STUDENTI; i++) {
+        studentiHtml += rowStudente(n, i);
+      }
+      studentiHtml += '</div>';
+
+      div.innerHTML = `
+        <div class="squadra-card-header">
+          <div class="squadra-numero">${n}</div>
+          <input type="text" class="form-control" id="nomeSquadra-${n}"
+                 placeholder="Nome squadra (es. Squadra Alfa)"
+                 style="margin: 0; flex: 1;">
+          <button type="button" class="btn-rimuovi-squadra"
+                  onclick="rimuoviSquadra(${n})" title="Rimuovi squadra">✕ Rimuovi</button>
+        </div>
+        <p style="font-size:0.82rem; color:#6b7280; margin: 0 0 0.75rem 0;">
+          Inserisci i nomi degli studenti (min. 5, max. 9):
+        </p>
+        ${studentiHtml}
+        <div class="squadra-footer">
+          <button type="button" class="btn-studente" id="btnAdd-${n}"
+                  onclick="aggiungiStudente(${n})">+ Studente</button>
+          <span class="studenti-count warn" id="count-${n}">
+            ${MIN_STUDENTI} studenti inseriti
+          </span>
+        </div>
+      `;
+
+      document.getElementById('squadreContainer').appendChild(div);
+      aggiornaCount(n);
+      aggiornaBottoneAggiungi();
+    }
+
+    function rowStudente(squadraId, num) {
+      return `<div class="studente-row" id="row-${squadraId}-${num}">
+        <span class="studente-num">${num}.</span>
+        <input type="text" class="studente-input"
+               id="studente-${squadraId}-${num}"
+               placeholder="Nome Cognome"
+               oninput="aggiornaCount(${squadraId})">
+      </div>`;
+    }
+
+    function aggiungiStudente(squadraId) {
+      const grid = document.getElementById('studenti-grid-' + squadraId);
+      const righe = grid.querySelectorAll('.studente-row').length;
+      if (righe >= MAX_STUDENTI) return;
+      const num = righe + 1;
+      grid.insertAdjacentHTML('beforeend', rowStudente(squadraId, num));
+      aggiornaCount(squadraId);
+    }
+
+    function aggiornaCount(squadraId) {
+      const grid = document.getElementById('studenti-grid-' + squadraId);
+      const inputs = grid.querySelectorAll('.studente-input');
+      const compilati = Array.from(inputs).filter(i => i.value.trim() !== '').length;
+      const tot = inputs.length;
+      const span = document.getElementById('count-' + squadraId);
+      const btnAdd = document.getElementById('btnAdd-' + squadraId);
+
+      span.textContent = compilati + ' / ' + tot + ' studenti';
+      if (compilati >= MIN_STUDENTI) {
+        span.className = 'studenti-count ok';
+      } else {
+        span.className = 'studenti-count warn';
+      }
+      if (btnAdd) btnAdd.disabled = tot >= MAX_STUDENTI;
+    }
+
+    function rimuoviSquadra(n) {
+      if (document.querySelectorAll('.squadra-card').length <= 1) {
+        alert('Deve esserci almeno una squadra.');
+        return;
+      }
+      const el = document.getElementById('squadra-' + n);
+      if (el) el.remove();
+      aggiornaBottoneAggiungi();
+    }
+
+    function aggiornaBottoneAggiungi() {
+      // Limite pratico: max 10 squadre
+      const tot = document.querySelectorAll('.squadra-card').length;
+      document.getElementById('btnAggiungiSquadra').disabled = tot >= 10;
+    }
+
+    function raccogliSquadre() {
+      const cards = document.querySelectorAll('.squadra-card');
+      const teams = [];
+      cards.forEach(card => {
+        const id = card.id.replace('squadra-', '');
+        const nome = (document.getElementById('nomeSquadra-' + id).value || '').trim();
+        const inputs = card.querySelectorAll('.studente-input');
+        const studenti = Array.from(inputs).map(i => i.value.trim()).filter(v => v !== '');
+        teams.push({ nome: nome || ('Squadra ' + id), studenti: studenti });
+      });
+      return teams;
+    }
+
+    // Submit
+    document.getElementById('formIscrizioni').addEventListener('submit', function(e) {
+      e.preventDefault();
+
+      const email = document.getElementById('emailDocente').value.trim();
+      const nome = document.getElementById('nomeDocente').value.trim();
+      const istituto = document.getElementById('istituto').value;
+      const plesso = document.getElementById('plesso').value;
+      const ordine = document.getElementById('ordine').value;
+      const classe = document.getElementById('classe').value;
+      const sezione = document.getElementById('sezione').value;
+
+      if (!email || !nome || !istituto || !plesso || !ordine || !classe || !sezione) {
+        alert('Compila tutti i campi obbligatori nella sezione Docente e Classe.');
+        return;
+      }
+
+      const teams = raccogliSquadre();
+      const valide = teams.filter(t => t.studenti.length >= MIN_STUDENTI);
+      if (valide.length === 0) {
+        alert('Ogni squadra deve avere almeno ' + MIN_STUDENTI + ' studenti.');
+        return;
+      }
+      if (teams.some(t => t.studenti.length > 0 && t.studenti.length < MIN_STUDENTI)) {
+        if (!confirm('Alcune squadre hanno meno di ' + MIN_STUDENTI + ' studenti e saranno ignorate. Continuare?')) return;
+      }
+
+      const btn = e.target.querySelector('button[type="submit"]');
+      btn.disabled = true;
+      btn.textContent = 'Invio in corso...';
+
+      lkApi(LOGIKRON_CONFIG.webAppUrls.iscrizioni, {
+        action: 'salvaIscrizione',
+        email: email,
+        nome: nome,
+        istituto: istituto,
+        plesso: plesso,
+        ordine: ordine,
+        classe: classe,
+        sezione: sezione,
+        teams: JSON.stringify(teams),
+        timestamp: new Date().toISOString()
+      })
+      .then(result => {
+        if (result.error) throw new Error(result.error);
+        document.getElementById('formIscrizioni').classList.add('hidden');
+        document.getElementById('successText').textContent =
+          result.nSquadre + ' squadr' + (result.nSquadre === 1 ? 'a iscritta' : 'e iscritte') + ' con successo!';
+        document.getElementById('successMessage').classList.remove('hidden');
+      })
+      .catch(err => {
+        btn.disabled = false;
+        btn.textContent = 'Invia Iscrizioni';
+        alert('Errore:\n' + err.message);
+      });
+    });
+
+    // Init
+    initIstituti();
+    aggiungiSquadra(); // parte con 1 squadra già pronta
+  </script>
 </body>
 </html>
