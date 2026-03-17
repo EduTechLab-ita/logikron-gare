@@ -227,9 +227,10 @@
         <div class="info-panel" id="info-fase1">
           <strong>Cosa fare:</strong>
           <ul>
-            <li>Condividi il <strong>Link Intenzioni</strong> ai docenti (email, WhatsApp, registro).</li>
+            <li>Clicca <strong>Apri Fase 1 + Attiva form</strong>: abilita il pulsante Intenzioni sul sito pubblico. Al termine ti mostra il link da condividere.</li>
+            <li>Condividi il link ai docenti (email, WhatsApp, registro elettronico).</li>
             <li>Aspetta che compilino il form. Visualizza chi si è iscritto con <em>Visualizza lista</em>.</li>
-            <li>Quando sei pronto, usa <strong>Apri Fase 2 + Invia mail</strong>: abilita il form iscrizioni e invia automaticamente una mail a tutti i docenti con il link.</li>
+            <li>Quando sei pronto, usa <strong>Apri Fase 2 + Invia mail</strong>: abilita le iscrizioni e invia automaticamente una mail a tutti i docenti con il link.</li>
           </ul>
           <strong>Tornare indietro / resettare:</strong>
           <ul>
@@ -239,6 +240,12 @@
           </ul>
         </div>
         <div class="admin-grid">
+          <div class="admin-card">
+            <div class="admin-card-icon">🟢</div>
+            <h4 class="admin-card-title">Apri Fase 1</h4>
+            <p class="admin-card-desc">Abilita il form Intenzioni sul sito pubblico</p>
+            <button class="btn btn-primary" onclick="apriFase1()">Apri Fase 1 + Attiva form</button>
+          </div>
           <div class="admin-card">
             <div class="admin-card-icon">📝</div>
             <h4 class="admin-card-title">Form Intenzioni</h4>
@@ -261,7 +268,7 @@
           <div class="admin-card">
             <div class="admin-card-icon">↩️</div>
             <h4 class="admin-card-title">Gestione Fasi</h4>
-            <p class="admin-card-desc">Torna indietro o chiudi una fase</p>
+            <p class="admin-card-desc">Torna indietro o chiudi tutto</p>
             <button class="btn btn-outline" style="margin-bottom:0.5rem;" onclick="setFase(1)">Solo Intenzioni attive</button>
             <button class="btn btn-outline" onclick="setFase(0)">Chiudi tutto</button>
           </div>
@@ -606,6 +613,27 @@
           aggiornaIndicatoriFase(r.fase);
         })
         .catch(err => alert('Errore: ' + err.message));
+    }
+
+    function apriFase1() {
+      if (!confirm('Questa azione abilita il form Intenzioni sul sito pubblico.\nI docenti potranno iniziare a esprimere la loro intenzione di partecipare.\n\nConfermi?')) return;
+      const btn = event.target;
+      btn.disabled = true;
+      btn.textContent = 'Attivazione...';
+      lkApi(API, { action: 'setFase', fase: 1, pwd: adminPwd })
+        .then(r => {
+          btn.disabled = false;
+          btn.textContent = 'Apri Fase 1 + Attiva form';
+          if (r.error) { alert('Errore: ' + r.error); return; }
+          aggiornaIndicatoriFase(1);
+          const link = window.location.origin + window.location.pathname.replace('admin.html', '') + 'intenzioni.html';
+          alert('✅ Fase 1 attivata!\nIl form Intenzioni è ora accessibile.\n\nLink da condividere ai docenti:\n' + link);
+        })
+        .catch(err => {
+          btn.disabled = false;
+          btn.textContent = 'Apri Fase 1 + Attiva form';
+          alert('Errore: ' + err.message);
+        });
     }
 
     function apriIscrizioni() {
