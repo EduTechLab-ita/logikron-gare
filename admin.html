@@ -234,17 +234,16 @@
           </ul>
           <strong>Tornare indietro / resettare:</strong>
           <ul>
-            <li><em>Solo Intenzioni attive</em> → riporta alla fase 1 disabilitando le iscrizioni (non cancella dati).</li>
-            <li><em>Chiudi tutto</em> → disabilita anche il form intenzioni.</li>
+            <li><em>Chiudi Fase 1</em> (pulsante rosso) → disabilita il form intenzioni senza cancellare i dati.</li>
             <li>Per cancellare i dati di test usa i pulsanti nella sezione <strong>Strumenti di Test</strong> in fondo alla pagina.</li>
           </ul>
         </div>
         <div class="admin-grid">
           <div class="admin-card">
-            <div class="admin-card-icon">🟢</div>
-            <h4 class="admin-card-title">Apri Fase 1</h4>
-            <p class="admin-card-desc">Abilita il form Intenzioni sul sito pubblico</p>
-            <button class="btn btn-primary" onclick="apriFase1()">Apri Fase 1 + Attiva form</button>
+            <div class="admin-card-icon" id="iconFase1">🔘</div>
+            <h4 class="admin-card-title">Stato Fase 1</h4>
+            <p class="admin-card-desc" id="descFase1">Caricamento...</p>
+            <button id="btnToggleFase1" class="btn btn-outline" disabled>...</button>
           </div>
           <div class="admin-card">
             <div class="admin-card-icon">📝</div>
@@ -258,19 +257,6 @@
             <h4 class="admin-card-title">Intenzioni ricevute</h4>
             <p class="admin-card-desc">Docenti che hanno espresso interesse</p>
             <button class="btn btn-outline" onclick="viewIntenzioni()">Visualizza lista</button>
-          </div>
-          <div class="admin-card">
-            <div class="admin-card-icon">✅</div>
-            <h4 class="admin-card-title">Apri Iscrizioni</h4>
-            <p class="admin-card-desc">Abilita il form iscrizioni e invia mail a tutti i docenti</p>
-            <button class="btn btn-primary" onclick="apriIscrizioni()">Apri Fase 2 + Invia mail</button>
-          </div>
-          <div class="admin-card">
-            <div class="admin-card-icon">↩️</div>
-            <h4 class="admin-card-title">Gestione Fasi</h4>
-            <p class="admin-card-desc">Torna indietro o chiudi tutto</p>
-            <button class="btn btn-outline" style="margin-bottom:0.5rem;" onclick="setFase(1)">Solo Intenzioni attive</button>
-            <button class="btn btn-outline" onclick="setFase(0)">Chiudi tutto</button>
           </div>
         </div>
         <div id="listaIntenzioni" class="hidden" style="margin-top:1rem;"></div>
@@ -299,20 +285,34 @@
         </div>
         <div class="admin-grid">
           <div class="admin-card">
+            <div class="admin-card-icon" id="iconFase2">🔘</div>
+            <h4 class="admin-card-title">Stato Fase 2</h4>
+            <p class="admin-card-desc" id="descFase2">Caricamento...</p>
+            <button id="btnToggleFase2" class="btn btn-outline" disabled>...</button>
+          </div>
+          <div class="admin-card">
             <div class="admin-card-icon">👥</div>
             <h4 class="admin-card-title">Form Iscrizioni</h4>
             <p class="admin-card-desc">Link per registrare le squadre</p>
             <button class="btn btn-primary" onclick="copyLink('iscrizioni')">Copia Link</button>
             <a href="iscrizioni.html" target="_blank" class="btn btn-outline mt-1" style="display:block;">Apri Form</a>
           </div>
-          <div class="admin-card">
-            <div class="admin-card-icon">🔒</div>
-            <h4 class="admin-card-title">Chiudi Iscrizioni</h4>
-            <p class="admin-card-desc">Torna alla sola raccolta intenzioni</p>
-            <button class="btn btn-outline" onclick="setFase(1)">Chiudi Fase 2</button>
-          </div>
         </div>
       </section>
+
+      <!-- ==================== TRANSIZIONE GARA ==================== -->
+      <div id="sezChiudiFasi" style="display:none; margin-bottom: var(--lk-spacing-xl);">
+        <div class="card" style="border:2px solid #f59e0b; background:#fffbeb;">
+          <div style="display:flex; align-items:center; gap:0.75rem; flex-wrap:wrap;">
+            <span style="font-size:1.5rem;">🏁</span>
+            <div style="flex:1; min-width:180px;">
+              <strong id="chiudiFasiTitolo" style="font-size:0.95rem;">Pronto per la gara?</strong>
+              <p id="chiudiFasiDesc" style="margin:2px 0 0 0; font-size:0.85rem; color:#64748b;"></p>
+            </div>
+            <button id="btnChiudiFasi" class="btn" onclick="chiudiFasiAvviaGara()">Chiudi Fasi e Avvia Gara</button>
+          </div>
+        </div>
+      </div>
 
       <!-- ==================== COMUNICAZIONI ==================== -->
       <section class="admin-section">
@@ -584,13 +584,104 @@
       lkApi(API, { action: 'getFase' }).then(r => aggiornaIndicatoriFase(r.fase)).catch(() => {});
     }
 
+    let faseCorrente = 0;
+
     function aggiornaIndicatoriFase(fase) {
-      document.getElementById('badge-fase1').innerHTML = fase === 1
+      faseCorrente = fase;
+
+      // Badge sezione
+      document.getElementById('badge-fase1').innerHTML = fase >= 1
         ? '<span class="badge-on">● ATTIVA</span>'
         : '<span class="badge-off">○ non attiva</span>';
-      document.getElementById('badge-fase2').innerHTML = fase >= 2
-        ? '<span class="badge-on">● ATTIVA</span>'
+      // Toggle Fase 1
+      const btn1  = document.getElementById('btnToggleFase1');
+      const desc1 = document.getElementById('descFase1');
+      const icon1 = document.getElementById('iconFase1');
+      btn1.disabled = false;
+      btn1.style.cssText = '';
+      if (fase < 1) {
+        icon1.textContent = '🔘';
+        desc1.textContent = 'Il form Intenzioni è disattivato sul sito pubblico.';
+        btn1.textContent  = 'Apri Fase 1 + Attiva form';
+        btn1.className    = 'btn btn-primary';
+        btn1.onclick      = apriFase1;
+      } else if (fase === 1) {
+        icon1.textContent = '🟢';
+        desc1.textContent = 'Il form Intenzioni è attivo. I docenti possono iscriversi.';
+        btn1.textContent  = 'Chiudi Fase 1';
+        btn1.className    = 'btn btn-outline';
+        btn1.style.borderColor = '#dc2626';
+        btn1.style.color       = '#dc2626';
+        btn1.onclick = function() { setFase(0, 'Chiudi Fase 1 e disattiva il form Intenzioni?'); };
+      } else {
+        icon1.textContent = '✅';
+        desc1.textContent = 'Fase 1 completata. Le iscrizioni sono aperte.';
+        btn1.textContent  = 'Fase 1 completata';
+        btn1.className    = 'btn btn-outline';
+        btn1.style.borderColor = '#94a3b8';
+        btn1.style.color       = '#94a3b8';
+        btn1.disabled = true;
+      }
+
+      // Toggle Fase 2
+      const btn2  = document.getElementById('btnToggleFase2');
+      const desc2 = document.getElementById('descFase2');
+      const icon2 = document.getElementById('iconFase2');
+      btn2.disabled = false;
+      btn2.style.cssText = '';
+      if (fase < 2) {
+        icon2.textContent = '🔘';
+        desc2.textContent = fase < 1
+          ? 'Disponibile dopo aver aperto la Fase 1.'
+          : 'Pronto per aprire le iscrizioni squadre.';
+        btn2.textContent  = 'Apri Fase 2 + Invia mail';
+        btn2.className    = 'btn btn-primary';
+        btn2.disabled     = fase < 1;
+        btn2.onclick      = apriIscrizioni;
+      } else if (fase === 2) {
+        icon2.textContent = '🟢';
+        desc2.textContent = 'Il form Iscrizioni è attivo. I docenti possono iscrivere le squadre.';
+        btn2.textContent  = 'Chiudi Fase 2';
+        btn2.className    = 'btn btn-outline';
+        btn2.style.borderColor = '#dc2626';
+        btn2.style.color       = '#dc2626';
+        btn2.onclick = function() { setFase(1, 'Chiudi Fase 2 e disattiva il form Iscrizioni?'); };
+      } else {
+        icon2.textContent = '✅';
+        desc2.textContent = 'Fase 2 completata. Iscrizioni chiuse.';
+        btn2.textContent  = 'Fase 2 completata';
+        btn2.className    = 'btn btn-outline';
+        btn2.style.borderColor = '#94a3b8';
+        btn2.style.color       = '#94a3b8';
+        btn2.disabled = true;
+      }
+
+      // Badge fase2 aggiornato
+      document.getElementById('badge-fase2').innerHTML =
+        fase >= 3 ? '<span class="badge-on" style="background:#d1fae5;color:#065f46;">✅ completata</span>'
+        : fase >= 2 ? '<span class="badge-on">● ATTIVA</span>'
         : '<span class="badge-off">○ non attiva</span>';
+
+      // Sezione transizione gara
+      const sezChiudi = document.getElementById('sezChiudiFasi');
+      const btnChiudi = document.getElementById('btnChiudiFasi');
+      if (fase === 2) {
+        sezChiudi.style.display = '';
+        document.getElementById('chiudiFasiTitolo').textContent = 'Iscrizioni chiuse? Pronto per la gara?';
+        document.getElementById('chiudiFasiDesc').textContent   = 'Clicca per disabilitare i form delle fasi precedenti e passare alla fase di gara. I dati non vengono cancellati.';
+        btnChiudi.className    = 'btn btn-primary';
+        btnChiudi.style.cssText = 'background:#f59e0b; border-color:#f59e0b;';
+        btnChiudi.disabled     = false;
+      } else if (fase >= 3) {
+        sezChiudi.style.display = '';
+        document.getElementById('chiudiFasiTitolo').textContent = '✅ Fasi pre-gara concluse — Buona gara!';
+        document.getElementById('chiudiFasiDesc').textContent   = 'Entrambe le fasi sono state chiuse. Usa la sezione "Gestione Gara" qui sotto.';
+        btnChiudi.className    = 'btn btn-outline';
+        btnChiudi.style.cssText = 'border-color:#94a3b8; color:#94a3b8;';
+        btnChiudi.disabled     = true;
+      } else {
+        sezChiudi.style.display = 'none';
+      }
     }
 
     function caricaStatIntenzioni() {
@@ -603,37 +694,30 @@
 
     // ==================== FASI ====================
 
-    function setFase(n) {
-      const label = ['Chiudi tutto (fase 0)', 'Solo Intenzioni (fase 1)', 'Apri Iscrizioni (fase 2)', 'Gara (fase 3)', 'Post-gara (fase 4)'];
-      if (!confirm('Confermi: ' + (label[n] || 'fase ' + n) + '?')) return;
+    function setFase(n, messaggio) {
+      const msg = messaggio || 'Imposta fase ' + n + '?';
+      if (!confirm(msg)) return;
       lkApi(API, { action: 'setFase', fase: n, pwd: adminPwd })
         .then(r => {
           if (r.error) { alert('Errore: ' + r.error); return; }
-          alert('Fase aggiornata a ' + r.fase);
           aggiornaIndicatoriFase(r.fase);
         })
         .catch(err => alert('Errore: ' + err.message));
     }
 
     function apriFase1() {
-      if (!confirm('Questa azione abilita il form Intenzioni sul sito pubblico.\nI docenti potranno iniziare a esprimere la loro intenzione di partecipare.\n\nConfermi?')) return;
-      const btn = event.target;
+      if (!confirm('Apri Fase 1: abilita il form Intenzioni sul sito pubblico.\nI docenti potranno iniziare a esprimere la loro intenzione di partecipare.\n\nConfermi?')) return;
+      const btn = document.getElementById('btnToggleFase1');
       btn.disabled = true;
       btn.textContent = 'Attivazione...';
       lkApi(API, { action: 'setFase', fase: 1, pwd: adminPwd })
         .then(r => {
-          btn.disabled = false;
-          btn.textContent = 'Apri Fase 1 + Attiva form';
-          if (r.error) { alert('Errore: ' + r.error); return; }
+          if (r.error) { alert('Errore: ' + r.error); aggiornaIndicatoriFase(faseCorrente); return; }
           aggiornaIndicatoriFase(1);
           const link = window.location.origin + window.location.pathname.replace('admin.html', '') + 'intenzioni.html';
-          alert('✅ Fase 1 attivata!\nIl form Intenzioni è ora accessibile.\n\nLink da condividere ai docenti:\n' + link);
+          alert('✅ Fase 1 attivata!\n\nLink da condividere ai docenti:\n' + link);
         })
-        .catch(err => {
-          btn.disabled = false;
-          btn.textContent = 'Apri Fase 1 + Attiva form';
-          alert('Errore: ' + err.message);
-        });
+        .catch(err => { alert('Errore: ' + err.message); aggiornaIndicatoriFase(faseCorrente); });
     }
 
     function apriIscrizioni() {
@@ -654,6 +738,20 @@
           btn.textContent = 'Apri Fase 2 + Invia mail';
           alert('Errore: ' + err.message);
         });
+    }
+
+    function chiudiFasiAvviaGara() {
+      if (!confirm('Chiudi Fase 1 e Fase 2 e avvia la Fase Gara?\n\n• I form Intenzioni e Iscrizioni verranno disabilitati\n• I dati già inseriti NON vengono cancellati\n• Puoi riaprire le fasi in qualsiasi momento\n\nConfermi?')) return;
+      const btn = document.getElementById('btnChiudiFasi');
+      btn.disabled = true;
+      btn.textContent = 'Chiusura in corso...';
+      lkApi(API, { action: 'setFase', fase: 3, pwd: adminPwd })
+        .then(r => {
+          if (r.error) { alert('Errore: ' + r.error); aggiornaIndicatoriFase(faseCorrente); return; }
+          aggiornaIndicatoriFase(3);
+          alert('✅ Fasi pre-gara chiuse!\nPuoi ora avviare la gara dalla sezione "Gestione Gara".');
+        })
+        .catch(err => { alert('Errore: ' + err.message); aggiornaIndicatoriFase(faseCorrente); });
     }
 
     // ==================== INTENZIONI ====================
