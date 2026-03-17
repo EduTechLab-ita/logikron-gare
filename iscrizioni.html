@@ -298,42 +298,88 @@
       return nome.replace(/[^0-9]/g, '');           // "4^" → "4"
     }
 
-    function generaNomeSquadra(posizione) {
+    // Offset dal backend: quante squadre con questo prefisso esistono già nello sheet
+    let baseNumero = 0;
+    let prefissoCorrente = ''; // per rilevare quando cambiano i dropdown
+
+    function generaPrefisso() {
       const icVal     = document.getElementById('istituto').value;
       const plessoVal = document.getElementById('plesso').value;
       const ordine    = document.getElementById('ordine').value;
       const classe    = document.getElementById('classe').value;
       const sezione   = document.getElementById('sezione').value;
-      if (!icVal || !plessoVal || !ordine || !classe || !sezione) return '—';
+      if (!icVal || !plessoVal || !ordine || !classe || !sezione) return '';
 
       const icCitta     = estraiCittaIC(icVal);
       const plessoCitta = estraiCittaPlesso(plessoVal);
       const icCode      = icAbbr[icCitta] || icCitta.substring(0, 2).toUpperCase();
       const pAbbrMap    = plessiAbbr[icCitta] || {};
       const plessoCode  = pAbbrMap[plessoCitta] || plessoCitta.substring(0, 2).toUpperCase();
-
-      // Se plesso = IC (sede unica), non ripetere il codice
       const scuolaPart  = icCitta.toUpperCase() === plessoCitta.toUpperCase()
-                          ? icCode
-                          : icCode + plessoCode;
+                          ? icCode : icCode + plessoCode;
       const ordinePart  = ordine === 'primaria' ? 'PRI' : 'SEC';
       const classePart  = abbreviaClasse(classe);
       const sezionePart = sezione === 'Unica' ? 'U' : sezione;
-
-      return scuolaPart + ordinePart + classePart + sezionePart + posizione;
+      return scuolaPart + ordinePart + classePart + sezionePart;
     }
 
-    function aggiornaNoiSquadre() {
+    function generaNomeSquadra(posizione) {
+      const prefisso = generaPrefisso();
+      if (!prefisso) return '—';
+      return prefisso + (baseNumero + posizione);
+    }
+
+    function _renderNoiSquadre() {
       document.querySelectorAll('.squadra-card').forEach((card, idx) => {
         const cardId = card.id.replace('squadra-', '');
         const pos = idx + 1;
-        // Aggiorna badge numero posizione
         const badge = card.querySelector('.squadra-numero');
         if (badge) badge.textContent = pos;
-        // Aggiorna codice auto-generato
         const nomeEl = document.getElementById('nomeSquadra-' + cardId);
-        if (nomeEl) nomeEl.textContent = generaNomeSquadra(pos);
+        if (nomeEl) {
+          nomeEl.textContent = generaNomeSquadra(pos);
+          nomeEl.style.opacity = '1';
+        }
       });
+    }
+
+    function aggiornaNoiSquadre() {
+      const prefisso = generaPrefisso();
+
+      // Dropdown incompleti: mostra trattino
+      if (!prefisso) {
+        document.querySelectorAll('.squadra-card').forEach((card, idx) => {
+          const badge = card.querySelector('.squadra-numero');
+          if (badge) badge.textContent = idx + 1;
+          const nomeEl = document.getElementById('nomeSquadra-' + card.id.replace('squadra-', ''));
+          if (nomeEl) { nomeEl.textContent = '—'; nomeEl.style.opacity = '1'; }
+        });
+        return;
+      }
+
+      // Prefisso cambiato: chiedi al backend il massimo già usato
+      if (prefisso !== prefissoCorrente) {
+        prefissoCorrente = prefisso;
+        baseNumero = 0;
+        // Mostra "..." mentre aspetta la risposta
+        document.querySelectorAll('[id^="nomeSquadra-"]').forEach(el => {
+          el.textContent = '...';
+          el.style.opacity = '0.45';
+        });
+        lkApi(LOGIKRON_CONFIG.webAppUrls.iscrizioni, { action: 'getMaxSquadra', prefisso: prefisso })
+          .then(r => {
+            if (prefisso !== prefissoCorrente) return; // dropdown cambiati nel frattempo
+            baseNumero = (r && r.max) ? r.max : 0;
+            _renderNoiSquadre();
+          })
+          .catch(() => {
+            if (prefisso !== prefissoCorrente) return;
+            baseNumero = 0;
+            _renderNoiSquadre();
+          });
+      } else {
+        _renderNoiSquadre();
+      }
     }
 
     function buildMappeAbbreviazioni() {
