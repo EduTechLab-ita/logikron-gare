@@ -142,6 +142,35 @@
     .btn-action-del:hover { background: #fff5f5; }
     .gara-status-bar { display: flex; gap: 1rem; align-items: center; flex-wrap: wrap; background: #f8fafc; border: 1px solid var(--lk-border); border-radius: var(--lk-radius-md); padding: 0.75rem 1rem; margin-bottom: 1rem; }
     .timer-live { font-size: 1.5rem; font-weight: 800; color: var(--lk-primary); font-variant-numeric: tabular-nums; letter-spacing: 0.05em; }
+
+    /* ===== MODAL GESTIONE ISCRITTI ===== */
+    .modal-overlay { position:fixed; inset:0; background:rgba(0,0,0,0.55); z-index:2000; overflow-y:auto; display:flex; align-items:flex-start; justify-content:center; padding:1.5rem 1rem; }
+    .modal-box { background:white; border-radius:14px; width:100%; max-width:960px; box-shadow:0 8px 40px rgba(0,0,0,0.25); display:flex; flex-direction:column; max-height:90vh; }
+    .modal-header { display:flex; align-items:center; justify-content:space-between; padding:1rem 1.25rem; border-bottom:1px solid #e2e8f0; flex-shrink:0; }
+    .modal-header h3 { margin:0; font-size:1.1rem; color:var(--lk-primary); }
+    .modal-close { background:none; border:1px solid #e2e8f0; border-radius:6px; padding:4px 10px; cursor:pointer; font-size:1rem; color:#64748b; }
+    .modal-close:hover { background:#f1f5f9; }
+    .modal-tabs { display:flex; gap:0; padding:0 1.25rem; border-bottom:2px solid #e2e8f0; flex-shrink:0; }
+    .modal-tab { background:none; border:none; padding:0.65rem 1.25rem; cursor:pointer; font-size:0.9rem; font-weight:600; color:#94a3b8; border-bottom:3px solid transparent; margin-bottom:-2px; transition:all 0.15s; }
+    .modal-tab.active { color:var(--lk-primary); border-bottom-color:var(--lk-primary); }
+    .modal-tab:hover:not(.active) { color:var(--lk-text); }
+    .modal-search { padding:0.75rem 1.25rem; border-bottom:1px solid #f1f5f9; flex-shrink:0; }
+    .modal-search input { width:100%; padding:0.5rem 0.75rem; border:1px solid #e2e8f0; border-radius:8px; font-size:0.88rem; box-sizing:border-box; }
+    .modal-body { overflow-y:auto; flex:1; padding:0; }
+    .modal-table { width:100%; border-collapse:collapse; font-size:0.83rem; }
+    .modal-table th { background:#f8fafc; color:#64748b; font-weight:600; font-size:0.75rem; text-transform:uppercase; letter-spacing:0.04em; padding:8px 12px; text-align:left; position:sticky; top:0; border-bottom:1px solid #e2e8f0; }
+    .modal-table td { padding:8px 12px; border-bottom:1px solid #f1f5f9; vertical-align:top; }
+    .modal-table tr:hover td { background:#fafbff; }
+    .modal-edit-row td { background:#fef9ff !important; padding:10px 12px; }
+    .modal-edit-input { width:100%; padding:4px 8px; border:1px solid #c7d2fe; border-radius:6px; font-size:0.82rem; font-family:inherit; box-sizing:border-box; }
+    .modal-edit-input:focus { outline:none; border-color:#6366f1; }
+    .modal-edit-textarea { width:100%; padding:4px 8px; border:1px solid #c7d2fe; border-radius:6px; font-size:0.82rem; font-family:inherit; resize:vertical; min-height:80px; box-sizing:border-box; }
+    .btn-modal-save { background:#4f46e5; color:white; border:none; border-radius:6px; padding:4px 12px; font-size:0.8rem; cursor:pointer; }
+    .btn-modal-cancel { background:none; border:1px solid #e2e8f0; border-radius:6px; padding:4px 10px; font-size:0.8rem; cursor:pointer; color:#64748b; }
+    .btn-modal-edit { background:none; border:1px solid #bfdbfe; border-radius:5px; padding:2px 8px; font-size:0.75rem; cursor:pointer; color:#1d4ed8; }
+    .btn-modal-del  { background:none; border:1px solid #fca5a5; border-radius:5px; padding:2px 8px; font-size:0.75rem; cursor:pointer; color:#dc2626; margin-left:4px; }
+    .modal-empty { text-align:center; padding:2.5rem; color:#94a3b8; font-size:0.9rem; }
+    .modal-count { font-size:0.78rem; color:#94a3b8; padding:0.4rem 1.25rem; border-bottom:1px solid #f1f5f9; flex-shrink:0; }
   </style>
 </head>
 <body>
@@ -975,37 +1004,6 @@
         .catch(err => { alert('Errore: ' + err.message); aggiornaIndicatoriFase(faseCorrente); });
     }
 
-    // ==================== INTENZIONI ====================
-
-    function viewIntenzioni() {
-      const div = document.getElementById('listaIntenzioni');
-      if (!div.classList.contains('hidden')) { div.classList.add('hidden'); return; }
-      div.innerHTML = '<p style="color:var(--lk-text-muted)">Caricamento...</p>';
-      div.classList.remove('hidden');
-      lkApi(API, { action: 'getIntenzioni' }).then(lista => {
-        if (!Array.isArray(lista) || lista.length === 0) {
-          div.innerHTML = '<p style="color:var(--lk-text-muted)">Nessuna intenzione registrata.</p>';
-          return;
-        }
-        let html = '<div class="card" style="padding:1rem;overflow-x:auto;">';
-        html += '<table style="width:100%;border-collapse:collapse;font-size:0.85rem;">';
-        html += '<tr style="background:#4f46e5;color:white;"><th style="padding:6px 10px;text-align:left;">Docente</th><th style="padding:6px 10px;text-align:left;">Istituto / Plesso</th><th style="padding:6px 10px;text-align:left;">Classe</th><th style="padding:6px 10px;text-align:center;">Squadre</th></tr>';
-        lista.forEach((i, idx) => {
-          const bg = idx % 2 === 0 ? '#f8fafc' : 'white';
-          html += `<tr style="background:${bg};">
-            <td style="padding:6px 10px;">${i.nome}<br><span style="color:#94a3b8;font-size:0.75rem;">${i.email}</span></td>
-            <td style="padding:6px 10px;">${i.istituto}<br><span style="color:#94a3b8;font-size:0.75rem;">${i.plesso}</span></td>
-            <td style="padding:6px 10px;">${i.classe} ${i.sezione} <span style="color:#94a3b8;">(${i.ordine})</span></td>
-            <td style="padding:6px 10px;text-align:center;">${i.nSquadre}</td>
-          </tr>`;
-        });
-        html += '</table></div>';
-        div.innerHTML = html;
-      }).catch(err => {
-        div.innerHTML = '<p style="color:#dc2626;">Errore: ' + err.message + '</p>';
-      });
-    }
-
     // ==================== ALLEGATI ====================
 
     let allegatiCount = 0;
@@ -1496,14 +1494,29 @@
       const btn = event.target;
       btn.disabled = true; btn.textContent = 'Creazione...';
       const dataGara = document.getElementById('dataOraGara').value || '';
-      lkApi(API, { action: 'creaGara', pwd: adminPwd, nome: nome, domande: JSON.stringify(domande), dataGara: dataGara })
+      lkApi(API, { action: 'creaGara', pwd: adminPwd, nome: nome, domande: JSON.stringify(domande), dataGara: dataGara }, 45000)
         .then(r => {
           btn.disabled = false; btn.textContent = '💾 Crea Gara';
           if (r.error) { alert('Errore: ' + r.error); return; }
           alert('✅ ' + r.message);
           toggleFormNuovaGara();
           document.getElementById('nomeGara').value = '';
-          caricaListaGare();
+          document.getElementById('dataOraGara').value = '';
+          // Ricarica lista e seleziona automaticamente la gara appena creata
+          const nuovoId = r.garaId;
+          lkApi(API, { action: 'getListaGare' }).then(gare => {
+            const sel = document.getElementById('selGaraLive');
+            sel.innerHTML = '<option value="">-- Seleziona gara --</option>';
+            if (!Array.isArray(gare)) return;
+            [...gare].reverse().forEach(g => {
+              const opt = document.createElement('option');
+              opt.value = g.id;
+              const dataLabel = g.dataGara ? g.dataGara.replace('T', ' ').substring(0, 16) : g.data;
+              opt.textContent = g.nome + ' — ' + g.stato + ' (' + dataLabel + ')';
+              sel.appendChild(opt);
+            });
+            if (nuovoId) { sel.value = nuovoId; selezionaGaraLive(); }
+          }).catch(() => {});
         })
         .catch(err => { btn.disabled = false; btn.textContent = '💾 Crea Gara'; alert('Errore: ' + err.message); });
     }
@@ -1529,6 +1542,274 @@
         })
         .catch(err => alert('Errore: ' + err.message));
     }
+
+    // ==================== MODAL GESTIONE ISCRITTI ====================
+
+    let _modalTab = 'intenzioni';
+    let _modalData = { intenzioni: null, iscrizioni: null };
+    let _editingRow = null;
+
+    function apriModalIscritti(tab) {
+      _modalTab = tab || 'intenzioni';
+      _modalData = { intenzioni: null, iscrizioni: null };
+      _editingRow = null;
+      document.getElementById('searchModal').value = '';
+      document.getElementById('modalIscritti').style.display = 'flex';
+      _switchTabModal(_modalTab);
+    }
+
+    function chiudiModal() {
+      document.getElementById('modalIscritti').style.display = 'none';
+    }
+
+    function _switchTabModal(tab) {
+      _modalTab = tab;
+      _editingRow = null;
+      document.getElementById('tabIntenzioniBtn').classList.toggle('active', tab === 'intenzioni');
+      document.getElementById('tabIscrizioniBtn').classList.toggle('active', tab === 'iscrizioni');
+      document.getElementById('searchModal').value = '';
+      if (_modalData[tab]) {
+        _renderModal(_modalData[tab], tab);
+      } else {
+        document.getElementById('modalBody').innerHTML = '<div class="modal-empty">Caricamento...</div>';
+        const action = tab === 'intenzioni' ? 'getIntenzioni' : 'getIscrizioni';
+        const params = tab === 'intenzioni' ? { action } : { action, pwd: adminPwd };
+        lkApi(API, params).then(lista => {
+          _modalData[tab] = Array.isArray(lista) ? lista : [];
+          _renderModal(_modalData[tab], tab);
+        }).catch(err => {
+          document.getElementById('modalBody').innerHTML = '<div class="modal-empty" style="color:#dc2626;">Errore: ' + err.message + '</div>';
+        });
+      }
+    }
+
+    function _renderModal(lista, tab) {
+      const search = (document.getElementById('searchModal').value || '').toLowerCase();
+      const filtrata = search
+        ? lista.filter(r => JSON.stringify(r).toLowerCase().includes(search))
+        : lista;
+      document.getElementById('modalCount').textContent = filtrata.length + ' record' + (search ? ' (filtrati su ' + lista.length + ')' : '');
+      if (filtrata.length === 0) {
+        document.getElementById('modalBody').innerHTML = '<div class="modal-empty">Nessun record trovato.</div>';
+        return;
+      }
+      let html = '<table class="modal-table"><thead><tr>';
+      if (tab === 'intenzioni') {
+        html += '<th>Docente</th><th>Istituto / Plesso</th><th>Ordine / Classe</th><th style="width:60px">Sq.</th><th style="width:80px">Azioni</th>';
+      } else {
+        html += '<th>Docente</th><th>Istituto / Classe</th><th>Squadra</th><th>Studenti</th><th style="width:80px">Azioni</th>';
+      }
+      html += '</tr></thead><tbody id="modalTbody">';
+      filtrata.forEach(r => { html += _rowHtml(r, tab, false); });
+      html += '</tbody></table>';
+      document.getElementById('modalBody').innerHTML = html;
+    }
+
+    function _rowHtml(r, tab, editing) {
+      const row = r.row;
+      if (editing) {
+        if (tab === 'intenzioni') {
+          return `<tr class="modal-edit-row" id="editrow-${row}"><td colspan="5">
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.4rem 0.75rem;">
+              <label style="font-size:0.75rem;color:#64748b;grid-column:1/-1;">✏️ Modifica intenzione riga ${row}</label>
+              <div><div style="font-size:0.72rem;color:#94a3b8;">Email</div><input class="modal-edit-input" id="ef-email" value="${_esc(r.email)}"></div>
+              <div><div style="font-size:0.72rem;color:#94a3b8;">Nome Docente</div><input class="modal-edit-input" id="ef-nome" value="${_esc(r.nome)}"></div>
+              <div><div style="font-size:0.72rem;color:#94a3b8;">Istituto</div><input class="modal-edit-input" id="ef-istituto" value="${_esc(r.istituto)}"></div>
+              <div><div style="font-size:0.72rem;color:#94a3b8;">Plesso</div><input class="modal-edit-input" id="ef-plesso" value="${_esc(r.plesso)}"></div>
+              <div><div style="font-size:0.72rem;color:#94a3b8;">Ordine</div>
+                <select class="modal-edit-input" id="ef-ordine">
+                  <option value="primaria" ${r.ordine==='primaria'?'selected':''}>Primaria</option>
+                  <option value="secondaria" ${r.ordine==='secondaria'?'selected':''}>Secondaria</option>
+                </select>
+              </div>
+              <div><div style="font-size:0.72rem;color:#94a3b8;">Classe</div><input class="modal-edit-input" id="ef-classe" value="${_esc(r.classe)}"></div>
+              <div><div style="font-size:0.72rem;color:#94a3b8;">Sezione</div><input class="modal-edit-input" id="ef-sezione" value="${_esc(r.sezione)}"></div>
+              <div><div style="font-size:0.72rem;color:#94a3b8;">N° Squadre stimate</div>
+                <select class="modal-edit-input" id="ef-nSquadre">
+                  ${[1,2,3,'4 o più'].map(n => `<option value="${n}" ${r.nSquadre==n?'selected':''}>${n}</option>`).join('')}
+                </select>
+              </div>
+              <div style="grid-column:1/-1;"><div style="font-size:0.72rem;color:#94a3b8;">Note</div><input class="modal-edit-input" id="ef-note" value="${_esc(r.note||'')}"></div>
+            </div>
+            <div style="margin-top:0.6rem;display:flex;gap:0.5rem;">
+              <button class="btn-modal-save" onclick="_saveEdit(${row},'intenzioni')">💾 Salva</button>
+              <button class="btn-modal-cancel" onclick="_cancelEdit()">Annulla</button>
+            </div>
+          </td></tr>`;
+        } else {
+          const studentiRighe = (r.studenti||'').split(';').map(s=>s.trim()).filter(Boolean).join('\n');
+          return `<tr class="modal-edit-row" id="editrow-${row}"><td colspan="5">
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.4rem 0.75rem;">
+              <label style="font-size:0.75rem;color:#64748b;grid-column:1/-1;">✏️ Modifica iscrizione riga ${row} — <code style="background:#4f46e5;color:white;padding:1px 6px;border-radius:4px;font-size:0.78rem;">${_esc(r.nomeSquadra)}</code></label>
+              <div><div style="font-size:0.72rem;color:#94a3b8;">Email</div><input class="modal-edit-input" id="ef-email" value="${_esc(r.email)}"></div>
+              <div><div style="font-size:0.72rem;color:#94a3b8;">Nome Docente</div><input class="modal-edit-input" id="ef-docente" value="${_esc(r.docente)}"></div>
+              <div><div style="font-size:0.72rem;color:#94a3b8;">Istituto</div><input class="modal-edit-input" id="ef-istituto" value="${_esc(r.istituto)}"></div>
+              <div><div style="font-size:0.72rem;color:#94a3b8;">Plesso</div><input class="modal-edit-input" id="ef-plesso" value="${_esc(r.plesso)}"></div>
+              <div><div style="font-size:0.72rem;color:#94a3b8;">Ordine</div>
+                <select class="modal-edit-input" id="ef-ordine">
+                  <option value="primaria" ${r.ordine==='primaria'?'selected':''}>Primaria</option>
+                  <option value="secondaria" ${r.ordine==='secondaria'?'selected':''}>Secondaria</option>
+                </select>
+              </div>
+              <div><div style="font-size:0.72rem;color:#94a3b8;">Classe</div><input class="modal-edit-input" id="ef-classe" value="${_esc(r.classe)}"></div>
+              <div><div style="font-size:0.72rem;color:#94a3b8;">Sezione</div><input class="modal-edit-input" id="ef-sezione" value="${_esc(r.sezione)}"></div>
+              <div><div style="font-size:0.72rem;color:#94a3b8;">Codice Squadra</div><input class="modal-edit-input" id="ef-nomeSquadra" value="${_esc(r.nomeSquadra)}"></div>
+              <div style="grid-column:1/-1;"><div style="font-size:0.72rem;color:#94a3b8;">Studenti (uno per riga)</div>
+                <textarea class="modal-edit-textarea" id="ef-studenti">${_esc(studentiRighe)}</textarea>
+              </div>
+            </div>
+            <div style="margin-top:0.6rem;display:flex;gap:0.5rem;">
+              <button class="btn-modal-save" onclick="_saveEdit(${row},'iscrizioni')">💾 Salva</button>
+              <button class="btn-modal-cancel" onclick="_cancelEdit()">Annulla</button>
+            </div>
+          </td></tr>`;
+        }
+      }
+      // --- Vista normale ---
+      if (tab === 'intenzioni') {
+        return `<tr id="row-${row}">
+          <td>${_esc(r.nome)}<br><span style="color:#94a3b8;font-size:0.75rem;">${_esc(r.email)}</span></td>
+          <td>${_esc(r.istituto)}<br><span style="color:#94a3b8;font-size:0.75rem;">${_esc(r.plesso)}</span></td>
+          <td>${_esc(r.classe)} ${_esc(r.sezione)}<br><span style="color:#94a3b8;font-size:0.75rem;">${_esc(r.ordine)}</span></td>
+          <td style="text-align:center;">${r.nSquadre}</td>
+          <td><button class="btn-modal-edit" onclick="_startEdit(${row},'intenzioni')">✏️</button><button class="btn-modal-del" onclick="_deleteRecord(${row},'intenzioni','${_esc(r.nome)} — ${_esc(r.classe)} ${_esc(r.sezione)}')">🗑</button></td>
+        </tr>`;
+      } else {
+        const studenti = (r.studenti||'').split(';').map(s=>s.trim()).filter(Boolean);
+        return `<tr id="row-${row}">
+          <td>${_esc(r.docente)}<br><span style="color:#94a3b8;font-size:0.75rem;">${_esc(r.email)}</span></td>
+          <td>${_esc(r.istituto)}<br><span style="color:#94a3b8;font-size:0.75rem;">${_esc(r.classe)} ${_esc(r.sezione)} — ${_esc(r.ordine)}</span></td>
+          <td><code style="background:#4f46e5;color:white;padding:1px 6px;border-radius:4px;font-size:0.78rem;">${_esc(r.nomeSquadra)}</code></td>
+          <td style="font-size:0.78rem;color:#475569;">${studenti.join(', ')}</td>
+          <td><button class="btn-modal-edit" onclick="_startEdit(${row},'iscrizioni')">✏️</button><button class="btn-modal-del" onclick="_deleteRecord(${row},'iscrizioni','${_esc(r.nomeSquadra)}')">🗑</button></td>
+        </tr>`;
+      }
+    }
+
+    function _esc(s) { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+
+    function _startEdit(row, tab) {
+      if (_editingRow !== null) _cancelEdit();
+      _editingRow = row;
+      const lista = _modalData[tab] || [];
+      const r = lista.find(x => x.row === row);
+      if (!r) return;
+      const tr = document.getElementById('row-' + row);
+      if (!tr) return;
+      const editTr = document.createElement('tbody');
+      editTr.innerHTML = _rowHtml(r, tab, true);
+      tr.parentNode.insertBefore(editTr.firstChild, tr.nextSibling);
+      tr.style.display = 'none';
+    }
+
+    function _cancelEdit() {
+      if (_editingRow === null) return;
+      const row = _editingRow;
+      const editTr = document.getElementById('editrow-' + row);
+      const normTr = document.getElementById('row-' + row);
+      if (editTr) editTr.remove();
+      if (normTr) normTr.style.display = '';
+      _editingRow = null;
+    }
+
+    function _saveEdit(row, tab) {
+      const lista = _modalData[tab] || [];
+      const r = lista.find(x => x.row === row);
+      if (!r) return;
+      let data = {};
+      if (tab === 'intenzioni') {
+        data = {
+          email:    document.getElementById('ef-email').value.trim(),
+          nome:     document.getElementById('ef-nome').value.trim(),
+          istituto: document.getElementById('ef-istituto').value.trim(),
+          plesso:   document.getElementById('ef-plesso').value.trim(),
+          ordine:   document.getElementById('ef-ordine').value,
+          classe:   document.getElementById('ef-classe').value.trim(),
+          sezione:  document.getElementById('ef-sezione').value.trim(),
+          nSquadre: document.getElementById('ef-nSquadre').value,
+          note:     document.getElementById('ef-note').value.trim()
+        };
+        const action = 'modificaIntenzione';
+        _doSave(action, row, data, tab, r);
+      } else {
+        data = {
+          email:       document.getElementById('ef-email').value.trim(),
+          docente:     document.getElementById('ef-docente').value.trim(),
+          istituto:    document.getElementById('ef-istituto').value.trim(),
+          plesso:      document.getElementById('ef-plesso').value.trim(),
+          ordine:      document.getElementById('ef-ordine').value,
+          classe:      document.getElementById('ef-classe').value.trim(),
+          sezione:     document.getElementById('ef-sezione').value.trim(),
+          nomeSquadra: document.getElementById('ef-nomeSquadra').value.trim(),
+          studenti:    document.getElementById('ef-studenti').value
+        };
+        _doSave('modificaIscrizione', row, data, tab, r);
+      }
+    }
+
+    function _doSave(action, row, data, tab, rOld) {
+      const btn = document.querySelector('#editrow-' + row + ' .btn-modal-save');
+      if (btn) { btn.disabled = true; btn.textContent = 'Salvataggio...'; }
+      lkApi(API, { action, row, data: JSON.stringify(data), pwd: adminPwd })
+        .then(r => {
+          if (r.error) { alert('Errore: ' + r.error); if (btn) { btn.disabled=false; btn.textContent='💾 Salva'; } return; }
+          // Aggiorna cache locale
+          const lista = _modalData[tab];
+          const idx = lista.findIndex(x => x.row === rOld.row);
+          if (idx >= 0) {
+            if (tab === 'intenzioni') {
+              Object.assign(lista[idx], data);
+            } else {
+              const studentiArr = data.studenti.split('\n').map(s=>s.trim()).filter(Boolean);
+              Object.assign(lista[idx], data, { studenti: studentiArr.join('; '), nStudenti: studentiArr.length });
+            }
+          }
+          _cancelEdit();
+          _renderModal(lista, tab);
+        })
+        .catch(err => { alert('Errore: ' + err.message); if (btn) { btn.disabled=false; btn.textContent='💾 Salva'; } });
+    }
+
+    function _deleteRecord(row, tab, label) {
+      if (!confirm('Eliminare "' + label + '"?\nQuesta operazione è irreversibile.')) return;
+      const action = tab === 'intenzioni' ? 'eliminaIntenzione' : 'eliminaIscrizione';
+      lkApi(API, { action, row, pwd: adminPwd })
+        .then(r => {
+          if (r.error) { alert('Errore: ' + r.error); return; }
+          // Rimuovi dalla cache e ri-renderizza
+          _modalData[tab] = (_modalData[tab]||[]).filter(x => x.row !== row);
+          // Ricalcola numeri riga per i successivi (le righe sul sheet si spostano)
+          (_modalData[tab]||[]).forEach(x => { if (x.row > row) x.row--; });
+          _renderModal(_modalData[tab], tab);
+        })
+        .catch(err => alert('Errore: ' + err.message));
+    }
+
+    // Aggiorna i vecchi bottoni per aprire il modal
+    function viewIntenzioni() { apriModalIscritti('intenzioni'); }
+    function viewIscrizioni() { apriModalIscritti('iscrizioni'); }
+
   </script>
+
+  <!-- MODAL GESTIONE ISCRITTI -->
+  <div id="modalIscritti" class="modal-overlay" style="display:none;" onclick="if(event.target===this)chiudiModal()">
+    <div class="modal-box">
+      <div class="modal-header">
+        <h3>Gestione Iscritti</h3>
+        <button class="modal-close" onclick="chiudiModal()">✕ Chiudi</button>
+      </div>
+      <div class="modal-tabs">
+        <button id="tabIntenzioniBtn" class="modal-tab active" onclick="_switchTabModal('intenzioni')">📝 Intenzioni</button>
+        <button id="tabIscrizioniBtn" class="modal-tab" onclick="_switchTabModal('iscrizioni')">👥 Iscrizioni</button>
+      </div>
+      <div class="modal-search">
+        <input type="text" id="searchModal" placeholder="🔍 Cerca per nome, istituto, classe, codice squadra..." oninput="_renderModal(_modalData[_modalTab]||[], _modalTab)">
+      </div>
+      <div id="modalCount" class="modal-count"></div>
+      <div id="modalBody" class="modal-body">
+        <div class="modal-empty">Seleziona una tab per caricare i dati.</div>
+      </div>
+    </div>
+  </div>
 </body>
 </html>

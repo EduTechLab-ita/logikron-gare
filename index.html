@@ -272,8 +272,11 @@
         disabilita(btn2, '2. Iscrivi la Squadra');
       } else if (fase === 1) {
         disabilita(btn2, '2. Iscrivi la Squadra (apre dopo le intenzioni)');
+      } else if (fase >= 3) {
+        disabilita(btn1, '1. Intenzioni chiuse');
+        disabilita(btn2, '2. Iscrizioni chiuse');
       }
-      // fase >= 2: entrambi attivi
+      // fase === 2: entrambi attivi
     }
 
     // Legge fase dal backend, con fallback a config.js
