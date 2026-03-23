@@ -406,7 +406,7 @@
             <div class="admin-card-icon">🖥️</div>
             <h4 class="admin-card-title">Tabellone Live</h4>
             <p class="admin-card-desc">Visualizza punteggi in tempo reale</p>
-            <a href="tabellone.html" target="_blank" class="btn btn-success">Apri Tabellone</a>
+            <button class="btn btn-success" onclick="apriTabelloneAdmin()">Apri Tabellone</button>
           </div>
           <div class="admin-card">
             <div class="admin-card-icon">🎯</div>
@@ -1228,6 +1228,11 @@
     function setupNuovoAnno() { alert('Setup Nuovo Anno — Da implementare'); }
     function openConfig()     { alert('Configurazione — Da implementare'); }
     function createGara()     { document.getElementById('sectionControlloGara').scrollIntoView({ behavior: 'smooth', block: 'start' }); }
+    function apriTabelloneAdmin() {
+      const sel = document.getElementById('selGaraLive');
+      const gid = sel && sel.value ? '?garaId=' + sel.value : '';
+      window.open('tabellone.html' + gid, '_blank');
+    }
     function viewClassifica() { alert('Classifica — Da implementare'); }
     function generateAttestati() { alert('Genera Attestati — Da implementare'); }
     function viewStatistiche()   { alert('Statistiche — Da implementare'); }

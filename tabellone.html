@@ -479,15 +479,23 @@
             document.getElementById('tabelloneNascosto').style.display = 'none';
           }
 
-          // Gara conclusa → ferma polling e mostra classifica
-          if (data.gara && (data.gara.stato === 'conclusa' || secondiLocali === 0)) {
+          // Gara in preparazione → mostra squadre, nessun timer
+          if (data.gara && data.gara.stato === 'preparazione') {
+            const elT = document.getElementById('timerDisplay');
+            if (elT) { elT.textContent = '⏳'; elT.style.color = '#fbbf24'; }
+            document.getElementById('tabelloneVisibile').style.display = '';
+            document.getElementById('tabelloneNascosto').style.display = 'none';
+            // Non avviare timer locale, continua polling per captare GO
+          } else if (data.gara && data.gara.stato === 'conclusa') {
+            // Gara conclusa → ferma polling e mostra classifica finale
             clearInterval(pollingInterval);
             document.getElementById('tabelloneVisibile').style.display = '';
             document.getElementById('tabelloneNascosto').style.display = 'none';
             document.getElementById('timerDisplay').textContent = '00:00';
+          } else {
+            // Gara attiva → avvia timer locale
+            if (!timerInterval) timerInterval = setInterval(tickTimer, 1000);
           }
-
-          if (!timerInterval) timerInterval = setInterval(tickTimer, 1000);
         }).catch(() => {});
     }
 
@@ -599,12 +607,20 @@
 
     // ==================== INIT ====================
 
-    lkApi(API, { action: 'getGaraAttiva' })
-      .then(g => {
-        if (g && g.id) { garaId = g.id; avviaPolling(); }
-        else mostraAttesa();
-      })
-      .catch(() => mostraAttesa());
+    // Se ?garaId= è presente nell'URL (link da admin), usa quello direttamente
+    const _urlGaraId = new URLSearchParams(window.location.search).get('garaId');
+    if (_urlGaraId) {
+      garaId = _urlGaraId;
+      avviaPolling();
+    } else {
+      // Comportamento pubblico: auto-discover gara attiva
+      lkApi(API, { action: 'getGaraAttiva' })
+        .then(g => {
+          if (g && g.id) { garaId = g.id; avviaPolling(); }
+          else mostraAttesa();
+        })
+        .catch(() => mostraAttesa());
+    }
   </script>
 </body>
 </html>
