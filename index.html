@@ -223,6 +223,16 @@
 
     </div>
 
+    <!-- SEZIONE GARE -->
+    <section class="mt-3">
+      <div class="card-header" style="margin-bottom:0.75rem;">
+        <h2 class="card-title" style="font-size:1.1rem;">🏆 Gare</h2>
+      </div>
+      <div id="sezioneGare">
+        <p style="color:var(--lk-text-muted); font-size:0.9rem;">Caricamento...</p>
+      </div>
+    </section>
+
     <!-- FOOTER -->
     <footer class="footer">
       <p>
@@ -283,6 +293,48 @@
     lkApi(LOGIKRON_CONFIG.webAppUrls.gare, { action: 'getFase' })
       .then(r => applicaFase(r.fase))
       .catch(() => applicaFase(LOGIKRON_CONFIG.faseAttiva));
+
+    // Carica lista gare pubblica
+    (function caricaGarePublic() {
+      const div = document.getElementById('sezioneGare');
+      lkApi(LOGIKRON_CONFIG.webAppUrls.gare, { action: 'getListaGare' })
+        .then(function(gare) {
+          if (!Array.isArray(gare) || gare.length === 0) {
+            div.innerHTML = '<p style="color:var(--lk-text-muted); font-size:0.9rem;">Nessuna gara programmata al momento.</p>';
+            return;
+          }
+          const stati = {
+            preparazione: { label: 'Programmata', bg: '#fef3c7', col: '#92400e' },
+            attiva:       { label: '🟢 IN CORSO', bg: '#d1fae5', col: '#065f46' },
+            conclusa:     { label: 'Conclusa',    bg: '#f1f5f9', col: '#64748b' }
+          };
+          // Mostra gare attive prima, poi preparazione, poi concluse
+          const ordine = { attiva: 0, preparazione: 1, conclusa: 2 };
+          gare.sort(function(a, b) {
+            return (ordine[a.stato] ?? 9) - (ordine[b.stato] ?? 9);
+          });
+          let html = '<div style="display:flex; flex-direction:column; gap:0.6rem;">';
+          gare.forEach(function(g) {
+            const s = stati[g.stato] || { label: g.stato, bg: '#f1f5f9', col: '#64748b' };
+            const dataDisplay = g.dataGara ? g.dataGara.replace('T', ' ').substring(0, 16) : g.data;
+            html += '<div style="display:flex; align-items:center; gap:0.75rem; padding:0.65rem 0.9rem; background:white; border:1px solid #e2e8f0; border-radius:10px; flex-wrap:wrap;">';
+            html += '<span style="display:inline-block; padding:2px 10px; border-radius:9999px; font-size:0.72rem; font-weight:700; background:' + s.bg + '; color:' + s.col + ';">' + s.label + '</span>';
+            html += '<span style="font-weight:600; font-size:0.9rem; flex:1;">' + _hesc(g.nome) + '</span>';
+            html += '<span style="font-size:0.78rem; color:#94a3b8;">' + dataDisplay + '</span>';
+            if (g.stato === 'attiva') {
+              html += '<a href="gara.html" class="btn btn-primary" style="padding:4px 14px; font-size:0.82rem;">Entra →</a>';
+            }
+            html += '</div>';
+          });
+          html += '</div>';
+          div.innerHTML = html;
+        })
+        .catch(function() {
+          div.innerHTML = '<p style="color:var(--lk-text-muted); font-size:0.9rem;">Impossibile caricare le gare.</p>';
+        });
+
+      function _hesc(s) { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+    })();
   </script>
 </body>
 </html>

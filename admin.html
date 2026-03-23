@@ -1223,22 +1223,27 @@
     let garaLiveCorrente = null;
     let pollingInterval = null;
     let timerInterval = null;
+    let _gareMap = {}; // cache garaId → oggetto gara
+
+    function _buildOptLabel(g) {
+      const dataLabel = g.dataGara ? g.dataGara.replace('T', ' ').substring(0, 16) : g.data;
+      return g.nome + ' — ' + g.stato + ' (' + dataLabel + ')';
+    }
 
     function caricaListaGare() {
       const sel = document.getElementById('selGaraLive');
       lkApi(API, { action: 'getListaGare' }).then(gare => {
+        _gareMap = {};
         const valPrecedente = sel.value;
         sel.innerHTML = '<option value="">-- Seleziona gara --</option>';
         if (!Array.isArray(gare) || gare.length === 0) return;
-        // Più recenti prima
         [...gare].reverse().forEach(g => {
+          _gareMap[g.id] = g;
           const opt = document.createElement('option');
           opt.value = g.id;
-          const dataLabel = g.dataGara ? g.dataGara.replace('T', ' ').substring(0, 16) : g.data;
-          opt.textContent = g.nome + ' — ' + g.stato + ' (' + dataLabel + ')';
+          opt.textContent = _buildOptLabel(g);
           sel.appendChild(opt);
         });
-        // Ripristina selezione se ancora presente
         if (valPrecedente && [...sel.options].some(o => o.value === valPrecedente)) {
           sel.value = valPrecedente;
         }
@@ -1249,6 +1254,11 @@
       const sel = document.getElementById('selGaraLive');
       stopPollingRisposte();
       stopTimerGara();
+
+      // Chiudi il form Nuova Gara se è aperto
+      const form = document.getElementById('formNuovaGara');
+      if (form && form.style.display !== 'none') toggleFormNuovaGara();
+
       if (!sel.value) {
         document.getElementById('pannelloGaraLive').style.display = 'none';
         return;
@@ -1258,16 +1268,33 @@
       document.getElementById('pannelloGaraLive').style.display = '';
       document.getElementById('garaLiveNome').textContent = nomeGara;
       document.getElementById('garaLiveId').textContent = 'ID: ' + garaId;
+      document.getElementById('garaLiveStato').innerHTML = '<span style="color:#94a3b8;font-size:0.8rem;">Caricamento...</span>';
       document.getElementById('logRisposte').innerHTML =
         '<tr><td colspan="8" style="text-align:center;color:var(--lk-text-muted);padding:1.5rem;">Caricamento...</td></tr>';
 
-      // Carica dettagli gara
-      lkApi(API, { action: 'getListaGare' }).then(gare => {
-        const gara = (gare || []).find(g => g.id === garaId);
-        if (!gara) return;
-        garaLiveCorrente = gara;
-        aggiornaUIGaraLive(gara);
-      }).catch(() => {});
+      // Scorri al pannello
+      document.getElementById('pannelloGaraLive').scrollIntoView({ behavior: 'smooth', block: 'start' });
+
+      // Usa cache se disponibile, altrimenti ricarica
+      const garaCache = _gareMap[garaId];
+      if (garaCache) {
+        garaLiveCorrente = garaCache;
+        aggiornaUIGaraLive(garaCache);
+      } else {
+        lkApi(API, { action: 'getListaGare' }).then(gare => {
+          if (!Array.isArray(gare)) return;
+          gare.forEach(g => { _gareMap[g.id] = g; });
+          const gara = _gareMap[garaId];
+          if (!gara) {
+            document.getElementById('garaLiveStato').innerHTML = '<span style="color:#dc2626;">Gara non trovata</span>';
+            return;
+          }
+          garaLiveCorrente = gara;
+          aggiornaUIGaraLive(gara);
+        }).catch(() => {
+          document.getElementById('garaLiveStato').innerHTML = '<span style="color:#dc2626;">Errore caricamento</span>';
+        });
+      }
 
       aggiornaLogRisposte();
     }
