@@ -25,9 +25,7 @@
     .reg-header .subtitle { font-size: 0.95rem; opacity: 0.85; margin: 0; }
     .reg-header .anno { background: rgba(255,255,255,0.2); padding: 3px 14px; border-radius: 9999px; font-size: 0.85rem; display: inline-block; margin-top: 0.5rem; }
 
-    .reg-section {
-      margin-bottom: 1.5rem;
-    }
+    .reg-section { margin-bottom: 1.5rem; }
     .reg-section-title {
       font-size: 1.1rem;
       font-weight: 700;
@@ -42,36 +40,15 @@
     .reg-section-title .icon { font-size: 1.2rem; }
 
     /* Tabella parametri */
-    .params-table {
-      width: 100%;
-      border-collapse: collapse;
-      font-size: 0.95rem;
-    }
-    .params-table th {
-      background: #4f46e5;
-      color: white;
-      padding: 0.5rem 0.75rem;
-      text-align: left;
-      font-weight: 600;
-    }
-    .params-table td {
-      padding: 0.5rem 0.75rem;
-      border-bottom: 1px solid #e2e8f0;
-    }
+    .params-table { width: 100%; border-collapse: collapse; font-size: 0.95rem; }
+    .params-table th { background: #4f46e5; color: white; padding: 0.5rem 0.75rem; text-align: left; font-weight: 600; }
+    .params-table td { padding: 0.5rem 0.75rem; border-bottom: 1px solid #e2e8f0; }
     .params-table tr:nth-child(even) td { background: #f8fafc; }
     .params-table td:last-child { font-weight: 600; color: #4f46e5; }
 
     /* Box ordini scolastici */
-    .ordine-grid {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 1rem;
-    }
-    .ordine-box {
-      border-radius: var(--lk-radius-md);
-      padding: 1rem;
-      border: 2px solid;
-    }
+    .ordine-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+    .ordine-box { border-radius: var(--lk-radius-md); padding: 1rem; border: 2px solid; }
     .ordine-primaria { border-color: #f59e0b; background: #fffbeb; }
     .ordine-secondaria { border-color: #3b82f6; background: #eff6ff; }
     .ordine-box h3 { font-size: 1rem; margin: 0 0 0.5rem 0; }
@@ -80,17 +57,18 @@
     .ordine-box ul { margin: 0; padding-left: 1.25rem; font-size: 0.9rem; }
     .ordine-box li { margin-bottom: 0.2rem; }
 
+    /* Ruoli squadra */
+    .ruoli-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; margin-top: 0.75rem; }
+    .ruolo-box { border-radius: var(--lk-radius-md); padding: 0.85rem 1rem; font-size: 0.9rem; }
+    .ruolo-capitano { background: #f0fdf4; border: 1.5px solid #22c55e; }
+    .ruolo-capitano h4 { color: #15803d; margin: 0 0 0.25rem 0; font-size: 0.95rem; }
+    .ruolo-consegnatore { background: #eff6ff; border: 1.5px solid #3b82f6; }
+    .ruolo-consegnatore h4 { color: #1d4ed8; margin: 0 0 0.25rem 0; font-size: 0.95rem; }
+    .ruolo-box p { margin: 0; color: #475569; line-height: 1.45; }
+
     /* Fasi gara */
-    .fase-timeline {
-      display: flex;
-      flex-direction: column;
-      gap: 0.75rem;
-    }
-    .fase-item {
-      display: flex;
-      gap: 0.75rem;
-      align-items: flex-start;
-    }
+    .fase-timeline { display: flex; flex-direction: column; gap: 0.75rem; }
+    .fase-item { display: flex; gap: 0.75rem; align-items: flex-start; }
     .fase-badge-time {
       background: #4f46e5;
       color: white;
@@ -107,40 +85,52 @@
     .fase-desc strong { color: #1e293b; }
 
     /* Punteggio */
-    .score-box {
-      background: linear-gradient(135deg, #ede9fe, #ddd6fe);
-      border-radius: var(--lk-radius-md);
-      padding: 1rem;
-      margin-bottom: 0.75rem;
-    }
+    .score-box { background: linear-gradient(135deg, #ede9fe, #ddd6fe); border-radius: var(--lk-radius-md); padding: 1rem; margin-bottom: 0.75rem; }
     .score-box h4 { margin: 0 0 0.5rem 0; color: #4f46e5; font-size: 0.95rem; }
     .score-box p { margin: 0; font-size: 0.9rem; line-height: 1.6; }
 
-    .jolly-box {
-      background: linear-gradient(135deg, #fef3c7, #fde68a);
-      border-radius: var(--lk-radius-md);
-      padding: 1rem;
-      border: 2px solid #f59e0b;
-    }
+    .jolly-box { background: linear-gradient(135deg, #fef3c7, #fde68a); border-radius: var(--lk-radius-md); padding: 1rem; border: 2px solid #f59e0b; }
     .jolly-box h4 { margin: 0 0 0.5rem 0; color: #92400e; font-size: 0.95rem; display: flex; align-items: center; gap: 0.4rem; }
     .jolly-box p { margin: 0; font-size: 0.9rem; line-height: 1.6; }
 
-    .bonus-grid {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 0.75rem;
-    }
-    .bonus-box {
-      border-radius: var(--lk-radius-md);
-      padding: 0.75rem;
-      font-size: 0.85rem;
-    }
+    .bonus-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; }
+    .bonus-box { border-radius: var(--lk-radius-md); padding: 0.75rem; font-size: 0.85rem; }
     .bonus-pos { background: #d1fae5; border: 1px solid #10b981; }
     .bonus-pos h5 { color: #065f46; margin: 0 0 0.4rem 0; }
     .bonus-comp { background: #fee2e2; border: 1px solid #ef4444; }
     .bonus-comp h5 { color: #991b1b; margin: 0 0 0.4rem 0; }
     .bonus-box ul { margin: 0; padding-left: 1.1rem; }
     .bonus-box li { margin-bottom: 0.15rem; }
+
+    /* Materiali ammessi / vietati */
+    .materiali-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+    .materiali-box { border-radius: var(--lk-radius-md); padding: 1rem; }
+    .materiali-ammessi { background: #f0fdf4; border: 2px solid #22c55e; }
+    .materiali-ammessi h4 { color: #15803d; margin: 0 0 0.6rem 0; font-size: 0.95rem; display: flex; align-items: center; gap: 0.4rem; }
+    .materiali-vietati { background: #fff1f2; border: 2px solid #f43f5e; }
+    .materiali-vietati h4 { color: #be123c; margin: 0 0 0.6rem 0; font-size: 0.95rem; display: flex; align-items: center; gap: 0.4rem; }
+    .materiali-box ul { margin: 0; padding-left: 1.2rem; font-size: 0.88rem; }
+    .materiali-box li { margin-bottom: 0.3rem; line-height: 1.4; }
+
+    .esclusione-box {
+      background: #fff1f2;
+      border-left: 4px solid #f43f5e;
+      padding: 0.75rem 1rem;
+      border-radius: 0 var(--lk-radius-sm) var(--lk-radius-sm) 0;
+      font-size: 0.88rem;
+      color: #be123c;
+      font-weight: 600;
+      margin-top: 0.75rem;
+    }
+    .comportamento-box {
+      background: #fefce8;
+      border-left: 4px solid #eab308;
+      padding: 0.75rem 1rem;
+      border-radius: 0 var(--lk-radius-sm) var(--lk-radius-sm) 0;
+      font-size: 0.88rem;
+      color: #713f12;
+      margin-top: 0.75rem;
+    }
 
     /* Note finali */
     .nota-box {
@@ -152,14 +142,46 @@
       color: #475569;
       margin-bottom: 0.5rem;
     }
+    .nota-box-indigo {
+      background: #eef2ff;
+      border-left: 4px solid #6366f1;
+      padding: 0.75rem 1rem;
+      border-radius: 0 var(--lk-radius-sm) var(--lk-radius-sm) 0;
+      font-size: 0.85rem;
+      color: #3730a3;
+      margin-bottom: 0.5rem;
+    }
 
-    /* Pulsante stampa */
-    .print-bar {
-      display: flex;
-      justify-content: flex-end;
-      gap: 0.75rem;
+    /* Classifica e spareggio */
+    .classifica-box { background: linear-gradient(135deg, #f0fdf4, #dcfce7); border-radius: var(--lk-radius-md); padding: 1rem; margin-bottom: 0.75rem; border: 1px solid #bbf7d0; }
+    .classifica-box h4 { margin: 0 0 0.5rem 0; color: #15803d; font-size: 0.95rem; }
+    .classifica-box p { margin: 0; font-size: 0.9rem; }
+    .spareggio-list { margin: 0; padding-left: 0; list-style: none; font-size: 0.9rem; }
+    .spareggio-list li { display: flex; align-items: flex-start; gap: 0.6rem; padding: 0.35rem 0; border-bottom: 1px solid #e2e8f0; }
+    .spareggio-list li:last-child { border-bottom: none; }
+    .spareggio-num { background: #4f46e5; color: white; border-radius: 50%; width: 22px; height: 22px; display: flex; align-items: center; justify-content: center; font-size: 0.75rem; font-weight: 700; flex-shrink: 0; margin-top: 1px; }
+
+    /* Attestati */
+    .attestati-box { background: linear-gradient(135deg, #f5f3ff, #ede9fe); border-radius: var(--lk-radius-md); padding: 1rem; border: 1px solid #c4b5fd; }
+    .attestati-box h4 { color: #4f46e5; margin: 0 0 0.5rem 0; font-size: 0.95rem; }
+    .attestati-box ul { margin: 0; padding-left: 1.2rem; font-size: 0.9rem; }
+    .attestati-box li { margin-bottom: 0.3rem; }
+
+    /* Buona Gara */
+    .buona-gara {
+      background: linear-gradient(135deg, #4f46e5, #7c3aed, #db2777);
+      border-radius: var(--lk-radius-lg);
+      padding: 2rem 1.5rem;
+      text-align: center;
+      color: white;
+      margin-top: 2rem;
       margin-bottom: 1.5rem;
     }
+    .buona-gara h2 { font-size: 2rem; margin: 0 0 0.5rem 0; letter-spacing: 0.05em; }
+    .buona-gara p { margin: 0; font-size: 0.95rem; opacity: 0.9; }
+
+    /* Pulsante stampa */
+    .print-bar { display: flex; justify-content: flex-end; gap: 0.75rem; margin-bottom: 1.5rem; }
 
     /* ===== STAMPA ===== */
     @media print {
@@ -170,6 +192,7 @@
       .text-muted { color: #64748b !important; }
       .container { max-width: 100% !important; padding: 0 !important; }
       .reg-header { border-radius: 0 !important; margin: 0 0 1rem 0 !important; }
+      .buona-gara { border-radius: 0 !important; margin: 1rem 0 0 0 !important; }
       .card {
         backdrop-filter: none !important;
         -webkit-backdrop-filter: none !important;
@@ -182,6 +205,8 @@
       .reg-section { page-break-inside: avoid; }
       .ordine-grid { grid-template-columns: 1fr 1fr; }
       .bonus-grid { grid-template-columns: 1fr 1fr; }
+      .materiali-grid { grid-template-columns: 1fr 1fr; }
+      .ruoli-grid { grid-template-columns: 1fr 1fr; }
       @page {
         margin: 1.5cm 1.5cm 2.2cm 1.5cm;
         @bottom-left {
@@ -200,7 +225,7 @@
     }
 
     @media (max-width: 600px) {
-      .ordine-grid, .bonus-grid { grid-template-columns: 1fr; }
+      .ordine-grid, .bonus-grid, .materiali-grid, .ruoli-grid { grid-template-columns: 1fr; }
     }
   </style>
 </head>
@@ -233,8 +258,8 @@
         il pensiero logico e l'interesse per la matematica in modo coinvolgente e competitivo.
       </p>
       <p class="mt-2">
-        Ogni squadra affronta una serie di quesiti logico-matematici in un tempo limite.
-        Il punteggio dipende dalla velocità e dalla correttezza delle risposte.
+        Ogni squadra affronta una serie di quesiti logico-matematici in un tempo limite. Il punteggio
+        dipende dalla velocità e dalla correttezza delle risposte.
       </p>
     </div>
 
@@ -268,10 +293,64 @@
       <div class="nota-box mt-2">
         <strong>Composizione squadra:</strong> da 5 a 9 studenti per squadra.
         Ogni classe può iscrivere più squadre. Le gare di primaria e secondaria si svolgono separatamente.
+        La partecipazione è aperta a tutti gli alunni che desiderino partecipare, senza selezione di merito.
+      </div>
+
+      <div class="ruoli-grid">
+        <div class="ruolo-box ruolo-capitano">
+          <h4>🎖️ Capitano</h4>
+          <p>Rappresenta la squadra verso l'insegnante referente. Può richiedere chiarimenti sul testo dei quesiti nei tempi previsti.</p>
+        </div>
+        <div class="ruolo-box ruolo-consegnatore">
+          <h4>⌨️ Consegnatore</h4>
+          <p>Si occupa di inserire le risposte della squadra sulla piattaforma digitale LogiKron.</p>
+        </div>
       </div>
     </div>
 
-    <!-- 3. PARAMETRI GARA -->
+    <!-- 3. MATERIALI E COMPORTAMENTO -->
+    <div class="card reg-section">
+      <h2 class="reg-section-title"><span class="icon">📐</span> Materiali e comportamento</h2>
+
+      <div class="materiali-grid">
+        <div class="materiali-box materiali-ammessi">
+          <h4>✅ Strumenti ammessi</h4>
+          <ul>
+            <li>Fogli per la brutta (forniti <em>esclusivamente</em> dall'insegnante referente)</li>
+            <li>Biro e penne</li>
+            <li>Matite e temperini</li>
+            <li>Gomme per cancellare</li>
+            <li>Righelli</li>
+            <li>Goniometri</li>
+            <li>Compassi</li>
+          </ul>
+        </div>
+        <div class="materiali-box materiali-vietati">
+          <h4>🚫 Strumenti vietati</h4>
+          <ul>
+            <li>Calcolatrici (di qualsiasi tipo)</li>
+            <li>Telefoni cellulari</li>
+            <li>Tablet personali</li>
+            <li>Smartwatch e dispositivi indossabili</li>
+            <li>Qualsiasi altro strumento digitale di calcolo</li>
+            <li>Libri, appunti, schede personali</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="esclusione-box">
+        ⚠️ L'utilizzo di qualsiasi strumento digitale o materiale non autorizzato comporta
+        l'<strong>esclusione immediata dell'intera squadra</strong> dalla gara.
+      </div>
+
+      <div class="comportamento-box mt-2">
+        💬 I componenti di ciascuna squadra possono collaborare tra loro nella risoluzione dei quesiti,
+        ma <strong>senza disturbare le squadre vicine</strong>, pena ammonimento e penalità.
+        L'insegnante referente presente in aula si rende garante della regolarità dello svolgimento.
+      </div>
+    </div>
+
+    <!-- 4. PARAMETRI GARA -->
     <div class="card reg-section">
       <h2 class="reg-section-title"><span class="icon">⚙️</span> Parametri della gara</h2>
       <table class="params-table">
@@ -291,30 +370,35 @@
       </table>
     </div>
 
-    <!-- 4. SVOLGIMENTO -->
+    <!-- 5. SVOLGIMENTO -->
     <div class="card reg-section">
       <h2 class="reg-section-title"><span class="icon">⏱️</span> Svolgimento della gara</h2>
       <div class="fase-timeline">
         <div class="fase-item">
           <span class="fase-badge-time">0 – 10'</span>
           <div class="fase-desc">
-            <strong>Scelta del Jolly.</strong> Ogni squadra sceglie una domanda come Jolly entro i primi 10 minuti.
-            Il Jolly raddoppia il punteggio (positivo o negativo) per quella domanda. Dopo 10 minuti il Jolly si blocca automaticamente.
+            <strong>Scelta del Jolly.</strong> Ogni squadra sceglie una domanda come Jolly entro i primi 10
+            minuti: il <strong>consegnatore</strong> provvede a inserirla nell'apposita sezione della piattaforma LogiKron.
+            Il Jolly raddoppia il punteggio (positivo o negativo) per quella domanda. Dopo
+            10 minuti il Jolly si blocca automaticamente e non è più modificabile.
+            Se allo scadere dei 10 minuti la squadra non ha ancora scelto il Jolly,
+            il sistema assegna automaticamente un <strong>quesito scelto a caso</strong> come Jolly d'ufficio.
           </div>
         </div>
         <div class="fase-item">
           <span class="fase-badge-time">0 – 20'</span>
           <div class="fase-desc">
-            <strong>Lettura quesiti.</strong> I primi 20 minuti sono dedicati alla lettura e comprensione dei problemi.
-            Le risposte possono essere inviate in qualsiasi momento durante l'intera durata della gara.
+            <strong>Lettura quesiti.</strong> I primi 20 minuti sono dedicati alla lettura e comprensione dei
+            problemi. Le risposte possono essere inviate in qualsiasi momento durante l'intera
+            durata della gara.
           </div>
         </div>
         <div class="fase-item">
           <span class="fase-badge-time">0 – 60'</span>
           <div class="fase-desc">
-            <strong>Gara in corso.</strong> Ogni squadra invia le risposte tramite la piattaforma digitale.
-            Il valore di ogni quesito aumenta di 2 punti ogni minuto: rispondere prima conviene.
-            È possibile rispondere più volte allo stesso quesito (con penalità ad ogni risposta errata).
+            <strong>Gara in corso.</strong> Ogni squadra invia le risposte tramite la piattaforma digitale. Il valore
+            di ogni quesito aumenta di 2 punti ogni minuto: rispondere prima conviene. È
+            possibile rispondere più volte allo stesso quesito (con penalità ad ogni risposta errata).
           </div>
         </div>
         <div class="fase-item">
@@ -327,7 +411,7 @@
       </div>
     </div>
 
-    <!-- 5. PUNTEGGIO -->
+    <!-- 6. PUNTEGGIO -->
     <div class="card reg-section">
       <h2 class="reg-section-title"><span class="icon">📊</span> Sistema di punteggio</h2>
 
@@ -343,9 +427,11 @@
       <div class="score-box">
         <h4>Risposta errata</h4>
         <p>
-          Ogni risposta errata sottrae <strong>5 punti</strong> al punteggio totale della squadra.
-          È possibile ritentare lo stesso quesito più volte, ma ogni tentativo errato costa 5 punti.
-          Se il quesito è il Jolly, la penalità è <strong>-10 punti</strong> (doppia).
+          Ogni risposta errata sottrae <strong>5 punti</strong> al punteggio totale della squadra. È possibile ritentare lo
+          stesso quesito più volte, ma ogni tentativo errato costa 5 punti. Se il quesito è il Jolly, la
+          penalità è <strong>-10 punti</strong> (doppia).
+          Se una squadra consegna più risposte corrette allo stesso quesito, il punteggio viene
+          assegnato solo la prima volta.
         </p>
       </div>
 
@@ -378,17 +464,55 @@
       </div>
     </div>
 
-    <!-- 6. NOTE TECNICHE -->
+    <!-- 7. CLASSIFICA E PARITÀ -->
+    <div class="card reg-section">
+      <h2 class="reg-section-title"><span class="icon">🏅</span> Classifica e parità</h2>
+
+      <div class="classifica-box">
+        <h4>🥇 Vince la squadra che totalizza il punteggio più elevato!</h4>
+        <p>
+          Il sistema informatizzato calcola automaticamente il valore e l'assegnazione dei punteggi
+          in tempo reale. Un tabellone live mostra la classifica aggiornata durante tutta la gara,
+          fatta eccezione per gli ultimi 5 minuti.
+        </p>
+      </div>
+
+      <p class="mb-2" style="font-size:0.9rem;"><strong>In caso di parità nelle prime posizioni al termine della gara:</strong></p>
+      <ol class="spareggio-list">
+        <li>
+          <span class="spareggio-num">1</span>
+          <span>Prevarrà la squadra che ha risposto correttamente a un <strong>maggior numero di quesiti</strong>.</span>
+        </li>
+        <li>
+          <span class="spareggio-num">2</span>
+          <span>In caso di ulteriore parità, prevarrà la squadra che ha consegnato un <strong>minor numero di risposte errate</strong>.</span>
+        </li>
+        <li>
+          <span class="spareggio-num">3</span>
+          <span>In caso di ulteriore parità, si procederà a un <strong>sorteggio</strong>.</span>
+        </li>
+      </ol>
+    </div>
+
+    <!-- 8. MODALITÀ DIGITALE E QUESITI -->
     <div class="card reg-section">
       <h2 class="reg-section-title"><span class="icon">💻</span> Modalità digitale</h2>
       <p class="mb-2">
         La gara si svolge interamente tramite la piattaforma <strong>LogiKron</strong>, accessibile da qualsiasi
-        browser su PC, tablet o LIM. Ogni squadra riceve un <strong>codice di accesso univoco</strong> (6 caratteri)
-        da inserire nella pagina "Pannello Squadra".
+        browser su PC, tablet o LIM. Ogni squadra riceve un <strong>codice di accesso univoco</strong> da inserire
+        nella pagina "Pannello Squadra".
       </p>
+
+      <div class="nota-box-indigo">
+        <strong>📧 Quesiti inviati la sera prima:</strong> i testi dei quesiti vengono inviati via mail
+        dall'organizzazione all'insegnante referente di ogni istituto la sera precedente la gara.
+        L'insegnante provvede a stamparli e a consegnarli in formato cartaceo ai capitani delle squadre
+        all'inizio della gara. Questo vale sia per la primaria che per la secondaria.
+      </div>
+
       <div class="nota-box">
-        <strong>Pannello Squadra:</strong> ciascuna squadra usa un dispositivo (tablet o PC) per inviare le risposte.
-        Il docente ha a disposizione il Tabellone Live da proiettare in aula sulla LIM.
+        <strong>Pannello Squadra:</strong> ciascuna squadra usa un dispositivo (tablet o PC) per inviare le risposte
+        tramite il consegnatore. Il docente ha a disposizione il Tabellone Live da proiettare sulla LIM.
       </div>
       <div class="nota-box">
         <strong>Formato risposte:</strong> tutte le risposte sono numeri interi da <code>0000</code> a <code>9999</code>.
@@ -398,6 +522,76 @@
         <strong>Connessione internet:</strong> è richiesta una connessione stabile durante tutta la durata della gara.
         Si consiglia di testare la connessione del dispositivo prima dell'inizio.
       </div>
+    </div>
+
+    <!-- 9. CHIARIMENTI SUI QUESITI -->
+    <div class="card reg-section">
+      <h2 class="reg-section-title"><span class="icon">🙋</span> Chiarimenti sui quesiti</h2>
+      <p class="mb-2" style="font-size:0.9rem;">
+        Eventuali dubbi sul <strong>testo</strong> dei quesiti potranno essere richiesti esclusivamente
+        dal <strong>capitano</strong> all'insegnante referente presente in classe, entro i primi
+        <strong>20 minuti</strong> dall'inizio della gara.
+      </p>
+      <div class="nota-box">
+        <strong>Nota:</strong> i chiarimenti sono ammessi solo sul <em>testo</em> dei quesiti (interpretazione
+        della consegna), non sui calcoli matematici o sulle strategie risolutive.
+      </div>
+      <div class="nota-box">
+        <strong>Richieste fuori tempo:</strong> le richieste di chiarimento oltre i primi 20 minuti non
+        vengono accettate. Si consiglia di leggere attentamente tutti i quesiti all'inizio della gara.
+      </div>
+    </div>
+
+    <!-- 10. PREPARAZIONE E ATTESTATI -->
+    <div class="card reg-section">
+      <h2 class="reg-section-title"><span class="icon">📋</span> Preparazione, iscrizioni e attestati</h2>
+
+      <p class="mb-2" style="font-size:0.9rem;">
+        L'organizzazione della preparazione degli alunni è affidata ai singoli Istituti Comprensivi,
+        che potranno organizzarsi secondo le proprie esigenze.
+      </p>
+
+      <div class="attestati-box mb-2">
+        <h4>📜 Attestati di partecipazione</h4>
+        <ul>
+          <li>Tutti i partecipanti ricevono un <strong>attestato digitale</strong> al termine della gara.</li>
+          <li>I nomi così come scritti nei moduli digitali di iscrizione vengono riportati automaticamente dal sistema sugli attestati, sollevando gli organizzatori da errori di scrittura.</li>
+          <li>La stampa in cartaceo è a cura delle rispettive Segreterie degli Istituti.</li>
+        </ul>
+      </div>
+
+      <div class="nota-box">
+        <strong>Iscrizioni:</strong> è compito degli insegnanti compilare i moduli digitali di iscrizione
+        per comunicare il nome degli alunni partecipanti e il numero delle squadre per ogni classe,
+        tramite la piattaforma LogiKron nelle fasi previste.
+      </div>
+
+      <div style="background: linear-gradient(135deg, #fef9c3, #fef08a); border: 2px solid #eab308; border-radius: var(--lk-radius-md); padding: 1rem; margin-top: 0.75rem;">
+        <h4 style="color: #854d0e; margin: 0 0 0.5rem 0; font-size: 0.95rem; display: flex; align-items: center; gap: 0.4rem;">
+          🦘 Allenati con il Kangourou Trainer!
+        </h4>
+        <p style="margin: 0 0 0.6rem 0; font-size: 0.9rem; color: #713f12;">
+          I quesiti dei Giochi LogiKron si ispirano allo stile logico-matematico delle gare Kangourou.
+          Per prepararsi, consigliamo di esercitarsi con il nostro archivio gratuito online:
+        </p>
+        <p style="margin: 0 0 0.6rem 0; font-size: 0.9rem;">
+          👉 <a href="https://edutechlab.it/kangourou-gare/" target="_blank" style="color: #1d4ed8; font-weight: 700;">
+            edutechlab.it/kangourou-gare
+          </a>
+          — archivio completo gare Kangourou dal 2007 ad oggi, con modalità allenamento, simulazione e a tempo.
+        </p>
+        <p style="margin: 0; font-size: 0.82rem; color: #78350f; font-style: italic;">
+          Nota: le gare in archivio sono in formato individuale (non a squadre), ma allenano le stesse
+          competenze di ragionamento logico-matematico richieste nei Giochi LogiKron.
+          Categorie disponibili: Koala (cl. 2ª–3ª), Kangourou (cl. 4ª–5ª), Benjamin (cl. 1ª–2ª media), Cadet (cl. 3ª media).
+        </p>
+      </div>
+    </div>
+
+    <!-- BUONA GARA -->
+    <div class="buona-gara">
+      <h2>🏆 Buona Gara! 🏆</h2>
+      <p>Che vinca la squadra più brava… e più veloce!</p>
     </div>
 
     <!-- FOOTER -->
