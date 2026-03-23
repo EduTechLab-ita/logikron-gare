@@ -108,6 +108,11 @@
       color: #92400e;
       box-shadow: 0 0 8px rgba(251, 191, 36, 0.4);
     }
+    .q-btn.q-answered.q-jolly {
+      background: linear-gradient(135deg, #fbbf24, #10b981);
+      border-color: #fbbf24;
+      color: white;
+    }
 
     /* Colonna destra: domanda attuale */
     .domanda-panel { padding: 1.25rem; }
@@ -134,11 +139,12 @@
 
     .jolly-badge {
       background: gold;
-      color: black;
+      color: #1e1b4b;
       padding: 2px 8px;
       border-radius: 4px;
       font-size: 0.8rem;
       font-weight: bold;
+      display: none;
     }
 
     .risposta-input {
@@ -160,15 +166,46 @@
       margin-bottom: 1rem;
     }
 
+    .feedback-risposta {
+      min-height: 1.4rem;
+      font-size: 0.95rem;
+      font-weight: 600;
+      text-align: center;
+      margin-top: 0.5rem;
+    }
+
+    .attesa-banner {
+      background: linear-gradient(135deg, #fef3c7, #fde68a);
+      border: 2px solid #f59e0b;
+      border-radius: var(--lk-radius-lg);
+      padding: 2rem;
+      text-align: center;
+      margin: 2rem auto;
+      max-width: 480px;
+    }
+
     @media (max-width: 768px) {
-      .gara-columns {
-        grid-template-columns: 1fr;
-      }
+      .gara-columns { grid-template-columns: 1fr; }
     }
   </style>
 </head>
 <body>
   <div class="container">
+
+    <!-- BANNER ATTESA (gara non ancora iniziata) -->
+    <div id="bannerAttesa" class="hidden">
+      <div class="attesa-banner">
+        <div style="font-size:3rem; margin-bottom:0.75rem;">⏳</div>
+        <h2 style="margin:0 0 0.5rem 0; color:#92400e;">Connesso!</h2>
+        <p style="margin:0 0 0.75rem 0; color:#78350f;">
+          Squadra: <strong id="nomeSquadraAttesa">—</strong><br>
+          Attendi il segnale di inizio dal docente.
+        </p>
+        <p style="font-size:0.8rem; color:#a16207; margin:0;">
+          La pagina si aggiornerà automaticamente all'avvio.
+        </p>
+      </div>
+    </div>
 
     <!-- LOGIN SQUADRA -->
     <div id="loginSquadra">
@@ -191,10 +228,13 @@
           <div class="form-group">
             <label class="form-label">Codice Squadra</label>
             <input type="text" id="codiceSquadra" class="form-control risposta-input"
-                   placeholder="ABC123" maxlength="6" style="text-transform: uppercase; font-size: 2rem;">
+                   placeholder="GTFIPRI4A1" maxlength="16"
+                   style="text-transform: uppercase; font-size: 1.6rem; letter-spacing: 0.2rem;"
+                   onkeypress="if(event.key==='Enter') accessoSquadra()">
             <p class="form-hint">Inserisci il codice ricevuto dal docente</p>
           </div>
-          <button onclick="accessoSquadra()" class="btn btn-success btn-lg btn-block">
+          <p id="loginError" class="form-error hidden" style="margin-bottom:0.5rem;"></p>
+          <button id="btnLogin" onclick="accessoSquadra()" class="btn btn-success btn-lg btn-block">
             Entra
           </button>
         </div>
@@ -208,10 +248,10 @@
       <div class="gara-header">
         <div class="gara-header-left">
           <p>Squadra</p>
-          <h2 id="nomeSquadraDisplay">4-A-GT</h2>
+          <h2 id="nomeSquadraDisplay">—</h2>
         </div>
         <div class="gara-header-center">
-          <div class="timer" id="timer">60:00</div>
+          <div class="timer" id="timer">--:--</div>
           <p>Tempo rimanente</p>
         </div>
         <div class="gara-header-right">
@@ -225,28 +265,19 @@
 
         <!-- COLONNA SINISTRA: Jolly + Stato quesiti -->
         <div class="card jolly-panel">
-          <h3 style="font-size: 1rem; color: var(--lk-primary-dark); margin-bottom: 0.5rem;">Scegli il Jolly</h3>
-          <div class="jolly-timer">
+          <h3 id="jollyPanelHeader" style="font-size: 1rem; color: var(--lk-primary-dark); margin-bottom: 0.5rem;">
+            Scegli il Jolly
+          </h3>
+          <div class="jolly-timer" id="jollyTimerBar">
             <span>&#127183;</span>
             Tempo: <span class="jolly-timer-value" id="timerJollyGara">10:00</span>
           </div>
-          <p style="font-size: 0.8rem; color: var(--lk-text-muted); margin-bottom: 0.5rem;">
+          <p id="jollyHint" style="font-size: 0.8rem; color: var(--lk-text-muted); margin-bottom: 0.5rem;">
             Clicca su una domanda per sceglierla come Jolly (x2 punti).
           </p>
 
-          <!-- Griglia 10 quesiti -->
-          <div class="quesiti-grid">
-            <button class="q-btn q-jolly" title="Q1 - JOLLY">1</button>
-            <button class="q-btn q-answered" title="Q2 - Risposto">2</button>
-            <button class="q-btn q-answered" title="Q3 - Risposto">3</button>
-            <button class="q-btn q-wrong" title="Q4 - Sbagliato">4</button>
-            <button class="q-btn q-selected" title="Q5 - Selezionato">5</button>
-            <button class="q-btn" title="Q6">6</button>
-            <button class="q-btn" title="Q7">7</button>
-            <button class="q-btn" title="Q8">8</button>
-            <button class="q-btn" title="Q9">9</button>
-            <button class="q-btn" title="Q10">10</button>
-          </div>
+          <!-- Griglia 10 quesiti (generata da JS) -->
+          <div class="quesiti-grid" id="quesitiGrid"></div>
 
           <!-- Legenda mini -->
           <div style="margin-top: 0.75rem; font-size: 0.7rem; color: var(--lk-text-muted);">
@@ -260,39 +291,47 @@
         <!-- COLONNA DESTRA: Domanda attuale -->
         <div class="card domanda-panel">
           <div class="valore-attuale">
-            Valore attuale di ogni risposta corretta: <strong id="valoreAttuale">20</strong> punti
+            Valore attuale risposta corretta: <strong id="valoreAttuale">20</strong> pt
           </div>
 
           <div class="domanda-header">
-            <div class="domanda-numero">1</div>
+            <div class="domanda-numero" id="domandaNumeroCircle">1</div>
             <div>
-              <strong style="font-size: 1.1rem;">Quesito 1</strong>
-              <span class="jolly-badge" style="margin-left: 6px;">JOLLY x2</span>
+              <strong id="domandaTitolo" style="font-size: 1.1rem;">Quesito 1</strong>
+              <span class="jolly-badge" id="jollyBadge">&#11088; JOLLY x2</span>
             </div>
           </div>
 
-          <p class="mb-2" style="font-size: 1rem; line-height: 1.6; color: var(--lk-text-dark);">
-            Un treno parte alle 8:45 e arriva a destinazione alle 11:20.
-            Quanti minuti dura il viaggio?
+          <p id="domandaTesto" class="mb-2" style="font-size: 1rem; line-height: 1.6; color: var(--lk-text-dark);">
+            Caricamento...
           </p>
 
           <div class="form-group mb-0">
-            <label class="form-label" style="font-size: 0.85rem;">La tua risposta (numero intero 0000-9999)</label>
-            <input type="text" class="form-control risposta-input"
-                   placeholder="0000" maxlength="4" pattern="[0-9]*" inputmode="numeric">
+            <label class="form-label" style="font-size: 0.85rem;">La tua risposta (numero 0 – 9999)</label>
+            <input type="text" id="rispostaInput" class="form-control risposta-input"
+                   placeholder="0000" maxlength="4" pattern="[0-9]*" inputmode="numeric"
+                   onkeypress="if(event.key==='Enter') inviaRispostaBackend()">
           </div>
-          <button class="btn btn-primary btn-lg btn-block mt-2">
+
+          <div class="feedback-risposta" id="feedbackRisposta"></div>
+
+          <button id="btnInviaRisposta" class="btn btn-primary btn-lg btn-block mt-2"
+                  onclick="inviaRispostaBackend()">
             Invia Risposta
           </button>
 
           <!-- Navigazione quesiti -->
           <div style="display: flex; justify-content: space-between; margin-top: 1rem;">
-            <button class="btn btn-outline" style="padding: 6px 16px; font-size: 0.85rem;" disabled>
-              Precedente
+            <button id="btnPrev" class="btn btn-outline" style="padding: 6px 16px; font-size: 0.85rem;"
+                    onclick="domandaPrecedente()" disabled>
+              ← Precedente
             </button>
-            <span style="color: var(--lk-text-muted); font-size: 0.85rem; align-self: center;">1 / 10</span>
-            <button class="btn btn-outline" style="padding: 6px 16px; font-size: 0.85rem;">
-              Successivo
+            <span id="domandaCounter" style="color: var(--lk-text-muted); font-size: 0.85rem; align-self: center;">
+              1 / 10
+            </span>
+            <button id="btnNext" class="btn btn-outline" style="padding: 6px 16px; font-size: 0.85rem;"
+                    onclick="domandaSuccessiva()">
+              Successivo →
             </button>
           </div>
         </div>
@@ -317,31 +356,453 @@
   </div>
 
   <script src="js/config.js"></script>
+  <script src="js/api.js"></script>
   <script src="js/math-bg.js"></script>
   <script>
+    const API        = LOGIKRON_CONFIG.webAppUrls.gare;
+    const NUM_DOM    = LOGIKRON_CONFIG.gare.numeroDomande  || 10;
+    const DURATA_MIN = LOGIKRON_CONFIG.gare.durataMinuti   || 60;
+    const JOLLY_MIN  = LOGIKRON_CONFIG.gare.tempoJollyMinuti || 10;
+
+    // ======== STATO ========
+    let stato = {
+      garaId: null, squadraId: null, nomeSquadra: null,
+      oraFine: null,
+      domande: [],      // [{num, testo, puntiBase}]
+      risposte: {},     // {numDomanda: {risposta, esito, punti}}
+      jolly: null,      // numero domanda jolly
+      jollyFissato: false,
+      jollyScaduto: false,
+      puntiTotali: 0,
+      domandaAttiva: 1
+    };
+
+    let timerInterval     = null;
+    let jollyTimerInt     = null;
+    let pollingInterval   = null;
+    let attesaInterval    = null;
+
+    // ======== LOGIN ========
+
     function accessoSquadra() {
-      const codice = document.getElementById('codiceSquadra').value.toUpperCase();
-      if (codice.length >= 4) {
-        // TODO: Verificare codice con Apps Script
+      const codice = document.getElementById('codiceSquadra').value.trim().toUpperCase();
+      const errEl  = document.getElementById('loginError');
+      errEl.classList.add('hidden');
+      if (!codice) { errEl.textContent = 'Inserisci il codice squadra'; errEl.classList.remove('hidden'); return; }
+
+      const btn = document.getElementById('btnLogin');
+      btn.disabled = true; btn.textContent = 'Connessione...';
+
+      lkApi(API, { action: 'loginSquadra', codice: codice })
+        .then(r => {
+          btn.disabled = false; btn.textContent = 'Entra';
+          if (r.error) {
+            errEl.textContent = 'Codice non riconosciuto. Riprova.';
+            errEl.classList.remove('hidden');
+            return;
+          }
+          stato.garaId     = r.garaId;
+          stato.squadraId  = r.squadraId;
+          stato.nomeSquadra = r.nomeSquadra || codice;
+
+          if (r.garaStato !== 'attiva') {
+            // Gara non ancora avviata: mostra banner attesa e polling avvio
+            sessionStorage.setItem('lkGara', JSON.stringify({ garaId: r.garaId, squadraId: r.squadraId, nomeSquadra: stato.nomeSquadra }));
+            mostraBannerAttesa();
+          } else {
+            sessionStorage.setItem('lkGara', JSON.stringify({ garaId: r.garaId, squadraId: r.squadraId, nomeSquadra: stato.nomeSquadra }));
+            caricaGara();
+          }
+        })
+        .catch(err => {
+          btn.disabled = false; btn.textContent = 'Entra';
+          errEl.textContent = 'Errore di rete: ' + err.message;
+          errEl.classList.remove('hidden');
+        });
+    }
+
+    function mostraBannerAttesa() {
+      document.getElementById('loginSquadra').classList.add('hidden');
+      document.getElementById('bannerAttesa').classList.remove('hidden');
+      document.getElementById('nomeSquadraAttesa').textContent = stato.nomeSquadra;
+      // Polling ogni 5s per aspettare avvio gara
+      attesaInterval = setInterval(() => {
+        lkApi(API, { action: 'getStatoSquadra', garaId: stato.garaId, squadraId: stato.squadraId })
+          .then(r => {
+            if (r.garaStato === 'attiva') {
+              clearInterval(attesaInterval);
+              document.getElementById('bannerAttesa').classList.add('hidden');
+              caricaGara();
+            }
+          }).catch(() => {});
+      }, 5000);
+    }
+
+    // ======== CARICA GARA ========
+
+    function caricaGara() {
+      Promise.all([
+        lkApi(API, { action: 'getDomande',      garaId: stato.garaId }),
+        lkApi(API, { action: 'getStatoSquadra', garaId: stato.garaId, squadraId: stato.squadraId })
+      ]).then(([domande, statoSq]) => {
+        stato.domande = (Array.isArray(domande) ? domande : []).sort((a,b) => a.num - b.num);
+        stato.oraFine = statoSq.oraFine || null;
+        stato.jolly   = statoSq.jolly ? parseInt(statoSq.jolly) : null;
+        stato.jollyFissato = !!stato.jolly;
+        stato.puntiTotali  = statoSq.puntiTotali || 0;
+
+        stato.risposte = {};
+        if (statoSq.risposte) {
+          Object.keys(statoSq.risposte).forEach(k => {
+            stato.risposte[parseInt(k)] = statoSq.risposte[k];
+          });
+        }
+
+        // Mostra pannello gara
         document.getElementById('loginSquadra').classList.add('hidden');
         document.getElementById('pannelloGara').classList.remove('hidden');
-        document.getElementById('nomeSquadraDisplay').textContent = codice;
-      } else {
-        alert('Inserisci un codice valido');
+        document.getElementById('nomeSquadraDisplay').textContent = stato.nomeSquadra;
+
+        renderGrigliaQuesiti();
+        aggiornaScore();
+
+        // Vai alla prima domanda non ancora corretta
+        let prima = 1;
+        for (let i = 1; i <= NUM_DOM; i++) {
+          const r = stato.risposte[i];
+          if (!r || r.esito !== 'corretta') { prima = i; break; }
+        }
+        mostraDomanda(prima);
+
+        startTimerGara();
+        startJollyTimer();
+        startPolling();
+      }).catch(err => alert('Errore caricamento gara: ' + err.message));
+    }
+
+    // ======== GRIGLIA QUESITI ========
+
+    function renderGrigliaQuesiti() {
+      const grid = document.getElementById('quesitiGrid');
+      grid.innerHTML = '';
+      for (let i = 1; i <= NUM_DOM; i++) {
+        const btn = document.createElement('button');
+        btn.id = 'qBtn' + i;
+        btn.textContent = i;
+        btn.className = 'q-btn';
+        btn.onclick = (function(n){ return function(){ clickQBtn(n); }; })(i);
+        grid.appendChild(btn);
+        aggiornaQBtn(i);
       }
     }
 
-    // Timer placeholder
-    let secondiRimanenti = LOGIKRON_CONFIG.gare.durataMinuti * 60;
-    setInterval(() => {
-      if (secondiRimanenti > 0) {
-        secondiRimanenti--;
-        const minuti = Math.floor(secondiRimanenti / 60);
-        const secondi = secondiRimanenti % 60;
-        document.getElementById('timer').textContent =
-          `${minuti.toString().padStart(2, '0')}:${secondi.toString().padStart(2, '0')}`;
+    function aggiornaQBtn(num) {
+      const btn = document.getElementById('qBtn' + num);
+      if (!btn) return;
+      const r = stato.risposte[num];
+      let cls = 'q-btn';
+      if (stato.jolly === num)          cls += ' q-jolly';
+      if (r && r.esito === 'corretta')  cls += ' q-answered';
+      else if (r && r.esito === 'sbagliata') cls += ' q-wrong';
+      if (num === stato.domandaAttiva)  cls += ' q-selected';
+      btn.className = cls;
+      btn.title = 'Q' + num + (stato.jolly === num ? ' ⭐JOLLY' : '') +
+                  (r ? (r.esito === 'corretta' ? ' ✓' : ' ✗') : '');
+    }
+
+    function aggiornaGriglia() {
+      for (let i = 1; i <= NUM_DOM; i++) aggiornaQBtn(i);
+    }
+
+    function clickQBtn(num) {
+      // Durante finestra jolly e jolly non ancora scelto → proponi jolly
+      if (!stato.jollyFissato && !stato.jollyScaduto) {
+        if (confirm('Impostare il Quesito ' + num + ' come JOLLY (x2 punti)?\n\nAttenzione: la scelta è definitiva!')) {
+          fissaJolly(num);
+          return;
+        }
       }
-    }, 1000);
+      mostraDomanda(num);
+    }
+
+    // ======== JOLLY ========
+
+    function fissaJolly(num) {
+      lkApi(API, { action: 'impostaJolly', garaId: stato.garaId, squadraId: stato.squadraId, numDomanda: num })
+        .then(r => {
+          if (r.error) { alert('Errore jolly: ' + r.error); return; }
+          stato.jolly = num;
+          stato.jollyFissato = true;
+          aggiornaGriglia();
+          aggiornaUIJolly();
+          mostraDomanda(stato.domandaAttiva);
+        })
+        .catch(err => alert('Errore: ' + err.message));
+    }
+
+    function aggiornaUIJolly() {
+      const header   = document.getElementById('jollyPanelHeader');
+      const timerBar = document.getElementById('jollyTimerBar');
+      const hint     = document.getElementById('jollyHint');
+
+      if (stato.jollyFissato) {
+        header.textContent = '⭐ Jolly: Quesito ' + stato.jolly;
+        header.style.color = '#92400e';
+        if (timerBar) timerBar.style.display = 'none';
+        if (hint) hint.textContent = 'Il tuo jolly è il Quesito ' + stato.jolly + ' — varrà il doppio dei punti!';
+      } else if (stato.jollyScaduto) {
+        header.textContent = '⏰ Jolly assegnato d\'ufficio';
+        header.style.color = '#64748b';
+        if (timerBar) timerBar.style.display = 'none';
+        if (hint) hint.textContent = 'Il tempo per scegliere il jolly è scaduto. Il sistema ne ha assegnato uno automaticamente.';
+      }
+    }
+
+    // ======== MOSTRA DOMANDA ========
+
+    function mostraDomanda(num) {
+      stato.domandaAttiva = num;
+      const domanda = stato.domande.find(d => d.num === num);
+
+      document.getElementById('domandaNumeroCircle').textContent = num;
+      document.getElementById('domandaTitolo').textContent = 'Quesito ' + num;
+      document.getElementById('domandaTesto').textContent =
+        (domanda && domanda.testo)
+          ? domanda.testo
+          : '(Il testo del quesito è su carta — consultalo e inserisci qui la risposta)';
+
+      // Badge jolly
+      document.getElementById('jollyBadge').style.display = (stato.jolly === num) ? '' : 'none';
+
+      // Counter navigazione
+      document.getElementById('domandaCounter').textContent = num + ' / ' + NUM_DOM;
+      document.getElementById('btnPrev').disabled = (num <= 1);
+      document.getElementById('btnNext').disabled = (num >= NUM_DOM);
+
+      // Campo risposta e feedback
+      const input = document.getElementById('rispostaInput');
+      const feedback = document.getElementById('feedbackRisposta');
+      const btnInvia = document.getElementById('btnInviaRisposta');
+      const r = stato.risposte[num];
+
+      if (r && r.esito === 'corretta') {
+        input.value = r.risposta || '';
+        input.disabled = true;
+        input.style.background = '#d1fae5';
+        feedback.textContent = '✓ Risposta corretta! +' + r.punti + ' punti' +
+          (stato.jolly === num ? ' ⭐ Jolly x2!' : '');
+        feedback.style.color = '#065f46';
+        btnInvia.disabled = true;
+      } else {
+        input.value = (r && r.risposta) ? r.risposta : '';
+        input.disabled = false;
+        input.style.background = '';
+        btnInvia.disabled = false;
+        if (r && r.esito === 'sbagliata') {
+          feedback.textContent = '✗ Risposta sbagliata. Riprova!';
+          feedback.style.color = '#dc2626';
+        } else {
+          feedback.textContent = '';
+        }
+        setTimeout(() => input.focus(), 50);
+      }
+
+      aggiornaGriglia();
+    }
+
+    // ======== INVIA RISPOSTA ========
+
+    function inviaRispostaBackend() {
+      const input = document.getElementById('rispostaInput');
+      const risposta = input.value.trim();
+      const feedback = document.getElementById('feedbackRisposta');
+
+      if (!risposta) { feedback.textContent = 'Inserisci una risposta!'; feedback.style.color = '#dc2626'; return; }
+      if (!/^\d{1,4}$/.test(risposta)) { feedback.textContent = 'Inserisci un numero da 0 a 9999'; feedback.style.color = '#dc2626'; return; }
+
+      const btn = document.getElementById('btnInviaRisposta');
+      btn.disabled = true; btn.textContent = 'Invio...';
+      feedback.textContent = '';
+
+      lkApi(API, { action: 'inviaRisposta', garaId: stato.garaId, squadraId: stato.squadraId,
+                   numDomanda: stato.domandaAttiva, risposta: risposta })
+        .then(r => {
+          btn.disabled = false; btn.textContent = 'Invia Risposta';
+          if (r.error) { feedback.textContent = 'Errore: ' + r.error; feedback.style.color = '#dc2626'; return; }
+
+          // Aggiorna stato locale
+          const rNorm = risposta.padStart(4,'0');
+          stato.risposte[stato.domandaAttiva] = { risposta: rNorm, esito: r.esito, punti: r.punti };
+          stato.puntiTotali += parseInt(r.punti) || 0;
+          aggiornaScore();
+          aggiornaQBtn(stato.domandaAttiva);
+
+          if (r.esito === 'corretta') {
+            feedback.textContent = '✓ CORRETTA! +' + r.punti + ' punti' +
+              (stato.jolly === stato.domandaAttiva ? ' ⭐ Jolly x2!' : '');
+            feedback.style.color = '#065f46';
+            input.disabled = true;
+            input.style.background = '#d1fae5';
+            btn.disabled = true;
+            // Auto-naviga alla prossima domanda aperta dopo 1.5s
+            setTimeout(() => {
+              const prossima = trovaProssimaDomanda();
+              if (prossima) mostraDomanda(prossima);
+            }, 1500);
+          } else {
+            feedback.textContent = '✗ Sbagliata! ' + r.punti + ' punti. Riprova.';
+            feedback.style.color = '#dc2626';
+            input.select();
+          }
+        })
+        .catch(err => {
+          btn.disabled = false; btn.textContent = 'Invia Risposta';
+          feedback.textContent = 'Errore di rete. Riprova.';
+          feedback.style.color = '#dc2626';
+        });
+    }
+
+    function trovaProssimaDomanda() {
+      // Prima cerca dopo quella attuale, poi ricomincia dall'inizio
+      for (let i = stato.domandaAttiva + 1; i <= NUM_DOM; i++) {
+        const r = stato.risposte[i];
+        if (!r || r.esito !== 'corretta') return i;
+      }
+      for (let i = 1; i < stato.domandaAttiva; i++) {
+        const r = stato.risposte[i];
+        if (!r || r.esito !== 'corretta') return i;
+      }
+      return null;
+    }
+
+    // ======== SCORE ========
+
+    function aggiornaScore() {
+      document.getElementById('scoreDisplay').textContent = stato.puntiTotali;
+    }
+
+    // ======== TIMER GARA ========
+
+    function startTimerGara() {
+      if (timerInterval) clearInterval(timerInterval);
+      const el = document.getElementById('timer');
+      function tick() {
+        if (!stato.oraFine) { el.textContent = '--:--'; return; }
+        const sec = Math.max(0, Math.floor((new Date(stato.oraFine) - new Date()) / 1000));
+        const m = Math.floor(sec / 60), s = sec % 60;
+        el.textContent = String(m).padStart(2,'0') + ':' + String(s).padStart(2,'0');
+        el.style.color = sec <= 60 ? '#fca5a5' : (sec <= 300 ? '#fde68a' : 'white');
+        if (sec === 0) { clearInterval(timerInterval); stopPolling(); }
+      }
+      tick();
+      timerInterval = setInterval(tick, 1000);
+    }
+
+    // ======== TIMER JOLLY ========
+
+    function startJollyTimer() {
+      if (stato.jollyFissato) { aggiornaUIJolly(); return; }
+      if (!stato.oraFine) return;
+
+      // jollyDeadline = oraFine - (durata - tempoJolly) minuti
+      const jollyDeadline = new Date(stato.oraFine).getTime() - (DURATA_MIN - JOLLY_MIN) * 60000;
+
+      if (Date.now() >= jollyDeadline) {
+        stato.jollyScaduto = true;
+        aggiornaUIJolly();
+        return;
+      }
+
+      if (jollyTimerInt) clearInterval(jollyTimerInt);
+      const el = document.getElementById('timerJollyGara');
+
+      function tick() {
+        const sec = Math.max(0, Math.floor((jollyDeadline - Date.now()) / 1000));
+        const m = Math.floor(sec / 60), s = sec % 60;
+        if (el) el.textContent = String(m).padStart(2,'0') + ':' + String(s).padStart(2,'0');
+        if (sec === 0) {
+          clearInterval(jollyTimerInt);
+          stato.jollyScaduto = true;
+          aggiornaUIJolly();
+        }
+      }
+      tick();
+      jollyTimerInt = setInterval(tick, 1000);
+    }
+
+    // ======== POLLING STATO ========
+
+    function startPolling() {
+      if (pollingInterval) clearInterval(pollingInterval);
+      pollingInterval = setInterval(pollStato, 5000);
+    }
+
+    function stopPolling() {
+      if (pollingInterval) { clearInterval(pollingInterval); pollingInterval = null; }
+    }
+
+    function pollStato() {
+      if (!stato.garaId) return;
+      lkApi(API, { action: 'getStatoSquadra', garaId: stato.garaId, squadraId: stato.squadraId })
+        .then(s => {
+          if (s.garaStato === 'conclusa') { stopPolling(); document.getElementById('timer').textContent = '00:00'; return; }
+          // Aggiorna punti (source of truth = server)
+          stato.puntiTotali = s.puntiTotali || stato.puntiTotali;
+          aggiornaScore();
+          // Aggiorna risposte
+          if (s.risposte) {
+            let changed = false;
+            Object.keys(s.risposte).forEach(k => {
+              const num = parseInt(k);
+              if (!stato.risposte[num] || stato.risposte[num].esito !== s.risposte[k].esito) {
+                stato.risposte[num] = s.risposte[k];
+                changed = true;
+              }
+            });
+            if (changed) {
+              aggiornaGriglia();
+              // Rifresca la domanda attiva se il suo stato è cambiato
+              mostraDomanda(stato.domandaAttiva);
+            }
+          }
+          // Aggiorna jolly se assegnato d'ufficio
+          if (s.jolly && !stato.jollyFissato) {
+            stato.jolly = parseInt(s.jolly);
+            stato.jollyFissato = true;
+            aggiornaGriglia();
+            aggiornaUIJolly();
+          }
+        }).catch(() => {});
+    }
+
+    // ======== NAVIGAZIONE ========
+
+    function domandaPrecedente() { if (stato.domandaAttiva > 1) mostraDomanda(stato.domandaAttiva - 1); }
+    function domandaSuccessiva() { if (stato.domandaAttiva < NUM_DOM) mostraDomanda(stato.domandaAttiva + 1); }
+
+    // ======== AUTO-LOGIN (sessione) ========
+
+    (function() {
+      const saved = sessionStorage.getItem('lkGara');
+      if (!saved) return;
+      try {
+        const s = JSON.parse(saved);
+        if (!s.garaId || !s.squadraId) return;
+        stato.garaId     = s.garaId;
+        stato.squadraId  = s.squadraId;
+        stato.nomeSquadra = s.nomeSquadra || '';
+        // Controlla se la gara è ancora attiva prima di entrare
+        lkApi(API, { action: 'getStatoSquadra', garaId: s.garaId, squadraId: s.squadraId })
+          .then(r => {
+            if (r.garaStato === 'attiva') {
+              caricaGara();
+            } else if (r.garaStato === 'preparazione') {
+              mostraBannerAttesa();
+            }
+            // Se conclusa o errore → resta sul login
+          }).catch(() => {});
+      } catch(e) { sessionStorage.removeItem('lkGara'); }
+    })();
   </script>
 </body>
 </html>
