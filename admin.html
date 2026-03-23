@@ -299,7 +299,7 @@
             <li>I docenti aprono il form e registrano i nomi dei loro studenti per ogni squadra.</li>
             <li>Il sistema assegna automaticamente un <strong>codice univoco</strong> a ogni squadra (es. <code>GTFIPRI4A1</code>). Questo è anche il <strong>codice di accesso il giorno della gara</strong>.</li>
             <li>I docenti ricevono una mail di conferma con tutti i codici squadra.</li>
-            <li>Puoi visualizzare le squadre iscritte aprendo direttamente il Google Sheet.</li>
+            <li>Puoi visualizzare e gestire le squadre iscritte direttamente da qui (pulsante "Visualizza Iscrizioni").</li>
           </ul>
           <strong>Tornare indietro:</strong>
           <ul>
@@ -320,7 +320,14 @@
             <button class="btn btn-primary" onclick="copyLink('iscrizioni')">Copia Link</button>
             <a href="iscrizioni.html" target="_blank" class="btn btn-outline mt-1" style="display:block;">Apri Form</a>
           </div>
+          <div class="admin-card">
+            <div class="admin-card-icon">📋</div>
+            <h4 class="admin-card-title">Squadre Iscritte</h4>
+            <p class="admin-card-desc" id="statIscrizioni">Caricamento...</p>
+            <button class="btn btn-outline" onclick="viewIscrizioni()">Visualizza Iscrizioni</button>
+          </div>
         </div>
+        <div id="listaIscrizioni" style="display:none; margin-top:1rem;"></div>
       </section>
 
       <!-- ==================== TRANSIZIONE GARA ==================== -->
@@ -412,6 +419,11 @@
             <div class="form-group">
               <label class="form-label">Nome gara *</label>
               <input type="text" id="nomeGara" class="form-control" placeholder="es. LogiKron 2025-2026 — Primaria">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Data e ora programmata (opzionale)</label>
+              <input type="datetime-local" id="dataOraGara" class="form-control">
+              <p class="form-hint" style="margin:3px 0 0 0; font-size:0.78rem; color:var(--lk-text-muted);">Visibile nell'elenco gare. Il timer parte solo con GO.</p>
             </div>
             <div style="margin-bottom:0.5rem; font-size:0.87rem; font-weight:600; color:var(--lk-text);">
               Quesiti — risposta in formato 0–9999 (es. "42" o "0042")
@@ -723,6 +735,7 @@
       document.getElementById('annoScolastico').textContent = LOGIKRON_CONFIG.annoScolastico;
       caricaFase();
       caricaStatIntenzioni();
+      caricaStatIscrizioni();
       caricaFiltroIstituti();
       aggiornaFiltroClassi();
       caricaListaGare();
@@ -840,6 +853,65 @@
       }).catch(() => {});
     }
 
+    function caricaStatIscrizioni() {
+      lkApi(API, { action: 'getIscrizioni', pwd: adminPwd }).then(lista => {
+        const el = document.getElementById('statIscrizioni');
+        if (!el) return;
+        if (!Array.isArray(lista)) { el.textContent = '—'; return; }
+        el.textContent = lista.length + ' squadr' + (lista.length === 1 ? 'a iscritta' : 'e iscritte');
+      }).catch(() => {});
+    }
+
+    function viewIscrizioni() {
+      const div = document.getElementById('listaIscrizioni');
+      if (div.style.display !== 'none') { div.style.display = 'none'; return; }
+      div.style.display = '';
+      div.innerHTML = '<p style="color:var(--lk-text-muted); font-size:0.9rem;">Caricamento...</p>';
+      lkApi(API, { action: 'getIscrizioni', pwd: adminPwd }).then(lista => {
+        if (!Array.isArray(lista) || lista.length === 0) {
+          div.innerHTML = '<p style="color:var(--lk-text-muted); font-size:0.9rem;">Nessuna iscrizione registrata.</p>';
+          return;
+        }
+        // Raggruppa per docente/istituto/classe/sezione
+        let html = '<div style="font-size:0.85rem;">';
+        let docCorrente = '';
+        lista.forEach(i => {
+          const chiave = i.docente + ' — ' + i.istituto + ', ' + i.plesso + ' — ' + i.ordine + ' ' + i.classe + ' sez.' + i.sezione;
+          if (chiave !== docCorrente) {
+            if (docCorrente !== '') html += '</div>';
+            html += '<div style="margin-bottom:0.75rem; padding:0.75rem; background:#f8fafc; border:1px solid #e2e8f0; border-radius:8px;">';
+            html += '<div style="font-weight:700; color:var(--lk-primary); margin-bottom:0.35rem;">' + chiave + '</div>';
+            html += '<div style="font-size:0.78rem; color:var(--lk-text-muted); margin-bottom:0.4rem;">' + i.email + '</div>';
+            docCorrente = chiave;
+          }
+          const studenti = (i.studenti || '').split(';').map(s => s.trim()).filter(Boolean);
+          html += '<div style="display:flex; align-items:flex-start; gap:0.5rem; margin-bottom:0.3rem; padding:0.35rem 0.5rem; background:white; border-radius:6px; border:1px solid #e2e8f0;">';
+          html += '<code style="background:#4f46e5; color:white; padding:2px 8px; border-radius:4px; font-size:0.8rem; white-space:nowrap; flex-shrink:0;">' + i.nomeSquadra + '</code>';
+          html += '<span style="color:var(--lk-text); flex:1;">' + studenti.join(', ') + '</span>';
+          html += '<button onclick="eliminaIscrizioneAdmin(' + i.row + ', \'' + i.nomeSquadra + '\')" style="background:none; border:1px solid #fca5a5; color:#dc2626; border-radius:4px; padding:1px 7px; font-size:0.75rem; cursor:pointer; flex-shrink:0;">🗑</button>';
+          html += '</div>';
+        });
+        if (docCorrente !== '') html += '</div>';
+        html += '</div>';
+        div.innerHTML = html;
+        document.getElementById('statIscrizioni').textContent = lista.length + ' squadr' + (lista.length === 1 ? 'a iscritta' : 'e iscritte');
+      }).catch(err => {
+        div.innerHTML = '<p style="color:#dc2626; font-size:0.9rem;">Errore: ' + err.message + '</p>';
+      });
+    }
+
+    function eliminaIscrizioneAdmin(row, nome) {
+      if (!confirm('Eliminare l\'iscrizione della squadra "' + nome + '"?\n\nL\'operazione è irreversibile.')) return;
+      lkApi(API, { action: 'eliminaIscrizione', row: row, pwd: adminPwd })
+        .then(r => {
+          if (r.error) { alert('Errore: ' + r.error); return; }
+          alert('✅ ' + r.message);
+          viewIscrizioni(); // ricarica lista (prima chiude, poi riapre)
+          viewIscrizioni();
+        })
+        .catch(err => alert('Errore: ' + err.message));
+    }
+
     // ==================== FASI ====================
 
     function setFase(n, messaggio) {
@@ -896,6 +968,7 @@
       lkApi(API, { action: 'setFase', fase: 3, pwd: adminPwd })
         .then(r => {
           if (r.error) { alert('Errore: ' + r.error); aggiornaIndicatoriFase(faseCorrente); return; }
+          btn.textContent = 'Chiudi Fasi e Avvia Gara';
           aggiornaIndicatoriFase(3);
           alert('✅ Fasi pre-gara chiuse!\nPuoi ora avviare la gara dalla sezione "Gestione Gara".');
         })
@@ -1163,7 +1236,8 @@
         [...gare].reverse().forEach(g => {
           const opt = document.createElement('option');
           opt.value = g.id;
-          opt.textContent = g.nome + ' — ' + g.stato + ' (' + g.data + ')';
+          const dataLabel = g.dataGara ? g.dataGara.replace('T', ' ').substring(0, 16) : g.data;
+          opt.textContent = g.nome + ' — ' + g.stato + ' (' + dataLabel + ')';
           sel.appendChild(opt);
         });
         // Ripristina selezione se ancora presente
@@ -1421,7 +1495,8 @@
       if (errori > 0) { alert('Inserisci la risposta per tutti i ' + n + ' quesiti.'); return; }
       const btn = event.target;
       btn.disabled = true; btn.textContent = 'Creazione...';
-      lkApi(API, { action: 'creaGara', pwd: adminPwd, nome: nome, domande: JSON.stringify(domande) })
+      const dataGara = document.getElementById('dataOraGara').value || '';
+      lkApi(API, { action: 'creaGara', pwd: adminPwd, nome: nome, domande: JSON.stringify(domande), dataGara: dataGara })
         .then(r => {
           btn.disabled = false; btn.textContent = '💾 Crea Gara';
           if (r.error) { alert('Errore: ' + r.error); return; }
