@@ -378,6 +378,15 @@
     </div>
   </div>
 
+  <!-- OVERLAY ATTESA GARA -->
+  <div id="overlayAttesa" style="display:none; position:fixed; inset:0; background:rgba(30,27,75,0.97);
+       z-index:100; align-items:center; justify-content:center; flex-direction:column; color:white; text-align:center;">
+    <div style="font-size:4rem; margin-bottom:1rem;">⏳</div>
+    <h2 style="font-size:1.8rem; margin:0 0 0.5rem 0;">In attesa della gara...</h2>
+    <p style="opacity:0.7; margin:0 0 1.5rem 0;">Il tabellone si attiverà automaticamente all'avvio.</p>
+    <div class="live-badge"><span class="live-dot"></span> IN ATTESA</div>
+  </div>
+
   <!-- NASCONDIMENTO ULTIMI 5 MIN -->
   <div class="tabellone-nascosto" id="tabelloneNascosto" style="display: none;">
     <div>
@@ -392,208 +401,210 @@
   </footer>
 
   <script src="js/config.js"></script>
+  <script src="js/api.js"></script>
   <script src="js/math-bg.js"></script>
   <script>
-    // ==========================================
-    // CONFIGURAZIONE
-    // ==========================================
-    const PUNTI_INIZIALI = LOGIKRON_CONFIG.gare.puntiIniziali;
-    const INCREMENTO = LOGIKRON_CONFIG.gare.incrementoPuntiOgniMinuti;
-    const PENALITA = LOGIKRON_CONFIG.gare.penalitaRispostaSbagliata;   // -5
-    const NUM_DOMANDE = LOGIKRON_CONFIG.gare.numeroDomande;
-    const DURATA_MINUTI = LOGIKRON_CONFIG.gare.durataMinuti;
-    const TEMPO_JOLLY = LOGIKRON_CONFIG.gare.tempoJollyMinuti * 60;
-    const TEMPO_DOMANDE = LOGIKRON_CONFIG.gare.tempoDomandeMinuti * 60;
-    const MINUTI_NASCONDIMENTO = LOGIKRON_CONFIG.gare.minutiNascondimento;
+    const API          = LOGIKRON_CONFIG.webAppUrls.gare;
+    const CFG          = LOGIKRON_CONFIG.gare;
+    const DURATA_MIN   = CFG.durataMinuti   || 60;
+    const JOLLY_MIN    = CFG.tempoJollyMinuti || 10;
+    const DOMANDE_MIN  = CFG.tempoDomandeMinuti || 20;
+    const INCREMENTO   = CFG.incrementoPuntiOgniMinuti || 2;
+    const PUNTI_BASE   = CFG.puntiIniziali  || 20;
+    const MIN_NASC     = CFG.minutiNascondimento || 5;
 
-    // ==========================================
-    // DATI ESEMPIO (mockup)
-    // ==========================================
-    const squadreDemo = [
-      {
-        nome: "Squadra A", jolly: 4,
-        risposte: [
-          { stato: 'correct', punti: 22 }, { stato: 'correct', punti: 24 },
-          { stato: 'correct', punti: 20 }, { stato: 'wrong', tentativi: 2 },
-          { stato: 'correct', punti: 52 }, { stato: 'correct', punti: 30 },
-          { stato: 'pending' }, { stato: 'empty' }, { stato: 'empty' },
-          { stato: 'empty' }
-        ]
-      },
-      {
-        nome: "Squadra B", jolly: 2,
-        risposte: [
-          { stato: 'correct', punti: 20 }, { stato: 'correct', punti: 22 },
-          { stato: 'wrong', tentativi: 1 }, { stato: 'correct', punti: 28 },
-          { stato: 'correct', punti: 30 }, { stato: 'pending' },
-          { stato: 'empty' }, { stato: 'empty' }, { stato: 'empty' },
-          { stato: 'empty' }
-        ]
-      },
-      {
-        nome: "Squadra C", jolly: 0,
-        risposte: [
-          { stato: 'correct', punti: 40 }, { stato: 'correct', punti: 22 },
-          { stato: 'correct', punti: 24 }, { stato: 'correct', punti: 26 },
-          { stato: 'empty' }, { stato: 'empty' }, { stato: 'empty' },
-          { stato: 'empty' }, { stato: 'empty' }, { stato: 'empty' }
-        ]
-      },
-      {
-        nome: "Squadra D", jolly: 1,
-        risposte: [
-          { stato: 'correct', punti: 24 }, { stato: 'wrong', tentativi: 3 },
-          { stato: 'correct', punti: 26 }, { stato: 'pending' },
-          { stato: 'empty' }, { stato: 'empty' }, { stato: 'empty' },
-          { stato: 'empty' }, { stato: 'empty' }, { stato: 'empty' }
-        ]
-      },
-      {
-        nome: "Squadra E", jolly: null,
-        risposte: [
-          { stato: 'correct', punti: 20 }, { stato: 'pending' },
-          { stato: 'empty' }, { stato: 'empty' }, { stato: 'empty' },
-          { stato: 'empty' }, { stato: 'empty' }, { stato: 'empty' },
-          { stato: 'empty' }, { stato: 'empty' }
-        ]
-      }
-    ];
+    let garaId         = null;
+    let lastData       = null;
+    let secondiLocali  = 0;
+    let jollyDeadline  = null;
+    let domandeDeadline= null;
+    let timerInterval  = null;
+    let pollingInterval= null;
+    let attesaInterval = null;
 
-    // ==========================================
-    // CALCOLO PUNTEGGIO
-    // ==========================================
-    function calcolaTotale(squadra) {
-      let totale = 0;
-      squadra.risposte.forEach((r, i) => {
-        const isJolly = (squadra.jolly === i);
-        if (r.stato === 'correct') {
-          totale += r.punti;
-        } else if (r.stato === 'wrong') {
-          const pen = isJolly ? (PENALITA * 2) : PENALITA;
-          totale += pen * r.tentativi;
-        }
+    // ==================== ATTESA GARA ====================
+
+    function mostraAttesa() {
+      document.getElementById('overlayAttesa').style.display = 'flex';
+      attesaInterval = setInterval(() => {
+        lkApi(API, { action: 'getGaraAttiva' })
+          .then(g => {
+            if (g && g.id) {
+              clearInterval(attesaInterval);
+              garaId = g.id;
+              document.getElementById('overlayAttesa').style.display = 'none';
+              avviaPolling();
+            }
+          }).catch(() => {});
+      }, 5000);
+    }
+
+    // ==================== POLLING TABELLONE ====================
+
+    function avviaPolling() {
+      aggiornaTabellone(); // subito
+      pollingInterval = setInterval(aggiornaTabellone, 5000);
+    }
+
+    function aggiornaTabellone() {
+      lkApi(API, { action: 'getTabellone', garaId: garaId })
+        .then(data => {
+          if (!data || data.error) return;
+          lastData = data;
+
+          // Sincronizza il timer locale col backend
+          secondiLocali = data.secondiRimanenti || 0;
+
+          // Calcola deadline jolly e domande
+          if (data.gara && data.gara.oraFine) {
+            const tf = new Date(data.gara.oraFine).getTime();
+            const dur = parseInt(data.gara.durata) || DURATA_MIN;
+            const jolM = parseInt(data.gara.tempoJolly) || JOLLY_MIN;
+            jollyDeadline    = tf - (dur - jolM)       * 60000;
+            domandeDeadline  = tf - (dur - DOMANDE_MIN) * 60000;
+          }
+
+          // Aggiorna intestazione colonne e valori
+          aggiornaTestataDomande(data.domande || []);
+
+          // Render corpo tabellone
+          renderBody(data.squadre || [], data.griglia || {}, data.domande || []);
+
+          // Nascondimento
+          if (data.nascosto) {
+            document.getElementById('tabelloneVisibile').style.display = 'none';
+            document.getElementById('tabelloneNascosto').style.display = 'flex';
+          } else {
+            document.getElementById('tabelloneVisibile').style.display = '';
+            document.getElementById('tabelloneNascosto').style.display = 'none';
+          }
+
+          // Gara conclusa → ferma polling e mostra classifica
+          if (data.gara && (data.gara.stato === 'conclusa' || secondiLocali === 0)) {
+            clearInterval(pollingInterval);
+            document.getElementById('tabelloneVisibile').style.display = '';
+            document.getElementById('tabelloneNascosto').style.display = 'none';
+            document.getElementById('timerDisplay').textContent = '00:00';
+          }
+
+          if (!timerInterval) timerInterval = setInterval(tickTimer, 1000);
+        }).catch(() => {});
+    }
+
+    // ==================== RENDER ====================
+
+    function aggiornaTestataDomande(domande) {
+      domande.forEach(d => {
+        const el = document.getElementById('val-' + d.num);
+        if (el) el.textContent = d.valoreAttuale || d.puntiBase || PUNTI_BASE;
       });
-      return totale;
     }
 
-    function ordinaSquadre(squadre) {
-      return [...squadre].sort((a, b) => calcolaTotale(b) - calcolaTotale(a));
-    }
-
-    // ==========================================
-    // RENDER
-    // ==========================================
-    function renderTabellone() {
+    function renderBody(squadre, griglia, domande) {
       const tbody = document.getElementById('tabelloneBody');
-      const squadreOrdinate = ordinaSquadre(squadreDemo);
       tbody.innerHTML = '';
+      const numDom = domande.length || CFG.numeroDomande || 10;
 
-      squadreOrdinate.forEach((sq, index) => {
+      squadre.forEach((sq, index) => {
         const pos = index + 1;
-        const totale = calcolaTotale(sq);
+        const jollyNum = sq.jolly ? parseInt(sq.jolly) : null;
+        const posClass = pos === 1 ? 'pos-1' : pos === 2 ? 'pos-2' : pos === 3 ? 'pos-3' : 'pos-other';
+        const sqGriglia = griglia[sq.id] || {};
+
+        let html = '<td class="pos-cell"><span class="pos-num ' + posClass + '">' + pos + '</span></td>';
+        html += '<td class="squadra-cell">' + esc(sq.nome) + '</td>';
+
+        for (let n = 1; n <= numDom; n++) {
+          const r = sqGriglia[n];
+          const isJolly = (jollyNum === n);
+          const jTag  = isJolly ? '<span class="jolly-tag">J</span>' : '';
+          const jCls  = isJolly ? ' cell-jolly' : '';
+
+          if (!r) {
+            html += '<td class="cell-empty' + jCls + '">' + jTag + '–</td>';
+          } else if (r.esito === 'corretta') {
+            const p = parseInt(r.punti) || 0;
+            html += '<td class="cell-correct' + jCls + '">' + jTag + '+' + p + '</td>';
+          } else {
+            // sbagliata
+            const p = parseInt(r.punti) || 0;
+            html += '<td class="cell-wrong' + jCls + '">' + jTag + p + '</td>';
+          }
+        }
+
+        html += '<td class="punteggio-cell">' + (parseInt(sq.punti) || 0) + '</td>';
         const tr = document.createElement('tr');
         tr.className = 'squadra-row';
-
-        let posClass = 'pos-other';
-        if (pos === 1) posClass = 'pos-1';
-        else if (pos === 2) posClass = 'pos-2';
-        else if (pos === 3) posClass = 'pos-3';
-
-        let html = `<td class="pos-cell"><span class="pos-num ${posClass}">${pos}</span></td>`;
-        html += `<td class="squadra-cell">${sq.nome}</td>`;
-
-        sq.risposte.forEach((r, i) => {
-          const isJolly = (sq.jolly === i);
-          const jollyTag = isJolly ? '<span class="jolly-tag">J</span>' : '';
-          const jollyClass = isJolly ? ' cell-jolly' : '';
-
-          if (r.stato === 'correct') {
-            html += `<td class="cell-correct${jollyClass}">${jollyTag}+${r.punti}</td>`;
-          } else if (r.stato === 'wrong') {
-            const pen = isJolly ? (PENALITA * 2) : PENALITA;
-            html += `<td class="cell-wrong${jollyClass}">${jollyTag}${pen * r.tentativi}</td>`;
-          } else if (r.stato === 'pending') {
-            html += `<td class="cell-pending${jollyClass}">${jollyTag}...</td>`;
-          } else {
-            html += `<td class="cell-empty${jollyClass}">${jollyTag}-</td>`;
-          }
-        });
-
-        html += `<td class="punteggio-cell">${totale}</td>`;
         tr.innerHTML = html;
         tbody.appendChild(tr);
       });
     }
 
-    // ==========================================
-    // TIMERS
-    // ==========================================
-    let secondiTrascorsi = 0;
-    let secondiTotali = DURATA_MINUTI * 60;
-    let secJolly = TEMPO_JOLLY;
-    let secDomande = TEMPO_DOMANDE;
-    let tabelloneNascosto = false;
+    // ==================== TIMER LOCALE ====================
 
     function fmt(sec) {
-      const m = Math.floor(sec / 60);
-      const s = sec % 60;
-      return `${m.toString().padStart(2,'0')}:${s.toString().padStart(2,'0')}`;
+      const s = Math.max(0, Math.floor(sec));
+      return String(Math.floor(s / 60)).padStart(2,'0') + ':' + String(s % 60).padStart(2,'0');
     }
 
-    function tick() {
-      if (secondiTrascorsi >= secondiTotali) return;
-      secondiTrascorsi++;
+    function tickTimer() {
+      if (secondiLocali > 0) secondiLocali--;
 
-      // Timer principale
-      const rim = secondiTotali - secondiTrascorsi;
-      document.getElementById('timerDisplay').textContent = fmt(rim);
+      // Timer principale (grande a DX)
+      const elT = document.getElementById('timerDisplay');
+      elT.textContent = fmt(secondiLocali);
+      elT.style.color = secondiLocali <= 60 ? '#fca5a5' : '#fcd34d';
 
-      // Valori domande
-      const minTr = Math.floor(secondiTrascorsi / 60);
-      const val = PUNTI_INIZIALI + (minTr * INCREMENTO);
-      for (let i = 1; i <= NUM_DOMANDE; i++) {
-        const el = document.getElementById(`val-${i}`);
-        if (el) el.textContent = val;
+      // Timer nel pannello nascosto
+      const elF = document.getElementById('timerFinale');
+      if (elF) elF.textContent = fmt(secondiLocali);
+
+      // Valori domande (aggiornamento locale tra un polling e l'altro)
+      if (lastData && lastData.gara && lastData.gara.oraInizio) {
+        const secTrascorsi = Math.floor((Date.now() - new Date(lastData.gara.oraInizio).getTime()) / 1000);
+        const minTr = Math.floor(secTrascorsi / 60);
+        const val = PUNTI_BASE + (minTr * INCREMENTO);
+        for (let i = 1; i <= (CFG.numeroDomande || 10); i++) {
+          const el = document.getElementById('val-' + i);
+          if (el) el.textContent = val;
+        }
       }
 
-      // Timer Jolly
+      // Timer Jolly (SX)
       const elJ = document.getElementById('timerJolly');
-      if (secJolly > 0) {
-        secJolly--;
-        elJ.textContent = fmt(secJolly);
-      } else if (!elJ.classList.contains('scaduto')) {
-        elJ.textContent = 'SCADUTO';
-        elJ.classList.add('scaduto');
+      if (elJ && jollyDeadline) {
+        const secJ = Math.max(0, (jollyDeadline - Date.now()) / 1000);
+        if (secJ <= 0) { elJ.textContent = 'SCADUTO'; elJ.classList.add('scaduto'); }
+        else { elJ.textContent = fmt(secJ); elJ.classList.remove('scaduto'); }
       }
 
-      // Timer Domande
+      // Timer Domande (SX)
       const elD = document.getElementById('timerDomande');
-      if (secDomande > 0) {
-        secDomande--;
-        elD.textContent = fmt(secDomande);
-      } else if (!elD.classList.contains('scaduto')) {
-        elD.textContent = 'SCADUTO';
-        elD.classList.add('scaduto');
+      if (elD && domandeDeadline) {
+        const secD = Math.max(0, (domandeDeadline - Date.now()) / 1000);
+        if (secD <= 0) { elD.textContent = 'SCADUTO'; elD.classList.add('scaduto'); }
+        else { elD.textContent = fmt(secD); elD.classList.remove('scaduto'); }
       }
 
-      // Nascondimento ultimi 5 min
-      const minRimanenti = rim / 60;
-      if (minRimanenti <= MINUTI_NASCONDIMENTO && !tabelloneNascosto) {
-        tabelloneNascosto = true;
+      // Nascondimento locale (tra un polling e l'altro)
+      if (secondiLocali > 0 && secondiLocali <= MIN_NASC * 60) {
         document.getElementById('tabelloneVisibile').style.display = 'none';
         document.getElementById('tabelloneNascosto').style.display = 'flex';
       }
-      if (tabelloneNascosto) {
-        document.getElementById('timerFinale').textContent = fmt(rim);
-      }
     }
 
-    setInterval(tick, 1000);
+    function esc(s) {
+      return String(s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+    }
 
-    // ==========================================
-    // INIT
-    // ==========================================
-    renderTabellone();
+    // ==================== INIT ====================
+
+    lkApi(API, { action: 'getGaraAttiva' })
+      .then(g => {
+        if (g && g.id) { garaId = g.id; avviaPolling(); }
+        else mostraAttesa();
+      })
+      .catch(() => mostraAttesa());
   </script>
 </body>
 </html>
