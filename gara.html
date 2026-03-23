@@ -113,6 +113,27 @@
       border-color: #fbbf24;
       color: white;
     }
+    .q-btn.q-wrong.q-jolly {
+      background: #ef4444;
+      border-color: #ef4444;
+      color: white;
+    }
+
+    @keyframes flashCorretta {
+      0%, 100% { background: #10b981; border-color: #10b981; }
+      50%       { background: #34d399; border-color: #34d399; box-shadow: 0 0 14px rgba(16,185,129,0.8); transform: scale(1.15); }
+    }
+    @keyframes flashSbagliata {
+      0%, 100% { background: #ef4444; border-color: #ef4444; }
+      50%       { background: #f87171; border-color: #f87171; box-shadow: 0 0 14px rgba(239,68,68,0.8); transform: scale(1.15); }
+    }
+    @keyframes flashJolly {
+      0%, 100% { background: linear-gradient(135deg, #fbbf24, #10b981); border-color: #fbbf24; }
+      50%       { background: linear-gradient(135deg, #fde68a, #6ee7b7); box-shadow: 0 0 16px rgba(251,191,36,0.9); transform: scale(1.15); }
+    }
+    .q-btn.q-flash-corretta { animation: flashCorretta 0.35s ease-in-out 3; }
+    .q-btn.q-flash-sbagliata { animation: flashSbagliata 0.35s ease-in-out 3; }
+    .q-btn.q-flash-jolly    { animation: flashJolly 0.35s ease-in-out 3; }
 
     /* Colonna destra: domanda attuale */
     .domanda-panel { padding: 1.25rem; }
@@ -405,13 +426,17 @@
           stato.squadraId  = r.squadraId;
           stato.nomeSquadra = r.nomeSquadra || codice;
 
-          if (r.garaStato !== 'attiva') {
-            // Gara non ancora avviata: mostra banner attesa e polling avvio
+          if (r.garaStato === 'attiva') {
+            sessionStorage.setItem('lkGara', JSON.stringify({ garaId: r.garaId, squadraId: r.squadraId, nomeSquadra: stato.nomeSquadra }));
+            caricaGara();
+          } else if (r.garaStato === 'preparazione') {
             sessionStorage.setItem('lkGara', JSON.stringify({ garaId: r.garaId, squadraId: r.squadraId, nomeSquadra: stato.nomeSquadra }));
             mostraBannerAttesa();
           } else {
-            sessionStorage.setItem('lkGara', JSON.stringify({ garaId: r.garaId, squadraId: r.squadraId, nomeSquadra: stato.nomeSquadra }));
-            caricaGara();
+            // conclusa o sconosciuta: avvisa
+            errEl.textContent = 'La gara è già terminata o non disponibile.';
+            errEl.classList.remove('hidden');
+            btn.disabled = false; btn.textContent = 'Entra';
           }
         })
         .catch(err => {
@@ -500,14 +525,30 @@
       const btn = document.getElementById('qBtn' + num);
       if (!btn) return;
       const r = stato.risposte[num];
+      const isJolly = (stato.jolly === num);
       let cls = 'q-btn';
-      if (stato.jolly === num)          cls += ' q-jolly';
-      if (r && r.esito === 'corretta')  cls += ' q-answered';
+      if (isJolly)                          cls += ' q-jolly';
+      if (r && r.esito === 'corretta')      cls += ' q-answered';
       else if (r && r.esito === 'sbagliata') cls += ' q-wrong';
-      if (num === stato.domandaAttiva)  cls += ' q-selected';
+      if (num === stato.domandaAttiva)      cls += ' q-selected';
       btn.className = cls;
-      btn.title = 'Q' + num + (stato.jolly === num ? ' ⭐JOLLY' : '') +
+      btn.title = 'Q' + num + (isJolly ? ' ⭐JOLLY' : '') +
                   (r ? (r.esito === 'corretta' ? ' ✓' : ' ✗') : '');
+    }
+
+    function flashQBtn(num, esito, isJollyCorretta) {
+      const btn = document.getElementById('qBtn' + num);
+      if (!btn) return;
+      let flashClass;
+      if (isJollyCorretta)        flashClass = 'q-flash-jolly';
+      else if (esito === 'corretta') flashClass = 'q-flash-corretta';
+      else                           flashClass = 'q-flash-sbagliata';
+      btn.classList.add(flashClass);
+      // Dopo 3 cicli (3 × 0.35s = ~1.1s) rimuovi e reimposta stato finale
+      setTimeout(function() {
+        btn.classList.remove(flashClass);
+        aggiornaQBtn(num);
+      }, 1150);
     }
 
     function aggiornaGriglia() {
@@ -585,27 +626,23 @@
       const btnInvia = document.getElementById('btnInviaRisposta');
       const r = stato.risposte[num];
 
+      // Mostra lo stato della risposta nel feedback, ma il campo è sempre libero e resettato
+      input.value = '';
+      input.disabled = false;
+      input.style.background = '';
+      btnInvia.disabled = false;
+
       if (r && r.esito === 'corretta') {
-        input.value = r.risposta || '';
-        input.disabled = true;
-        input.style.background = '#d1fae5';
-        feedback.textContent = '✓ Risposta corretta! +' + r.punti + ' punti' +
-          (stato.jolly === num ? ' ⭐ Jolly x2!' : '');
+        feedback.textContent = '✓ Risposta corretta: ' + (r.risposta || '') + '  +' + r.punti + ' punti' +
+          (stato.jolly === num ? ' ⭐ Jolly x2!' : '') + '  (risposte sbagliate applicano penalità)';
         feedback.style.color = '#065f46';
-        btnInvia.disabled = true;
+      } else if (r && r.esito === 'sbagliata') {
+        feedback.textContent = '✗ Risposta sbagliata. Riprova!';
+        feedback.style.color = '#dc2626';
       } else {
-        input.value = (r && r.risposta) ? r.risposta : '';
-        input.disabled = false;
-        input.style.background = '';
-        btnInvia.disabled = false;
-        if (r && r.esito === 'sbagliata') {
-          feedback.textContent = '✗ Risposta sbagliata. Riprova!';
-          feedback.style.color = '#dc2626';
-        } else {
-          feedback.textContent = '';
-        }
-        setTimeout(() => input.focus(), 50);
+        feedback.textContent = '';
       }
+      setTimeout(() => input.focus(), 50);
 
       aggiornaGriglia();
     }
@@ -630,29 +667,42 @@
           btn.disabled = false; btn.textContent = 'Invia Risposta';
           if (r.error) { feedback.textContent = 'Errore: ' + r.error; feedback.style.color = '#dc2626'; return; }
 
-          // Aggiorna stato locale
+          const numDom = stato.domandaAttiva;
           const rNorm = risposta.padStart(4,'0');
-          stato.risposte[stato.domandaAttiva] = { risposta: rNorm, esito: r.esito, punti: r.punti };
+          const isJolly = (stato.jolly === numDom);
+          const precedenteCorretta = r.hasPrecedenteCorretta || false;
+
+          // Aggiorna punteggio (la penalità/bonus è sempre valida)
           stato.puntiTotali += parseInt(r.punti) || 0;
           aggiornaScore();
-          aggiornaQBtn(stato.domandaAttiva);
 
           if (r.esito === 'corretta') {
+            stato.risposte[numDom] = { risposta: rNorm, esito: 'corretta', punti: r.punti };
+            flashQBtn(numDom, 'corretta', isJolly);
             feedback.textContent = '✓ CORRETTA! +' + r.punti + ' punti' +
-              (stato.jolly === stato.domandaAttiva ? ' ⭐ Jolly x2!' : '');
+              (isJolly ? ' ⭐ Jolly x2!' : '') + '  — puoi riprovare ma i punti non cambiano';
             feedback.style.color = '#065f46';
-            input.disabled = true;
-            input.style.background = '#d1fae5';
-            btn.disabled = true;
-            // Auto-naviga alla prossima domanda aperta dopo 1.5s
+            input.value = '';
+            // Auto-naviga alla prossima domanda aperta dopo 2s (aspetta fine flash)
             setTimeout(() => {
               const prossima = trovaProssimaDomanda();
               if (prossima) mostraDomanda(prossima);
-            }, 1500);
+            }, 2000);
+          } else if (precedenteCorretta) {
+            // Sbagliata dopo corretta: flash rosso poi torna verde; stato rimane corretta
+            flashQBtn(numDom, 'sbagliata', false);
+            feedback.textContent = '✗ Sbagliata! ' + r.punti + ' punti. Hai già risposto correttamente a questa domanda.';
+            feedback.style.color = '#dc2626';
+            // Dopo il flash (1.2s) il btn torna verde da solo (stato.risposte rimane corretta)
+            input.value = '';
+            input.focus();
           } else {
+            stato.risposte[numDom] = { risposta: rNorm, esito: 'sbagliata', punti: r.punti };
+            flashQBtn(numDom, 'sbagliata', false);
             feedback.textContent = '✗ Sbagliata! ' + r.punti + ' punti. Riprova.';
             feedback.style.color = '#dc2626';
-            input.select();
+            input.value = '';
+            input.focus();
           }
         })
         .catch(err => {
@@ -745,7 +795,14 @@
       if (!stato.garaId) return;
       lkApi(API, { action: 'getStatoSquadra', garaId: stato.garaId, squadraId: stato.squadraId })
         .then(s => {
-          if (s.garaStato === 'conclusa') { stopPolling(); document.getElementById('timer').textContent = '00:00'; return; }
+          if (s.garaStato === 'conclusa') {
+            stopPolling();
+            document.getElementById('timer').textContent = '00:00';
+            document.getElementById('punteggioFinaleVal').textContent = (s.puntiTotali || stato.puntiTotali || 0) + ' pt';
+            const ov = document.getElementById('overlayGaraTerminata');
+            if (ov) ov.style.display = 'flex';
+            return;
+          }
           // Aggiorna punti (source of truth = server)
           stato.puntiTotali = s.puntiTotali || stato.puntiTotali;
           aggiornaScore();
@@ -804,5 +861,15 @@
       } catch(e) { sessionStorage.removeItem('lkGara'); }
     })();
   </script>
+
+  <!-- OVERLAY GARA TERMINATA -->
+  <div id="overlayGaraTerminata" style="display:none;position:fixed;inset:0;background:linear-gradient(135deg,#0f0c29,#302b63,#24243e);z-index:9999;flex-direction:column;align-items:center;justify-content:center;color:white;text-align:center;padding:2rem;">
+    <div style="font-size:4rem;margin-bottom:1rem;">🏁</div>
+    <div style="font-size:clamp(2rem,8vw,4rem);font-weight:900;margin-bottom:0.5rem;">Gara Terminata!</div>
+    <div style="font-size:clamp(1rem,3vw,1.4rem);opacity:0.8;margin-bottom:2rem;">Rimanete in attesa per i risultati.<br>Il tabellone annuncerà la classifica!</div>
+    <div id="punteggioFinaleDisplay" style="background:rgba(255,255,255,0.1);border-radius:16px;padding:1rem 2rem;font-size:clamp(1rem,3vw,1.3rem);">
+      Il vostro punteggio finale: <span id="punteggioFinaleVal" style="font-weight:900;color:#fcd34d;font-size:1.5em;"></span>
+    </div>
+  </div>
 </body>
 </html>
