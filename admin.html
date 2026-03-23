@@ -124,6 +124,24 @@
       margin-top: 0.5rem;
     }
     .danger-zone h4 { color: #dc2626; margin: 0 0 0.5rem 0; font-size: 0.9rem; }
+
+    /* ========== Controllo Gara Live ========== */
+    .phase-gara { background: #fee2e2; color: #991b1b; }
+    .log-container { max-height: 420px; overflow-y: auto; border: 1px solid var(--lk-border); border-radius: var(--lk-radius-md); }
+    .log-table { width: 100%; border-collapse: collapse; font-size: 0.82rem; }
+    .log-table th { background: #1e293b; color: white; padding: 7px 10px; text-align: left; font-weight: 600; position: sticky; top: 0; z-index: 1; }
+    .log-table td { padding: 6px 10px; border-bottom: 1px solid var(--lk-border); vertical-align: middle; }
+    .log-table tr:hover td { background: #f8fafc; }
+    .badge-corretta { background: #d1fae5; color: #065f46; padding: 2px 8px; border-radius: 9999px; font-size: 0.75rem; font-weight: 600; white-space: nowrap; }
+    .badge-sbagliata { background: #fee2e2; color: #991b1b; padding: 2px 8px; border-radius: 9999px; font-size: 0.75rem; font-weight: 600; white-space: nowrap; }
+    .badge-jolly-live { background: #fef3c7; color: #92400e; padding: 2px 6px; border-radius: 9999px; font-size: 0.7rem; font-weight: 700; }
+    .btn-action-sm { background: none; border: 1px solid var(--lk-border); border-radius: 4px; padding: 3px 7px; cursor: pointer; font-size: 0.8rem; line-height: 1; }
+    .btn-action-edit { border-color: #93c5fd; color: #1d4ed8; }
+    .btn-action-edit:hover { background: #eff6ff; }
+    .btn-action-del { border-color: #fca5a5; color: #dc2626; }
+    .btn-action-del:hover { background: #fff5f5; }
+    .gara-status-bar { display: flex; gap: 1rem; align-items: center; flex-wrap: wrap; background: #f8fafc; border: 1px solid var(--lk-border); border-radius: var(--lk-radius-md); padding: 0.75rem 1rem; margin-bottom: 1rem; }
+    .timer-live { font-size: 1.5rem; font-weight: 800; color: var(--lk-primary); font-variant-numeric: tabular-nums; letter-spacing: 0.05em; }
   </style>
 </head>
 <body>
@@ -356,6 +374,126 @@
         </div>
       </section>
 
+      <!-- ==================== CONTROLLO GARA LIVE ==================== -->
+      <section class="admin-section">
+        <h3 class="admin-section-title">
+          <span class="phase-badge phase-gara">🎮</span>
+          Controllo Gara Live
+          <button class="btn-info-toggle" onclick="toggleInfo('info-gara-live')" title="Informazioni">i</button>
+        </h3>
+        <div class="info-panel" id="info-gara-live">
+          <strong>Come usare:</strong>
+          <ul>
+            <li><strong>Nuova Gara:</strong> inserisci nome e i 10 quesiti con le risposte corrette.</li>
+            <li><strong>Importa Squadre:</strong> carica automaticamente tutte le squadre iscritte nella gara.</li>
+            <li><strong>GO:</strong> avvia il timer ufficiale della gara.</li>
+            <li>Il log si aggiorna ogni 3 secondi con tutte le risposte inviate.</li>
+            <li>Usa <strong>✏️</strong> per correggere un esito (toggle corretta/sbagliata) e <strong>🗑️</strong> per eliminare una risposta.</li>
+            <li><strong>TERMINA:</strong> chiudi la gara anticipatamente (altrimenti scade al timeout).</li>
+          </ul>
+        </div>
+
+        <!-- Selezione gara + Nuova Gara -->
+        <div class="card mt-1">
+          <div style="display:flex; gap:0.75rem; align-items:flex-end; flex-wrap:wrap;">
+            <div class="form-group" style="flex:1; min-width:200px; margin:0;">
+              <label class="form-label">Gara da gestire</label>
+              <select id="selGaraLive" class="form-control" onchange="selezionaGaraLive()">
+                <option value="">-- Seleziona gara --</option>
+              </select>
+            </div>
+            <button class="btn btn-outline" onclick="caricaListaGare()" style="white-space:nowrap;">🔄 Aggiorna</button>
+            <button class="btn btn-primary" onclick="toggleFormNuovaGara()" id="btnToggleFormGara" style="white-space:nowrap;">+ Nuova Gara</button>
+          </div>
+
+          <!-- Form creazione nuova gara (nascosto) -->
+          <div id="formNuovaGara" style="display:none; margin-top:1rem; border-top:1px solid var(--lk-border); padding-top:1rem;">
+            <h4 style="margin:0 0 0.75rem 0; font-size:0.95rem; color:var(--lk-text);">Nuova Gara</h4>
+            <div class="form-group">
+              <label class="form-label">Nome gara *</label>
+              <input type="text" id="nomeGara" class="form-control" placeholder="es. LogiKron 2025-2026 — Primaria">
+            </div>
+            <div style="margin-bottom:0.5rem; font-size:0.87rem; font-weight:600; color:var(--lk-text);">
+              Quesiti — risposta in formato 0–9999 (es. "42" o "0042")
+            </div>
+            <div style="overflow-x:auto;">
+              <table style="width:100%; border-collapse:collapse; font-size:0.85rem;">
+                <thead>
+                  <tr style="background:#f1f5f9;">
+                    <th style="padding:6px 10px; text-align:center; width:36px;">#</th>
+                    <th style="padding:6px 10px; text-align:left;">Testo quesito (opzionale)</th>
+                    <th style="padding:6px 10px; text-align:center; width:130px;">Risposta *</th>
+                  </tr>
+                </thead>
+                <tbody id="tabellaQuesiti"></tbody>
+              </table>
+            </div>
+            <div style="margin-top:1rem; display:flex; gap:0.75rem;">
+              <button class="btn btn-primary" onclick="salvaGara()">💾 Crea Gara</button>
+              <button class="btn btn-outline" onclick="toggleFormNuovaGara()">Annulla</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Pannello controllo gara selezionata -->
+        <div id="pannelloGaraLive" style="display:none; margin-top:1rem;">
+          <!-- Status bar -->
+          <div class="gara-status-bar">
+            <div>
+              <div style="font-weight:700; font-size:1rem;" id="garaLiveNome">—</div>
+              <div style="font-size:0.78rem; color:var(--lk-text-muted);" id="garaLiveId">—</div>
+            </div>
+            <div id="garaLiveStato"></div>
+            <div style="margin-left:auto; display:flex; flex-direction:column; align-items:flex-end;">
+              <div class="timer-live" id="timerGaraLive">—</div>
+              <div style="font-size:0.72rem; color:var(--lk-text-muted);">tempo rimanente</div>
+            </div>
+          </div>
+
+          <!-- Azioni -->
+          <div style="display:flex; gap:0.75rem; flex-wrap:wrap; margin-bottom:1rem;">
+            <button id="btnGoGara" class="btn btn-success" onclick="goGara()" style="display:none; font-size:1rem; padding:10px 28px;">
+              ▶ GO — Avvia Gara
+            </button>
+            <button id="btnImportaSquadre" class="btn btn-outline" onclick="importaSquadreInGara()" style="display:none;">
+              👥 Importa Squadre
+            </button>
+            <button id="btnJollyUfficio" class="btn btn-outline" onclick="jollyDUfficioLive()" style="display:none;">
+              ⭐ Jolly d'ufficio
+            </button>
+            <button id="btnTerminaGara" class="btn btn-outline" onclick="terminaGaraLive()"
+                    style="border-color:#dc2626; color:#dc2626; display:none;">
+              ■ TERMINA GARA
+            </button>
+          </div>
+
+          <!-- Log risposte -->
+          <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:0.5rem;">
+            <strong style="font-size:0.9rem;">📋 Log risposte</strong>
+            <span id="logContatoreRisposte" style="font-size:0.8rem; color:var(--lk-text-muted);"></span>
+          </div>
+          <div class="log-container">
+            <table class="log-table">
+              <thead>
+                <tr>
+                  <th>Ora</th>
+                  <th>Squadra</th>
+                  <th style="text-align:center;">Q</th>
+                  <th style="text-align:center;">Risposta</th>
+                  <th style="text-align:center;">Esito</th>
+                  <th style="text-align:center;">Punti</th>
+                  <th style="text-align:center;">Jolly</th>
+                  <th style="text-align:center;">Azioni</th>
+                </tr>
+              </thead>
+              <tbody id="logRisposte">
+                <tr><td colspan="8" style="text-align:center; color:var(--lk-text-muted); padding:1.5rem;">Nessuna risposta ancora</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
       <!-- ==================== FASE 4: POST-GARA ==================== -->
       <section class="admin-section">
         <h3 class="admin-section-title">
@@ -519,6 +657,10 @@
                     onclick="resetDati('Intenzioni')">
               🗑 Reset Intenzioni
             </button>
+            <button class="btn btn-outline" style="border-color:#fca5a5;color:#dc2626;"
+                    onclick="eliminaGaraTest()">
+              🗑 Elimina Gara (selezionata sopra)
+            </button>
           </div>
         </div>
       </section>
@@ -583,6 +725,7 @@
       caricaStatIntenzioni();
       caricaFiltroIstituti();
       aggiornaFiltroClassi();
+      caricaListaGare();
     }
 
     function caricaFase() {
@@ -999,10 +1142,318 @@
     // Placeholder — da implementare nelle fasi successive
     function setupNuovoAnno() { alert('Setup Nuovo Anno — Da implementare'); }
     function openConfig()     { alert('Configurazione — Da implementare'); }
-    function createGara()     { alert('Crea Gara — Da implementare'); }
+    function createGara()     { toggleFormNuovaGara(); document.getElementById('formNuovaGara').scrollIntoView({ behavior: 'smooth' }); }
     function viewClassifica() { alert('Classifica — Da implementare'); }
     function generateAttestati() { alert('Genera Attestati — Da implementare'); }
     function viewStatistiche()   { alert('Statistiche — Da implementare'); }
+
+    // ==================== CONTROLLO GARA LIVE ====================
+
+    let garaLiveCorrente = null;
+    let pollingInterval = null;
+    let timerInterval = null;
+
+    function caricaListaGare() {
+      const sel = document.getElementById('selGaraLive');
+      lkApi(API, { action: 'getListaGare' }).then(gare => {
+        const valPrecedente = sel.value;
+        sel.innerHTML = '<option value="">-- Seleziona gara --</option>';
+        if (!Array.isArray(gare) || gare.length === 0) return;
+        // Più recenti prima
+        [...gare].reverse().forEach(g => {
+          const opt = document.createElement('option');
+          opt.value = g.id;
+          opt.textContent = g.nome + ' — ' + g.stato + ' (' + g.data + ')';
+          sel.appendChild(opt);
+        });
+        // Ripristina selezione se ancora presente
+        if (valPrecedente && [...sel.options].some(o => o.value === valPrecedente)) {
+          sel.value = valPrecedente;
+        }
+      }).catch(() => {});
+    }
+
+    function selezionaGaraLive() {
+      const sel = document.getElementById('selGaraLive');
+      stopPollingRisposte();
+      stopTimerGara();
+      if (!sel.value) {
+        document.getElementById('pannelloGaraLive').style.display = 'none';
+        return;
+      }
+      const garaId = sel.value;
+      const nomeGara = sel.options[sel.selectedIndex].text.split(' — ')[0];
+      document.getElementById('pannelloGaraLive').style.display = '';
+      document.getElementById('garaLiveNome').textContent = nomeGara;
+      document.getElementById('garaLiveId').textContent = 'ID: ' + garaId;
+      document.getElementById('logRisposte').innerHTML =
+        '<tr><td colspan="8" style="text-align:center;color:var(--lk-text-muted);padding:1.5rem;">Caricamento...</td></tr>';
+
+      // Carica dettagli gara
+      lkApi(API, { action: 'getListaGare' }).then(gare => {
+        const gara = (gare || []).find(g => g.id === garaId);
+        if (!gara) return;
+        garaLiveCorrente = gara;
+        aggiornaUIGaraLive(gara);
+      }).catch(() => {});
+
+      aggiornaLogRisposte();
+    }
+
+    function aggiornaUIGaraLive(gara) {
+      const stati = {
+        preparazione: '<span class="phase-badge phase-0">⏳ Preparazione</span>',
+        attiva:       '<span class="phase-badge phase-3" style="background:#d1fae5;color:#065f46;">🟢 ATTIVA</span>',
+        conclusa:     '<span class="phase-badge phase-0">✅ Conclusa</span>'
+      };
+      document.getElementById('garaLiveStato').innerHTML = stati[gara.stato] || gara.stato;
+
+      document.getElementById('btnGoGara').style.display       = gara.stato === 'preparazione' ? '' : 'none';
+      document.getElementById('btnImportaSquadre').style.display = gara.stato === 'preparazione' ? '' : 'none';
+      document.getElementById('btnJollyUfficio').style.display  = gara.stato === 'attiva' ? '' : 'none';
+      document.getElementById('btnTerminaGara').style.display   = gara.stato === 'attiva' ? '' : 'none';
+
+      if (gara.stato === 'attiva') {
+        startPollingRisposte();
+        startTimerGara(gara);
+      } else {
+        document.getElementById('timerGaraLive').textContent = gara.stato === 'conclusa' ? '00:00' : '—';
+      }
+    }
+
+    function goGara() {
+      const garaId = document.getElementById('selGaraLive').value;
+      if (!garaId) return;
+      if (!confirm('Avviare la gara? Il timer partirà immediatamente.')) return;
+      const btn = document.getElementById('btnGoGara');
+      btn.disabled = true; btn.textContent = 'Avvio in corso...';
+      lkApi(API, { action: 'avviaGara', garaId: garaId, pwd: adminPwd })
+        .then(r => {
+          btn.disabled = false; btn.textContent = '▶ GO — Avvia Gara';
+          if (r.error) { alert('Errore: ' + r.error); return; }
+          alert('✅ Gara avviata!');
+          garaLiveCorrente = Object.assign({}, garaLiveCorrente,
+            { stato: 'attiva', oraFine: r.oraFine });
+          aggiornaUIGaraLive(garaLiveCorrente);
+        })
+        .catch(err => { btn.disabled = false; btn.textContent = '▶ GO — Avvia Gara'; alert('Errore: ' + err.message); });
+    }
+
+    function terminaGaraLive() {
+      const garaId = document.getElementById('selGaraLive').value;
+      if (!garaId) return;
+      if (!confirm('Terminare la gara anticipatamente?')) return;
+      lkApi(API, { action: 'terminaGara', garaId: garaId, pwd: adminPwd })
+        .then(r => {
+          if (r.error) { alert('Errore: ' + r.error); return; }
+          stopPollingRisposte(); stopTimerGara();
+          garaLiveCorrente = Object.assign({}, garaLiveCorrente, { stato: 'conclusa' });
+          aggiornaUIGaraLive(garaLiveCorrente);
+          alert('✅ Gara terminata!');
+        })
+        .catch(err => alert('Errore: ' + err.message));
+    }
+
+    function importaSquadreInGara() {
+      const garaId = document.getElementById('selGaraLive').value;
+      if (!garaId) return;
+      if (!confirm('Importare tutte le squadre del foglio Iscrizioni in questa gara?')) return;
+      lkApi(API, { action: 'importaSquadreGara', garaId: garaId, pwd: adminPwd })
+        .then(r => { if (r.error) { alert('Errore: ' + r.error); return; } alert('✅ ' + r.message); })
+        .catch(err => alert('Errore: ' + err.message));
+    }
+
+    function jollyDUfficioLive() {
+      const garaId = document.getElementById('selGaraLive').value;
+      if (!garaId) return;
+      if (!confirm('Assegnare jolly casuale a tutte le squadre senza jolly?')) return;
+      lkApi(API, { action: 'assegnaJollyDUfficio', garaId: garaId })
+        .then(r => { if (r.error) { alert('Errore: ' + r.error); return; } alert('✅ ' + r.message); })
+        .catch(err => alert('Errore: ' + err.message));
+    }
+
+    function startPollingRisposte() {
+      stopPollingRisposte();
+      pollingInterval = setInterval(aggiornaLogRisposte, 3000);
+    }
+    function stopPollingRisposte() {
+      if (pollingInterval) { clearInterval(pollingInterval); pollingInterval = null; }
+    }
+
+    function startTimerGara(gara) {
+      stopTimerGara();
+      const el = document.getElementById('timerGaraLive');
+      function tick() {
+        if (!gara.oraFine) { el.textContent = '—'; return; }
+        const sec = Math.max(0, Math.floor((new Date(gara.oraFine) - new Date()) / 1000));
+        const m = Math.floor(sec / 60), s = sec % 60;
+        el.textContent = String(m).padStart(2,'0') + ':' + String(s).padStart(2,'0');
+        el.style.color = sec <= 300 ? '#dc2626' : 'var(--lk-primary)'; // rosso ultimi 5 min
+        if (sec === 0) stopTimerGara();
+      }
+      tick();
+      timerInterval = setInterval(tick, 1000);
+    }
+    function stopTimerGara() {
+      if (timerInterval) { clearInterval(timerInterval); timerInterval = null; }
+    }
+
+    function aggiornaLogRisposte() {
+      const garaId = document.getElementById('selGaraLive').value;
+      if (!garaId) return;
+      lkApi(API, { action: 'getRisposteGara', garaId: garaId })
+        .then(r => {
+          const tbody = document.getElementById('logRisposte');
+          const risposte = r.risposte || [];
+          document.getElementById('logContatoreRisposte').textContent =
+            risposte.length + (risposte.length === 1 ? ' risposta' : ' risposte');
+          if (risposte.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;color:var(--lk-text-muted);padding:1.5rem;">Nessuna risposta ancora</td></tr>';
+            return;
+          }
+          tbody.innerHTML = risposte.map(function(r) {
+            let ora = '—';
+            if (r.timestamp) {
+              try {
+                const d = new Date(r.timestamp);
+                ora = String(d.getHours()).padStart(2,'0') + ':' +
+                      String(d.getMinutes()).padStart(2,'0') + ':' +
+                      String(d.getSeconds()).padStart(2,'0');
+              } catch(e) {}
+            }
+            const esitoBadge = r.esito === 'corretta'
+              ? '<span class="badge-corretta">✓ corretta</span>'
+              : '<span class="badge-sbagliata">✗ sbagliata</span>';
+            const jollyBadge = r.isJolly ? '<span class="badge-jolly-live">⭐ J</span>' : '';
+            const puntiColor = r.punti > 0 ? 'color:#065f46;font-weight:700;' : 'color:#991b1b;font-weight:700;';
+            const sqId = (r.squadraId || '').replace(/'/g,"\\'");
+            const sqNome = (r.nomeSquadra || '').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+            const sqNomeEsc = (r.nomeSquadra || '').replace(/'/g,"\\'");
+            return '<tr>' +
+              '<td style="font-variant-numeric:tabular-nums;white-space:nowrap;font-size:0.78rem;">' + ora + '</td>' +
+              '<td style="font-weight:600;max-width:150px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="' + sqNome + '">' + sqNome + '</td>' +
+              '<td style="text-align:center;font-weight:700;color:var(--lk-primary);">Q' + r.numDomanda + '</td>' +
+              '<td style="text-align:center;font-family:monospace;font-weight:600;">' + (r.risposta || '—') + '</td>' +
+              '<td style="text-align:center;">' + esitoBadge + '</td>' +
+              '<td style="text-align:center;' + puntiColor + '">' + (r.punti > 0 ? '+' : '') + r.punti + '</td>' +
+              '<td style="text-align:center;">' + jollyBadge + '</td>' +
+              '<td style="text-align:center;white-space:nowrap;">' +
+                '<button class="btn-action-sm btn-action-edit" title="Cambia esito"' +
+                ' onclick="editRispostaLive(\'' + sqId + '\',' + r.numDomanda + ',\'' + r.esito + '\')">✏️</button> ' +
+                '<button class="btn-action-sm btn-action-del" title="Elimina risposta"' +
+                ' onclick="deleteRispostaLive(\'' + sqId + '\',' + r.numDomanda + ',\'' + sqNomeEsc + '\')">🗑️</button>' +
+              '</td>' +
+            '</tr>';
+          }).join('');
+        })
+        .catch(function() {});
+    }
+
+    function editRispostaLive(squadraId, numDomanda, esitoAttuale) {
+      const garaId = document.getElementById('selGaraLive').value;
+      if (!garaId) return;
+      const nuovoEsito = esitoAttuale === 'corretta' ? 'sbagliata' : 'corretta';
+      if (!confirm('Cambia esito Q' + numDomanda + ':\n"' + esitoAttuale + '" → "' + nuovoEsito + '"?')) return;
+      lkApi(API, { action: 'modificaRisposta', garaId: garaId, squadraId: squadraId,
+                   numDomanda: numDomanda, nuovoEsito: nuovoEsito, pwd: adminPwd })
+        .then(r => { if (r.error) { alert('Errore: ' + r.error); return; } aggiornaLogRisposte(); })
+        .catch(err => alert('Errore: ' + err.message));
+    }
+
+    function deleteRispostaLive(squadraId, numDomanda, nomeSquadra) {
+      const garaId = document.getElementById('selGaraLive').value;
+      if (!garaId) return;
+      if (!confirm('Eliminare risposta Q' + numDomanda + ' di "' + nomeSquadra + '"?')) return;
+      lkApi(API, { action: 'eliminaRisposta', garaId: garaId, squadraId: squadraId,
+                   numDomanda: numDomanda, pwd: adminPwd })
+        .then(r => { if (r.error) { alert('Errore: ' + r.error); return; } aggiornaLogRisposte(); })
+        .catch(err => alert('Errore: ' + err.message));
+    }
+
+    // ---- Form nuova gara ----
+
+    function toggleFormNuovaGara() {
+      const form = document.getElementById('formNuovaGara');
+      const btn  = document.getElementById('btnToggleFormGara');
+      if (form.style.display === 'none') {
+        form.style.display = '';
+        btn.textContent = '✕ Annulla';
+        initTabellaQuesiti();
+      } else {
+        form.style.display = 'none';
+        btn.textContent = '+ Nuova Gara';
+      }
+    }
+
+    function initTabellaQuesiti() {
+      const tbody = document.getElementById('tabellaQuesiti');
+      const n = (LOGIKRON_CONFIG.gare && LOGIKRON_CONFIG.gare.numeroDomande) || 10;
+      let html = '';
+      for (let i = 1; i <= n; i++) {
+        html += '<tr>' +
+          '<td style="text-align:center;font-weight:700;color:var(--lk-primary);padding:4px 8px;">' + i + '</td>' +
+          '<td style="padding:3px 6px;"><input type="text" class="form-control" id="qTesto' + i + '"' +
+          ' style="margin:2px 0;font-size:0.84rem;" placeholder="Testo opzionale"></td>' +
+          '<td style="text-align:center;padding:3px 6px;"><input type="text" class="form-control" id="qRisposta' + i + '"' +
+          ' style="margin:2px 0;width:90px;font-family:monospace;text-align:center;font-weight:700;"' +
+          ' placeholder="0000" maxlength="4"></td>' +
+          '</tr>';
+      }
+      tbody.innerHTML = html;
+    }
+
+    function salvaGara() {
+      const nome = document.getElementById('nomeGara').value.trim();
+      if (!nome) { alert('Inserisci il nome della gara.'); return; }
+      const n = (LOGIKRON_CONFIG.gare && LOGIKRON_CONFIG.gare.numeroDomande) || 10;
+      const domande = [];
+      let errori = 0;
+      for (let i = 1; i <= n; i++) {
+        const rInput = document.getElementById('qRisposta' + i);
+        const risposta = rInput.value.trim();
+        if (!risposta) { errori++; rInput.style.borderColor = '#dc2626'; continue; }
+        rInput.style.borderColor = '';
+        domande.push({
+          testo: (document.getElementById('qTesto' + i).value || '').trim(),
+          risposta: risposta
+        });
+      }
+      if (errori > 0) { alert('Inserisci la risposta per tutti i ' + n + ' quesiti.'); return; }
+      const btn = event.target;
+      btn.disabled = true; btn.textContent = 'Creazione...';
+      lkApi(API, { action: 'creaGara', pwd: adminPwd, nome: nome, domande: JSON.stringify(domande) })
+        .then(r => {
+          btn.disabled = false; btn.textContent = '💾 Crea Gara';
+          if (r.error) { alert('Errore: ' + r.error); return; }
+          alert('✅ ' + r.message);
+          toggleFormNuovaGara();
+          document.getElementById('nomeGara').value = '';
+          caricaListaGare();
+        })
+        .catch(err => { btn.disabled = false; btn.textContent = '💾 Crea Gara'; alert('Errore: ' + err.message); });
+    }
+
+    // ---- Elimina gara (test) ----
+
+    function eliminaGaraTest() {
+      const sel = document.getElementById('selGaraLive');
+      if (!sel.value) {
+        alert('Prima seleziona una gara dalla sezione "Controllo Gara Live".');
+        return;
+      }
+      const nome = sel.options[sel.selectedIndex].text;
+      if (!confirm('⚠️ Eliminare COMPLETAMENTE la gara:\n"' + nome + '"?\n\nVerranno rimossi: squadre, domande e risposte.\nAzione irreversibile.')) return;
+      if (!confirm('Ultima conferma — eliminare "' + nome + '"?')) return;
+      lkApi(API, { action: 'eliminaGara', garaId: sel.value, pwd: adminPwd })
+        .then(r => {
+          if (r.error) { alert('Errore: ' + r.error); return; }
+          alert('✅ ' + r.message);
+          stopPollingRisposte(); stopTimerGara();
+          document.getElementById('pannelloGaraLive').style.display = 'none';
+          caricaListaGare();
+        })
+        .catch(err => alert('Errore: ' + err.message));
+    }
   </script>
 </body>
 </html>
