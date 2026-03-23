@@ -458,6 +458,12 @@
               clearInterval(attesaInterval);
               document.getElementById('bannerAttesa').classList.add('hidden');
               caricaGara();
+            } else if (r.garaStato === 'conclusa') {
+              clearInterval(attesaInterval);
+              document.getElementById('bannerAttesa').classList.add('hidden');
+              document.getElementById('punteggioFinaleVal').textContent = (r.puntiTotali || 0) + ' pt';
+              const ov = document.getElementById('overlayGaraTerminata');
+              if (ov) ov.style.display = 'flex';
             }
           }).catch(() => {});
       }, 5000);

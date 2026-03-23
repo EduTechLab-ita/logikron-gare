@@ -413,6 +413,7 @@
             <h4 class="admin-card-title">Pannello Squadre</h4>
             <p class="admin-card-desc">Link per le squadre durante la gara</p>
             <button class="btn btn-outline" onclick="copyLink('gara')">Copia Link</button>
+            <a href="gara.html" target="_blank" class="btn btn-primary mt-1" style="display:block;">Apri Pagina</a>
           </div>
         </div>
       </section>
@@ -513,6 +514,9 @@
             <button id="btnTerminaGara" class="btn btn-outline" onclick="terminaGaraLive()"
                     style="border-color:#dc2626; color:#dc2626; display:none;">
               ■ TERMINA GARA
+            </button>
+            <button id="btnCerimonia" class="btn btn-primary" onclick="avanzaCerimonia()" style="display:none;">
+              🎉 Avvia Cerimonia
             </button>
           </div>
 
@@ -1357,6 +1361,21 @@
       document.getElementById('btnImportaSquadre').style.display = gara.stato === 'preparazione' ? '' : 'none';
       document.getElementById('btnJollyUfficio').style.display  = gara.stato === 'attiva' ? '' : 'none';
       document.getElementById('btnTerminaGara').style.display   = gara.stato === 'attiva' ? '' : 'none';
+      // Cerimonia: visibile solo se conclusa e ci sono ancora fasi da mostrare
+      if (gara.stato === 'conclusa') {
+        _cerimoniaCurrent = typeof gara.cerimonia === 'number' ? gara.cerimonia : 0;
+        const labels = ['🎉 Mostra Classifica', '🏆 Avvia Podio', '📋 Classifica Completa'];
+        const btnCer = document.getElementById('btnCerimonia');
+        if (_cerimoniaCurrent < labels.length) {
+          btnCer.textContent = labels[_cerimoniaCurrent];
+          btnCer.style.display = '';
+        } else {
+          btnCer.style.display = 'none';
+        }
+      } else {
+        document.getElementById('btnCerimonia').style.display = 'none';
+        _cerimoniaCurrent = 0;
+      }
 
       if (gara.stato === 'attiva') {
         startPollingRisposte();
@@ -1414,7 +1433,27 @@
 
     function startPollingRisposte() {
       stopPollingRisposte();
-      pollingInterval = setInterval(aggiornaLogRisposte, 3000);
+      pollingInterval = setInterval(function() {
+        aggiornaLogRisposte();
+        // Controlla se la gara è terminata automaticamente (scaduto timer)
+        if (garaLiveCorrente && garaLiveCorrente.stato === 'attiva' && garaLiveCorrente.oraFine) {
+          const rimasti = Math.floor((new Date(garaLiveCorrente.oraFine) - new Date()) / 1000);
+          if (rimasti <= 0) {
+            // Timer scaduto: aggiorna stato da backend
+            lkApi(API, { action: 'getListaGare' }).then(function(gare) {
+              if (!Array.isArray(gare)) return;
+              gare.forEach(function(g) { _gareMap[g.id] = g; });
+              const garaId = document.getElementById('selGaraLive').value;
+              const garaAggiornata = _gareMap[garaId];
+              if (garaAggiornata && garaAggiornata.stato !== garaLiveCorrente.stato) {
+                garaLiveCorrente = garaAggiornata;
+                stopTimerGara();
+                aggiornaUIGaraLive(garaLiveCorrente);
+              }
+            }).catch(function() {});
+          }
+        }
+      }, 3000);
     }
     function stopPollingRisposte() {
       if (pollingInterval) { clearInterval(pollingInterval); pollingInterval = null; }
@@ -1441,17 +1480,37 @@
     function aggiornaLogRisposte() {
       const garaId = document.getElementById('selGaraLive').value;
       if (!garaId) return;
-      lkApi(API, { action: 'getRisposteGara', garaId: garaId })
-        .then(r => {
+      Promise.all([
+        lkApi(API, { action: 'getRisposteGara', garaId: garaId }),
+        lkApi(API, { action: 'getSquadre', garaId: garaId })
+      ]).then(function(results) {
           const tbody = document.getElementById('logRisposte');
-          const risposte = r.risposte || [];
+          const risposte = results[0].risposte || [];
+          const squadre = Array.isArray(results[1]) ? results[1] : [];
+
+          // Righe jolly senza risposta: squadre con jolly scelto ma nessuna risposta per quella domanda
+          const risposteChiave = new Set(risposte.map(function(r) { return r.squadraId + '_' + r.numDomanda; }));
+          const righeJolly = [];
+          squadre.forEach(function(sq) {
+            if (sq.jolly && sq.jolly !== '' && sq.jolly !== null) {
+              const k = sq.id + '_' + sq.jolly;
+              if (!risposteChiave.has(k)) {
+                righeJolly.push({ squadraId: sq.id, nomeSquadra: sq.nome, numJolly: sq.jolly });
+              }
+            }
+          });
+
+          const totale = risposte.length + righeJolly.length;
           document.getElementById('logContatoreRisposte').textContent =
-            risposte.length + (risposte.length === 1 ? ' risposta' : ' risposte');
-          if (risposte.length === 0) {
+            risposte.length + (risposte.length === 1 ? ' risposta' : ' risposte') +
+            (righeJolly.length > 0 ? ' + ' + righeJolly.length + ' jolly in attesa' : '');
+
+          if (totale === 0) {
             tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;color:var(--lk-text-muted);padding:1.5rem;">Nessuna risposta ancora</td></tr>';
             return;
           }
-          tbody.innerHTML = risposte.map(function(r) {
+
+          function rigaRisposta(r) {
             let ora = '—';
             if (r.timestamp) {
               try {
@@ -1466,9 +1525,10 @@
               : '<span class="badge-sbagliata">✗ sbagliata</span>';
             const jollyBadge = r.isJolly ? '<span class="badge-jolly-live">⭐ J</span>' : '';
             const puntiColor = r.punti > 0 ? 'color:#065f46;font-weight:700;' : 'color:#991b1b;font-weight:700;';
-            const sqId = (r.squadraId || '').replace(/'/g,"\\'");
-            const sqNome = (r.nomeSquadra || '').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+            const sqId    = (r.squadraId || '').replace(/'/g,"\\'");
+            const sqNome  = (r.nomeSquadra || '').replace(/</g,'&lt;').replace(/>/g,'&gt;');
             const sqNomeEsc = (r.nomeSquadra || '').replace(/'/g,"\\'");
+            const rispEsc = (r.risposta || '').replace(/'/g,"\\'");
             return '<tr>' +
               '<td style="font-variant-numeric:tabular-nums;white-space:nowrap;font-size:0.78rem;">' + ora + '</td>' +
               '<td style="font-weight:600;max-width:150px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="' + sqNome + '">' + sqNome + '</td>' +
@@ -1478,13 +1538,30 @@
               '<td style="text-align:center;' + puntiColor + '">' + (r.punti > 0 ? '+' : '') + r.punti + '</td>' +
               '<td style="text-align:center;">' + jollyBadge + '</td>' +
               '<td style="text-align:center;white-space:nowrap;">' +
-                '<button class="btn-action-sm btn-action-edit" title="Cambia esito"' +
-                ' onclick="editRispostaLive(\'' + sqId + '\',' + r.numDomanda + ',\'' + r.esito + '\')">✏️</button> ' +
+                '<button class="btn-action-sm btn-action-edit" title="Modifica risposta"' +
+                ' onclick="editRispostaLive(\'' + sqId + '\',' + r.numDomanda + ',\'' + r.esito + '\',\'' + rispEsc + '\',\'' + sqNomeEsc + '\')">✏️</button> ' +
                 '<button class="btn-action-sm btn-action-del" title="Elimina risposta"' +
                 ' onclick="deleteRispostaLive(\'' + sqId + '\',' + r.numDomanda + ',\'' + sqNomeEsc + '\')">🗑️</button>' +
               '</td>' +
             '</tr>';
-          }).join('');
+          }
+
+          function rigaJollyPending(j) {
+            const sqNome = (j.nomeSquadra || '').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+            return '<tr style="opacity:0.7;">' +
+              '<td style="font-size:0.78rem;color:#94a3b8;">—</td>' +
+              '<td style="font-weight:600;max-width:150px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="' + sqNome + '">' + sqNome + '</td>' +
+              '<td style="text-align:center;font-weight:700;color:var(--lk-primary);">Q' + j.numJolly + '</td>' +
+              '<td style="text-align:center;color:#94a3b8;font-size:0.8rem;">—</td>' +
+              '<td style="text-align:center;"><span style="background:#fef9c3;color:#78350f;padding:2px 8px;border-radius:9999px;font-size:0.72rem;font-weight:700;">⏳ in attesa</span></td>' +
+              '<td style="text-align:center;color:#94a3b8;">—</td>' +
+              '<td style="text-align:center;"><span class="badge-jolly-live">⭐ J</span></td>' +
+              '<td style="text-align:center;"></td>' +
+            '</tr>';
+          }
+
+          tbody.innerHTML = risposte.map(rigaRisposta).join('') +
+                            righeJolly.map(rigaJollyPending).join('');
         })
         .catch(function() {
           const tbody = document.getElementById('logRisposte');
@@ -1492,13 +1569,59 @@
         });
     }
 
-    function editRispostaLive(squadraId, numDomanda, esitoAttuale) {
+    // ==================== CERIMONIA ====================
+    var _cerimoniaCurrent = 0;
+    var _cerimoniaLabels  = ['🎉 Mostra Classifica', '🏆 Avvia Podio', '📋 Classifica Completa'];
+
+    function avanzaCerimonia() {
       const garaId = document.getElementById('selGaraLive').value;
       if (!garaId) return;
-      const nuovoEsito = esitoAttuale === 'corretta' ? 'sbagliata' : 'corretta';
-      if (!confirm('Cambia esito Q' + numDomanda + ':\n"' + esitoAttuale + '" → "' + nuovoEsito + '"?')) return;
+      const nextFase = _cerimoniaCurrent + 1;
+      const btn = document.getElementById('btnCerimonia');
+      btn.disabled = true;
+      lkApi(API, { action: 'setCerimonia', garaId: garaId, fase: nextFase, pwd: adminPwd })
+        .then(function(r) {
+          btn.disabled = false;
+          if (r.error) { alert('Errore: ' + r.error); return; }
+          _cerimoniaCurrent = nextFase;
+          if (_cerimoniaCurrent < _cerimoniaLabels.length) {
+            btn.textContent = _cerimoniaLabels[_cerimoniaCurrent];
+          } else {
+            btn.style.display = 'none';
+          }
+        })
+        .catch(function(err) { btn.disabled = false; alert('Errore: ' + err.message); });
+    }
+
+    // Dati temporanei per la modifica risposta
+    var _modRisposta = {};
+
+    function editRispostaLive(squadraId, numDomanda, esitoAttuale, rispostaAttuale, nomeSquadra) {
+      const garaId = document.getElementById('selGaraLive').value;
+      if (!garaId) return;
+      _modRisposta = { garaId: garaId, squadraId: squadraId, numDomanda: numDomanda };
+      document.getElementById('modalModificaTitolo').textContent = '✏️ Modifica Q' + numDomanda + ' — ' + (nomeSquadra || squadraId);
+      document.getElementById('modRispostaVal').value = rispostaAttuale || '';
+      document.getElementById(esitoAttuale === 'corretta' ? 'modEsitoCorretta' : 'modEsitoSbagliata').checked = true;
+      document.getElementById('modNoteRicalcolo').style.display = '';
+      document.getElementById('modalModificaRisposta').style.display = '';
+    }
+
+    function chiudiModalModifica() {
+      document.getElementById('modalModificaRisposta').style.display = 'none';
+      _modRisposta = {};
+    }
+
+    function salvaModificaRisposta() {
+      const { garaId, squadraId, numDomanda } = _modRisposta;
+      if (!garaId || !squadraId) return;
+      const nuovaRisposta = document.getElementById('modRispostaVal').value.trim();
+      const nuovoEsito = document.querySelector('input[name="modEsito"]:checked');
+      if (!nuovoEsito) { alert('Seleziona un esito.'); return; }
+      chiudiModalModifica();
       lkApi(API, { action: 'modificaRisposta', garaId: garaId, squadraId: squadraId,
-                   numDomanda: numDomanda, nuovoEsito: nuovoEsito, pwd: adminPwd })
+                   numDomanda: numDomanda, nuovoEsito: nuovoEsito.value,
+                   nuovaRisposta: nuovaRisposta, pwd: adminPwd })
         .then(r => { if (r.error) { alert('Errore: ' + r.error); return; } aggiornaLogRisposte(); })
         .catch(err => alert('Errore: ' + err.message));
     }
@@ -2028,6 +2151,41 @@
       <div id="modalCount" class="modal-count"></div>
       <div id="modalBody" class="modal-body">
         <div class="modal-empty">Seleziona una tab per caricare i dati.</div>
+      </div>
+    </div>
+  </div>
+  <!-- MODAL MODIFICA RISPOSTA -->
+  <div id="modalModificaRisposta" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.55); z-index:2100; overflow-y:auto;" onclick="if(event.target===this)chiudiModalModifica()">
+    <div style="background:white; max-width:420px; margin:4rem auto 1.5rem; border-radius:14px; padding:1.5rem; box-shadow:0 10px 40px rgba(0,0,0,0.3); color:#1e293b;">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem;">
+        <h3 id="modalModificaTitolo" style="margin:0; font-size:1rem; color:#1e293b;">✏️ Modifica Risposta</h3>
+        <button class="modal-close" onclick="chiudiModalModifica()">✕</button>
+      </div>
+      <div style="display:flex; flex-direction:column; gap:0.85rem;">
+        <div>
+          <label style="display:block; font-size:0.82rem; font-weight:600; color:#475569; margin-bottom:0.3rem;">Risposta (4 cifre)</label>
+          <input id="modRispostaVal" type="text" maxlength="4" pattern="[0-9]{4}"
+            style="width:100%; padding:0.5rem 0.75rem; border:1px solid #cbd5e1; border-radius:8px; font-size:1rem; font-family:monospace; letter-spacing:0.1em; color:#1e293b; box-sizing:border-box;"
+            placeholder="0000">
+        </div>
+        <div>
+          <label style="display:block; font-size:0.82rem; font-weight:600; color:#475569; margin-bottom:0.3rem;">Esito</label>
+          <div style="display:flex; gap:1rem;">
+            <label style="display:flex; align-items:center; gap:0.4rem; cursor:pointer; color:#065f46; font-weight:600; font-size:0.9rem;">
+              <input type="radio" name="modEsito" value="corretta" id="modEsitoCorretta"> ✓ Corretta
+            </label>
+            <label style="display:flex; align-items:center; gap:0.4rem; cursor:pointer; color:#991b1b; font-weight:600; font-size:0.9rem;">
+              <input type="radio" name="modEsito" value="sbagliata" id="modEsitoSbagliata"> ✗ Sbagliata
+            </label>
+          </div>
+        </div>
+        <div id="modNoteRicalcolo" style="font-size:0.78rem; color:#64748b; padding:0.5rem 0.75rem; background:#f8fafc; border-radius:6px; display:none;">
+          ℹ️ I punti verranno ricalcolati in base al timestamp originale della risposta.
+        </div>
+        <div style="display:flex; gap:0.75rem; margin-top:0.25rem;">
+          <button class="btn btn-primary" style="flex:1;" onclick="salvaModificaRisposta()">Salva</button>
+          <button class="btn btn-outline" onclick="chiudiModalModifica()">Annulla</button>
+        </div>
       </div>
     </div>
   </div>

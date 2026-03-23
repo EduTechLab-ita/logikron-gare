@@ -10,6 +10,7 @@
   <link rel="apple-touch-icon" href="assets/icon-192.png">
   <meta name="theme-color" content="#4f46e5">
   <script>if('serviceWorker' in navigator) navigator.serviceWorker.register('./sw.js');</script>
+  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.2/dist/confetti.browser.min.js"></script>
   <style>
     * { box-sizing: border-box; }
 
@@ -83,6 +84,193 @@
     @keyframes pulse {
       0%, 100% { opacity: 1; }
       50% { opacity: 0.7; }
+    }
+    @keyframes shimmer {
+      0%   { background-position: -200% 0; }
+      100% { background-position:  200% 0; }
+    }
+    @keyframes slideUp {
+      from { transform: translateY(50px); opacity: 0; }
+      to   { transform: translateY(0);    opacity: 1; }
+    }
+    @keyframes dropIn {
+      from { transform: translateY(-100px) scale(0.7); opacity: 0; }
+      to   { transform: translateY(0) scale(1);        opacity: 1; }
+    }
+    @keyframes slideFromLeft {
+      from { transform: translateX(-100px); opacity: 0; }
+      to   { transform: translateX(0);      opacity: 1; }
+    }
+    @keyframes slideFromRight {
+      from { transform: translateX(100px); opacity: 0; }
+      to   { transform: translateX(0);     opacity: 1; }
+    }
+
+    /* ===== CERIMONIA ANIMAZIONI ===== */
+    @keyframes slideUp {
+      from { transform: translateY(60px); opacity: 0; }
+      to   { transform: translateY(0);    opacity: 1; }
+    }
+    @keyframes dropIn {
+      from { transform: translateY(-120px) scale(0.7); opacity: 0; }
+      to   { transform: translateY(0) scale(1);        opacity: 1; }
+    }
+    @keyframes slideLeft {
+      from { transform: translateX(120px); opacity: 0; }
+      to   { transform: translateX(0);     opacity: 1; }
+    }
+    @keyframes slideRight {
+      from { transform: translateX(-120px); opacity: 0; }
+      to   { transform: translateX(0);      opacity: 1; }
+    }
+    @keyframes scaleIn {
+      from { transform: scale(0.3); opacity: 0; }
+      to   { transform: scale(1);   opacity: 1; }
+    }
+    @keyframes shimmer {
+      0%   { background-position: -200% 0; }
+      100% { background-position:  200% 0; }
+    }
+
+    .cer-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: linear-gradient(135deg, #0f0c29, #302b63, #24243e);
+      z-index: 200;
+      overflow: hidden;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      text-align: center;
+      padding: 2rem;
+    }
+
+    /* Fase 0: attesa risultati */
+    .cer-attesa-titolo {
+      font-size: clamp(2.5rem, 8vw, 5rem);
+      font-weight: 900;
+      letter-spacing: -0.02em;
+      margin-bottom: 0.5rem;
+      background: linear-gradient(90deg, #fbbf24, #f59e0b, #fcd34d, #f59e0b, #fbbf24);
+      background-size: 200% auto;
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      animation: shimmer 3s linear infinite;
+    }
+    .cer-attesa-sub {
+      font-size: clamp(1rem, 3vw, 1.6rem);
+      opacity: 0.8;
+      margin-bottom: 2rem;
+    }
+    .cer-dots { display: flex; gap: 0.75rem; justify-content: center; }
+    .cer-dot {
+      width: 16px; height: 16px; border-radius: 50%; background: rgba(255,255,255,0.4);
+      animation: pulse 1.4s infinite;
+    }
+    .cer-dot:nth-child(2) { animation-delay: 0.2s; }
+    .cer-dot:nth-child(3) { animation-delay: 0.4s; }
+
+    /* Fase 1: classifica parziale */
+    .cer-classifica-titolo {
+      font-size: clamp(1.5rem, 5vw, 2.8rem);
+      font-weight: 900;
+      margin-bottom: 1.5rem;
+      color: #fcd34d;
+    }
+    .cer-teams-grid {
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+      width: 100%;
+      max-width: 700px;
+      overflow-y: auto;
+      max-height: calc(100vh - 200px);
+    }
+    .cer-team-row {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      background: rgba(255,255,255,0.08);
+      border: 1px solid rgba(255,255,255,0.15);
+      border-radius: 12px;
+      padding: 0.7rem 1.2rem;
+      animation: slideUp 0.5s ease-out both;
+      opacity: 0;
+    }
+    .cer-pos-badge {
+      font-size: 1.4rem;
+      font-weight: 900;
+      width: 2.2rem;
+      text-align: center;
+      color: rgba(255,255,255,0.5);
+    }
+    .cer-team-nome {
+      flex: 1;
+      font-size: clamp(1rem, 2.5vw, 1.3rem);
+      font-weight: 700;
+      text-align: left;
+    }
+    .cer-team-pts {
+      font-size: clamp(1rem, 2.5vw, 1.3rem);
+      font-weight: 900;
+      color: #fcd34d;
+    }
+
+    /* Fase 2: podio */
+    .cer-podio-wrap {
+      display: flex;
+      align-items: flex-end;
+      justify-content: center;
+      gap: clamp(1rem, 4vw, 3rem);
+      padding-bottom: 3rem;
+    }
+    .podio-card {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      opacity: 0;
+    }
+    .podio-medal {
+      font-size: clamp(2rem, 6vw, 4rem);
+      line-height: 1;
+      margin-bottom: 0.3rem;
+    }
+    .podio-nome {
+      font-weight: 900;
+      font-size: clamp(0.9rem, 2.5vw, 1.4rem);
+      margin-bottom: 0.2rem;
+    }
+    .podio-ic {
+      font-size: clamp(0.65rem, 1.5vw, 0.85rem);
+      opacity: 0.7;
+      margin-bottom: 0.5rem;
+    }
+    .podio-pts {
+      font-size: clamp(1rem, 3vw, 1.8rem);
+      font-weight: 900;
+      color: #fcd34d;
+      margin-bottom: 0.5rem;
+    }
+    .podio-base {
+      border-radius: 8px 8px 0 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: clamp(1.5rem, 4vw, 2.5rem);
+      font-weight: 900;
+      color: rgba(0,0,0,0.5);
+    }
+    .podio-3rd .podio-base { width: clamp(80px,15vw,140px); height: clamp(60px,10vw,100px); background: #cd7f32; }
+    .podio-2nd .podio-base { width: clamp(90px,17vw,160px); height: clamp(90px,14vw,140px); background: #c0c0c0; }
+    .podio-1st .podio-base { width: clamp(100px,19vw,180px); height: clamp(120px,18vw,180px); background: #ffd700; }
+    .podio-titolo {
+      font-size: clamp(1.8rem, 6vw, 3.5rem);
+      font-weight: 900;
+      margin-bottom: 2rem;
+      color: #fcd34d;
+      text-shadow: 0 0 30px rgba(252,211,77,0.5);
     }
 
     .timer-big {
@@ -396,6 +584,53 @@
     </div>
   </div>
 
+  <!-- CERIMONIA 0: GARA TERMINATA — ATTESA -->
+  <div id="overlayCer0" style="display:none;position:fixed;inset:0;background:linear-gradient(135deg,#0f0c29,#302b63,#24243e);z-index:200;flex-direction:column;align-items:center;justify-content:center;color:white;text-align:center;padding:2rem;">
+    <div style="font-size:clamp(3rem,10vw,6rem);margin-bottom:0.5rem;">🏁</div>
+    <div id="cerTitoloGara" style="font-size:clamp(1.2rem,4vw,2rem);font-weight:700;margin-bottom:0.5rem;opacity:0.8;"></div>
+    <div style="font-size:clamp(2rem,7vw,4.5rem);font-weight:900;letter-spacing:-0.02em;margin-bottom:0.5rem;background:linear-gradient(90deg,#fbbf24,#f59e0b,#fcd34d,#f59e0b,#fbbf24);background-size:200% auto;-webkit-background-clip:text;-webkit-text-fill-color:transparent;animation:shimmer 3s linear infinite;">Gara Terminata!</div>
+    <div style="font-size:clamp(1rem,3vw,1.5rem);opacity:0.75;margin-bottom:2rem;">Rimanete in attesa per i risultati...</div>
+    <div style="display:flex;gap:0.75rem;justify-content:center;">
+      <div style="width:14px;height:14px;border-radius:50%;background:rgba(255,255,255,0.5);animation:pulse 1.4s infinite;"></div>
+      <div style="width:14px;height:14px;border-radius:50%;background:rgba(255,255,255,0.5);animation:pulse 1.4s 0.2s infinite;"></div>
+      <div style="width:14px;height:14px;border-radius:50%;background:rgba(255,255,255,0.5);animation:pulse 1.4s 0.4s infinite;"></div>
+    </div>
+  </div>
+
+  <!-- CERIMONIA 1: CLASSIFICA PARZIALE (dal last al 4°) -->
+  <div id="overlayCer1" style="display:none;position:fixed;inset:0;background:linear-gradient(135deg,#0f0c29,#302b63);z-index:200;flex-direction:column;align-items:center;justify-content:flex-start;color:white;padding:2rem;overflow-y:auto;">
+    <div style="font-size:clamp(1.5rem,5vw,2.8rem);font-weight:900;color:#fcd34d;margin-bottom:1.5rem;flex-shrink:0;">📊 Classifica</div>
+    <div id="cer1Teams" style="display:flex;flex-direction:column;gap:0.5rem;width:100%;max-width:700px;"></div>
+  </div>
+
+  <!-- CERIMONIA 2: PODIO -->
+  <div id="overlayCer2" style="display:none;position:fixed;inset:0;background:linear-gradient(135deg,#0f0c29,#302b63,#24243e);z-index:200;flex-direction:column;align-items:center;justify-content:center;color:white;padding:2rem;">
+    <div style="font-size:clamp(1.8rem,6vw,3.5rem);font-weight:900;margin-bottom:2rem;color:#fcd34d;text-shadow:0 0 30px rgba(252,211,77,0.5);">🏆 Il Podio</div>
+    <div style="display:flex;align-items:flex-end;justify-content:center;gap:clamp(1rem,4vw,3rem);padding-bottom:2rem;">
+      <div id="podioCard3" style="opacity:0;display:flex;flex-direction:column;align-items:center;">
+        <div style="font-size:clamp(2rem,6vw,3.5rem);">🥉</div>
+        <div id="podioNome3" style="font-weight:900;font-size:clamp(0.85rem,2.5vw,1.3rem);margin-bottom:0.2rem;"></div>
+        <div id="podioIc3" style="font-size:clamp(0.65rem,1.5vw,0.8rem);opacity:0.7;margin-bottom:0.4rem;"></div>
+        <div id="podioPts3" style="font-size:clamp(1rem,3vw,1.6rem);font-weight:900;color:#fcd34d;margin-bottom:0.4rem;"></div>
+        <div style="width:clamp(80px,14vw,130px);height:clamp(60px,10vw,100px);background:#cd7f32;border-radius:8px 8px 0 0;display:flex;align-items:center;justify-content:center;font-size:clamp(1.5rem,4vw,2.5rem);font-weight:900;color:rgba(0,0,0,0.4);">3</div>
+      </div>
+      <div id="podioCard1" style="opacity:0;display:flex;flex-direction:column;align-items:center;">
+        <div style="font-size:clamp(2.5rem,8vw,4.5rem);">🥇</div>
+        <div id="podioNome1" style="font-weight:900;font-size:clamp(0.95rem,3vw,1.5rem);margin-bottom:0.2rem;"></div>
+        <div id="podioIc1" style="font-size:clamp(0.65rem,1.5vw,0.8rem);opacity:0.7;margin-bottom:0.4rem;"></div>
+        <div id="podioPts1" style="font-size:clamp(1.2rem,3.5vw,1.9rem);font-weight:900;color:#fcd34d;margin-bottom:0.4rem;"></div>
+        <div style="width:clamp(100px,18vw,170px);height:clamp(110px,17vw,170px);background:#ffd700;border-radius:8px 8px 0 0;display:flex;align-items:center;justify-content:center;font-size:clamp(1.8rem,5vw,3rem);font-weight:900;color:rgba(0,0,0,0.4);">1</div>
+      </div>
+      <div id="podioCard2" style="opacity:0;display:flex;flex-direction:column;align-items:center;">
+        <div style="font-size:clamp(2rem,6vw,3.5rem);">🥈</div>
+        <div id="podioNome2" style="font-weight:900;font-size:clamp(0.85rem,2.5vw,1.3rem);margin-bottom:0.2rem;"></div>
+        <div id="podioIc2" style="font-size:clamp(0.65rem,1.5vw,0.8rem);opacity:0.7;margin-bottom:0.4rem;"></div>
+        <div id="podioPts2" style="font-size:clamp(1rem,3vw,1.6rem);font-weight:900;color:#fcd34d;margin-bottom:0.4rem;"></div>
+        <div style="width:clamp(90px,16vw,150px);height:clamp(85px,13vw,130px);background:#c0c0c0;border-radius:8px 8px 0 0;display:flex;align-items:center;justify-content:center;font-size:clamp(1.5rem,4vw,2.5rem);font-weight:900;color:rgba(0,0,0,0.4);">2</div>
+      </div>
+    </div>
+  </div>
+
   <footer style="text-align: center; color: rgba(255,255,255,0.4); font-size: 0.65rem; padding: 0.4rem;">
     <strong>LogiKron</strong> - Giochi Matematici di Interistituto | <a href="https://edutechlab.it" target="_blank" style="color: rgba(255,255,255,0.5);">EduTechLab</a> | Powered by Vibe Coding - Fabio Rizzotto
   </footer>
@@ -421,6 +656,7 @@
     let timerInterval  = null;
     let pollingInterval= null;
     let attesaInterval = null;
+    let _cerimoniaRendered = -1; // evita di rilanciare animazioni già mostrate
 
     // ==================== ATTESA GARA ====================
 
@@ -470,33 +706,130 @@
           // Render corpo tabellone
           renderBody(data.squadre || [], data.griglia || {}, data.domande || []);
 
-          // Nascondimento
-          if (data.nascosto) {
-            document.getElementById('tabelloneVisibile').style.display = 'none';
-            document.getElementById('tabelloneNascosto').style.display = 'flex';
-          } else {
-            document.getElementById('tabelloneVisibile').style.display = '';
-            document.getElementById('tabelloneNascosto').style.display = 'none';
-          }
-
-          // Gara in preparazione → mostra squadre, nessun timer
-          if (data.gara && data.gara.stato === 'preparazione') {
+          // Gestione stato gara
+          if (data.gara && data.gara.stato === 'conclusa') {
+            // Conclusa → overlay cerimonia ha priorità su tutto (non modificare display tabellone qui)
+            if (timerInterval) { clearInterval(timerInterval); timerInterval = null; }
+            document.getElementById('timerDisplay').textContent = '00:00';
+            const cer = parseInt(data.gara.cerimonia) || 0;
+            aggiornaCerimonia(cer, data);
+          } else if (data.gara && data.gara.stato === 'preparazione') {
             const elT = document.getElementById('timerDisplay');
             if (elT) { elT.textContent = '⏳'; elT.style.color = '#fbbf24'; }
             document.getElementById('tabelloneVisibile').style.display = '';
             document.getElementById('tabelloneNascosto').style.display = 'none';
-            // Non avviare timer locale, continua polling per captare GO
-          } else if (data.gara && data.gara.stato === 'conclusa') {
-            // Gara conclusa → ferma polling e mostra classifica finale
-            clearInterval(pollingInterval);
-            document.getElementById('tabelloneVisibile').style.display = '';
-            document.getElementById('tabelloneNascosto').style.display = 'none';
-            document.getElementById('timerDisplay').textContent = '00:00';
           } else {
-            // Gara attiva → avvia timer locale
+            // Gara attiva → nascondimento normale
+            if (data.nascosto) {
+              document.getElementById('tabelloneVisibile').style.display = 'none';
+              document.getElementById('tabelloneNascosto').style.display = 'flex';
+            } else {
+              document.getElementById('tabelloneVisibile').style.display = '';
+              document.getElementById('tabelloneNascosto').style.display = 'none';
+            }
             if (!timerInterval) timerInterval = setInterval(tickTimer, 1000);
           }
         }).catch(() => {});
+    }
+
+    // ==================== CERIMONIA ====================
+
+    function mostraSoloOverlay(id) {
+      ['overlayCer0','overlayCer1','overlayCer2',
+       'tabelloneVisibile','tabelloneNascosto'].forEach(function(el) {
+        const d = document.getElementById(el);
+        if (d) d.style.display = 'none';
+      });
+      const target = document.getElementById(id);
+      if (target) target.style.display = 'flex';
+    }
+
+    function aggiornaCerimonia(cer, data) {
+      if (cer === _cerimoniaRendered) return; // già mostrato
+
+      const squadre = data.squadre || [];
+      // Titolo gara nell'overlay 0
+      const nomeGara = data.gara && data.gara.nome ? data.gara.nome : '';
+      const el = document.getElementById('cerTitoloGara');
+      if (el) el.textContent = nomeGara;
+
+      if (cer === 0) {
+        mostraSoloOverlay('overlayCer0');
+      } else if (cer === 1) {
+        mostraSoloOverlay('overlayCer1');
+        renderCer1(squadre);
+      } else if (cer === 2) {
+        mostraSoloOverlay('overlayCer2');
+        renderCer2(squadre);
+      } else {
+        // cer >= 3: mostra tabellone completo
+        ['overlayCer0','overlayCer1','overlayCer2','tabelloneNascosto'].forEach(function(id) {
+          const d = document.getElementById(id);
+          if (d) d.style.display = 'none';
+        });
+        document.getElementById('tabelloneVisibile').style.display = '';
+      }
+      _cerimoniaRendered = cer;
+    }
+
+    function renderCer1(squadre) {
+      // Dal last al 4° (indice 3 in avanti), in ordine inverso (last → 4°)
+      const container = document.getElementById('cer1Teams');
+      if (!container) return;
+      container.innerHTML = '';
+      // squadre è già ordinata per punti decrescenti (pos 1 = indice 0)
+      // Mostriamo dal last al 4° (indice 3)
+      const partial = squadre.slice(3).reverse(); // dal last al 4°
+      if (partial.length === 0) {
+        container.innerHTML = '<p style="opacity:0.6;">Nessuna squadra oltre il podio</p>';
+        return;
+      }
+      partial.forEach(function(sq, i) {
+        const pos = squadre.indexOf(sq) + 1;
+        const row = document.createElement('div');
+        row.style.cssText = 'display:flex;align-items:center;gap:1rem;background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.15);border-radius:12px;padding:0.7rem 1.2rem;animation:slideUp 0.5s ease-out both;opacity:0;';
+        row.style.animationDelay = (i * 200) + 'ms';
+        row.innerHTML = '<span style="font-size:1.2rem;font-weight:900;width:2rem;text-align:center;color:rgba(255,255,255,0.4);">' + pos + '</span>' +
+          '<span style="flex:1;font-size:clamp(0.9rem,2.5vw,1.2rem);font-weight:700;">' + esc(sq.nome) + '</span>' +
+          '<span style="font-size:clamp(0.9rem,2.5vw,1.2rem);font-weight:900;color:#fcd34d;">' + sq.punti + ' pt</span>';
+        container.appendChild(row);
+      });
+    }
+
+    function renderCer2(squadre) {
+      if (squadre.length === 0) return;
+      function fillCard(rank, cardId, nomeId, icId, ptsId) {
+        const sq = squadre[rank - 1];
+        if (!sq) return;
+        document.getElementById(nomeId).textContent = sq.nome || '';
+        document.getElementById(icId).textContent = sq.ic || '';
+        document.getElementById(ptsId).textContent = sq.punti + ' pt';
+        // Animazione con delay
+        const delays = { 1: 4500, 2: 3000, 3: 1500 };
+        const anims  = { 1: 'dropIn', 2: 'slideFromRight', 3: 'slideFromLeft' };
+        setTimeout(function() {
+          const card = document.getElementById(cardId);
+          if (!card) return;
+          card.style.animation = anims[rank] + ' 0.7s cubic-bezier(0.34,1.56,0.64,1) both';
+          card.style.opacity = '1';
+          if (rank === 1) lanciaConfetti();
+        }, delays[rank]);
+      }
+      fillCard(1, 'podioCard1', 'podioNome1', 'podioIc1', 'podioPts1');
+      fillCard(2, 'podioCard2', 'podioNome2', 'podioIc2', 'podioPts2');
+      fillCard(3, 'podioCard3', 'podioNome3', 'podioIc3', 'podioPts3');
+    }
+
+    function lanciaConfetti() {
+      if (typeof confetti === 'undefined') return;
+      // Raffica di coriandoli per 4 secondi
+      const end = Date.now() + 4000;
+      const colors = ['#ffd700', '#ff6b6b', '#4ecdc4', '#45b7d1', '#f9ca24', '#6ab04c'];
+      (function frame() {
+        confetti({ particleCount: 6, angle: 60,  spread: 55, origin: { x: 0 }, colors: colors });
+        confetti({ particleCount: 6, angle: 120, spread: 55, origin: { x: 1 }, colors: colors });
+        if (Date.now() < end) requestAnimationFrame(frame);
+      })();
     }
 
     // ==================== RENDER ====================
