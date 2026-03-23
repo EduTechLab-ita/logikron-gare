@@ -418,7 +418,7 @@
       </section>
 
       <!-- ==================== CONTROLLO GARA LIVE ==================== -->
-      <section class="admin-section">
+      <section class="admin-section" id="sectionControlloGara">
         <h3 class="admin-section-title">
           <span class="phase-badge phase-gara">🎮</span>
           Controllo Gara Live
@@ -1227,7 +1227,7 @@
     // Placeholder — da implementare nelle fasi successive
     function setupNuovoAnno() { alert('Setup Nuovo Anno — Da implementare'); }
     function openConfig()     { alert('Configurazione — Da implementare'); }
-    function createGara()     { toggleFormNuovaGara(); document.getElementById('formNuovaGara').scrollIntoView({ behavior: 'smooth' }); }
+    function createGara()     { document.getElementById('sectionControlloGara').scrollIntoView({ behavior: 'smooth', block: 'start' }); }
     function viewClassifica() { alert('Classifica — Da implementare'); }
     function generateAttestati() { alert('Genera Attestati — Da implementare'); }
     function viewStatistiche()   { alert('Statistiche — Da implementare'); }
@@ -1863,9 +1863,8 @@
     function apriModalImportaSquadre() {
       const garaId = document.getElementById('selGaraLive').value;
       if (!garaId) return;
-      document.querySelectorAll('input[name="importaOrdine"]').forEach(r => { r.checked = (r.value === ''); });
-      document.getElementById('importaFiltroClassiBox').style.display = 'none';
-      document.getElementById('importaFiltroClassiCheck').innerHTML = '';
+      document.getElementById('importaFiltroClassiAll').innerHTML =
+        '<span style="font-size:0.8rem;color:#94a3b8;font-style:italic;">Caricamento classi...</span>';
       document.getElementById('importaCountLabel').textContent = 'Caricamento...';
       document.getElementById('importaTbody').innerHTML =
         '<tr><td colspan="6" style="text-align:center;padding:2rem;color:#94a3b8;">Caricamento iscrizioni...</td></tr>';
