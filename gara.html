@@ -851,8 +851,8 @@
               mostraDomanda(stato.domandaAttiva);
             }
           }
-          // Aggiorna jolly se assegnato d'ufficio
-          if (s.jolly && !stato.jollyFissato) {
+          // Aggiorna jolly: sia assegnazione d'ufficio sia cambio da admin
+          if (s.jolly && parseInt(s.jolly) !== stato.jolly) {
             stato.jolly = parseInt(s.jolly);
             stato.jollyFissato = true;
             aggiornaGriglia();

@@ -1534,13 +1534,10 @@
     function aggiornaLogRisposte() {
       const garaId = document.getElementById('selGaraLive').value;
       if (!garaId) return;
-      Promise.all([
-        lkApi(API, { action: 'getRisposteGara', garaId: garaId }),
-        lkApi(API, { action: 'getSquadre', garaId: garaId })
-      ]).then(function(results) {
+      lkApi(API, { action: 'getRisposteGara', garaId: garaId })
+        .then(function(results) {
           const tbody = document.getElementById('logRisposte');
-          const risposte = results[0].risposte || [];
-          const squadre = Array.isArray(results[1]) ? results[1] : [];
+          const risposte = results.risposte || [];
 
           const totale = risposte.length;
           const nJolly = risposte.filter(function(r){ return r.esito === 'jolly'; }).length;
