@@ -1280,6 +1280,7 @@
     let garaLiveCorrente = null;
     let pollingInterval = null;
     let timerInterval = null;
+    let _adminSecLocali = 0; // secondi rimanenti per il tick locale del timer admin
     let _gareMap = {}; // cache garaId → oggetto gara
 
     function _buildOptLabel(g) {
@@ -1432,10 +1433,11 @@
       }
 
       if (gara.stato === 'attiva') {
-        startPollingRisposte();
-        startTimerGara(gara);
+        startPollingRisposte(); // il primo poll aggiornerà il timer via secondiRimanenti
       } else {
-        document.getElementById('timerGaraLive').textContent = gara.stato === 'conclusa' ? '00:00' : '—';
+        stopTimerGara();
+        const el = document.getElementById('timerGaraLive');
+        if (el) { el.textContent = gara.stato === 'conclusa' ? '00:00' : '—'; el.style.color = 'var(--lk-primary)'; }
       }
     }
 
@@ -1513,19 +1515,20 @@
       if (pollingInterval) { clearInterval(pollingInterval); pollingInterval = null; }
     }
 
-    function startTimerGara(gara) {
+    function startTimerGara(sec) {
       stopTimerGara();
+      _adminSecLocali = sec;
+      _tickAdminTimer();
+      timerInterval = setInterval(_tickAdminTimer, 1000);
+    }
+    function _tickAdminTimer() {
+      if (_adminSecLocali > 0) _adminSecLocali--;
       const el = document.getElementById('timerGaraLive');
-      function tick() {
-        if (!gara.oraFine) { el.textContent = '—'; return; }
-        const sec = Math.max(0, Math.floor((new Date(gara.oraFine) - new Date()) / 1000));
-        const m = Math.floor(sec / 60), s = sec % 60;
-        el.textContent = String(m).padStart(2,'0') + ':' + String(s).padStart(2,'0');
-        el.style.color = sec <= 300 ? '#dc2626' : 'var(--lk-primary)'; // rosso ultimi 5 min
-        if (sec === 0) stopTimerGara();
-      }
-      tick();
-      timerInterval = setInterval(tick, 1000);
+      if (!el) return;
+      const m = Math.floor(_adminSecLocali / 60), s = _adminSecLocali % 60;
+      el.textContent = String(m).padStart(2,'0') + ':' + String(s).padStart(2,'0');
+      el.style.color = _adminSecLocali <= 300 ? '#dc2626' : 'var(--lk-primary)';
+      if (_adminSecLocali === 0) stopTimerGara();
     }
     function stopTimerGara() {
       if (timerInterval) { clearInterval(timerInterval); timerInterval = null; }
@@ -1536,6 +1539,16 @@
       if (!garaId) return;
       lkApi(API, { action: 'getRisposteGara', garaId: garaId })
         .then(function(results) {
+          // Aggiorna/avvia timer con secondi rimanenti dal server
+          if (typeof results.secondiRimanenti === 'number' && results.secondiRimanenti > 0) {
+            if (!timerInterval) {
+              startTimerGara(results.secondiRimanenti);
+            } else {
+              // Ri-sincronizza ogni ~30s se c'è drift (la sinc avviene ogni 3s di polling)
+              _adminSecLocali = results.secondiRimanenti;
+            }
+          }
+
           const tbody = document.getElementById('logRisposte');
           const risposte = results.risposte || [];
 
