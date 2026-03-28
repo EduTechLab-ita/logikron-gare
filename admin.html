@@ -1352,8 +1352,8 @@
       document.getElementById('garaLiveNome').textContent = nomeGara;
       document.getElementById('garaLiveId').textContent = 'ID: ' + garaId;
       document.getElementById('garaLiveStato').innerHTML = '<span style="color:#94a3b8;font-size:0.8rem;">Caricamento...</span>';
-      document.getElementById('logRisposte').innerHTML =
-        '<tr><td colspan="8" style="text-align:center;color:var(--lk-text-muted);padding:1.5rem;">Caricamento...</td></tr>';
+      // Non azzerare il tbody per evitare flash — il DOM diffing aggiornerà le righe
+      document.getElementById('logContatoreRisposte').textContent = 'Caricamento...';
 
       // Apri modal
       document.getElementById('modalGaraLive').classList.add('aperto');
@@ -1572,11 +1572,18 @@
             (righeJolly.length > 0 ? ' + ' + righeJolly.length + ' jolly in attesa' : '');
 
           if (totale === 0) {
-            tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;color:var(--lk-text-muted);padding:1.5rem;">Nessuna risposta ancora</td></tr>';
+            // Mostra vuoto solo se non c'erano già righe (evita flash)
+            if (!tbody.querySelector('tr[data-log-key]')) {
+              tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;color:var(--lk-text-muted);padding:1.5rem;">Nessuna risposta ancora</td></tr>';
+            }
             return;
           }
 
-          function rigaRisposta(r) {
+          // Rimuovi eventuale riga "Nessuna risposta ancora"
+          var rigaVuota = tbody.querySelector('tr:not([data-log-key])');
+          if (rigaVuota) tbody.removeChild(rigaVuota);
+
+          function cellRisposta(r) {
             let ora = '—';
             if (r.timestamp) {
               try {
@@ -1595,8 +1602,7 @@
             const sqNome  = String(r.nomeSquadra || '').replace(/</g,'&lt;').replace(/>/g,'&gt;');
             const sqNomeEsc = String(r.nomeSquadra || '').replace(/'/g,"\\'");
             const rispEsc = String(r.risposta != null ? r.risposta : '').replace(/'/g,"\\'");
-            return '<tr>' +
-              '<td style="font-variant-numeric:tabular-nums;white-space:nowrap;font-size:0.78rem;">' + ora + '</td>' +
+            return '<td style="font-variant-numeric:tabular-nums;white-space:nowrap;font-size:0.78rem;">' + ora + '</td>' +
               '<td style="font-weight:600;max-width:150px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="' + sqNome + '">' + sqNome + '</td>' +
               '<td style="text-align:center;font-weight:700;color:var(--lk-primary);">Q' + r.numDomanda + '</td>' +
               '<td style="text-align:center;font-family:monospace;font-weight:600;">' + (r.risposta != null ? r.risposta : '—') + '</td>' +
@@ -1608,26 +1614,49 @@
                 ' onclick="editRispostaLive(\'' + sqId + '\',' + r.numDomanda + ',\'' + r.esito + '\',\'' + rispEsc + '\',\'' + sqNomeEsc + '\')">✏️</button> ' +
                 '<button class="btn-action-sm btn-action-del" title="Elimina risposta"' +
                 ' onclick="deleteRispostaLive(\'' + sqId + '\',' + r.numDomanda + ',\'' + sqNomeEsc + '\')">🗑️</button>' +
-              '</td>' +
-            '</tr>';
+              '</td>';
           }
 
-          function rigaJollyPending(j) {
-            const sqNome = (j.nomeSquadra || '').replace(/</g,'&lt;').replace(/>/g,'&gt;');
-            return '<tr style="opacity:0.7;">' +
-              '<td style="font-size:0.78rem;color:#94a3b8;">—</td>' +
+          function cellJollyPending(j) {
+            const sqNome = String(j.nomeSquadra || '').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+            return '<td style="font-size:0.78rem;color:#94a3b8;">—</td>' +
               '<td style="font-weight:600;max-width:150px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="' + sqNome + '">' + sqNome + '</td>' +
               '<td style="text-align:center;font-weight:700;color:var(--lk-primary);">Q' + j.numJolly + '</td>' +
               '<td style="text-align:center;color:#94a3b8;font-size:0.8rem;">—</td>' +
               '<td style="text-align:center;"><span style="background:#fef9c3;color:#78350f;padding:2px 8px;border-radius:9999px;font-size:0.72rem;font-weight:700;">⏳ in attesa</span></td>' +
               '<td style="text-align:center;color:#94a3b8;">—</td>' +
               '<td style="text-align:center;"><span class="badge-jolly-live">⭐ J</span></td>' +
-              '<td style="text-align:center;"></td>' +
-            '</tr>';
+              '<td style="text-align:center;"></td>';
           }
 
-          tbody.innerHTML = risposte.map(rigaRisposta).join('') +
-                            righeJolly.map(rigaJollyPending).join('');
+          // DOM diffing: mappa chiave→tr esistenti
+          var existingRows = {};
+          Array.from(tbody.querySelectorAll('tr[data-log-key]')).forEach(function(tr) {
+            existingRows[tr.dataset.logKey] = tr;
+          });
+          var usedKeys = new Set();
+
+          // Costruisce lista ordinata: risposte (più recenti prima) + jolly pending
+          var items = [];
+          risposte.forEach(function(r) { items.push({ key: 'r_' + r.row, html: cellRisposta(r), style: '' }); });
+          righeJolly.forEach(function(j) { items.push({ key: 'j_' + j.squadraId + '_' + j.numJolly, html: cellJollyPending(j), style: 'opacity:0.7;' }); });
+
+          items.forEach(function(item) {
+            usedKeys.add(item.key);
+            var tr = existingRows[item.key];
+            if (!tr) {
+              tr = document.createElement('tr');
+              tr.dataset.logKey = item.key;
+            }
+            if (item.style) tr.style.cssText = item.style;
+            if (tr.innerHTML !== item.html) tr.innerHTML = item.html;
+            tbody.appendChild(tr); // riordina mantenendo ordine backend
+          });
+
+          // Rimuovi righe obsolete (risposta eliminata)
+          Object.keys(existingRows).forEach(function(k) {
+            if (!usedKeys.has(k)) tbody.removeChild(existingRows[k]);
+          });
         })
         .catch(function() {
           const tbody = document.getElementById('logRisposte');
