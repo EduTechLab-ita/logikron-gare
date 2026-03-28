@@ -102,6 +102,9 @@
     .q-btn.q-answered { background: #10b981; color: white; border-color: #10b981; }
     .q-btn.q-wrong { background: #ef4444; color: white; border-color: #ef4444; }
     .q-btn.q-selected { border-color: var(--lk-primary); background: #ede9fe; color: var(--lk-primary); }
+    /* Selezionata + già risposta: mantiene il colore della risposta, aggiunge bordo selection */
+    .q-btn.q-answered.q-selected { background: #10b981; color: white; border-color: var(--lk-primary); box-shadow: 0 0 0 3px rgba(79,70,229,0.4); }
+    .q-btn.q-wrong.q-selected { background: #ef4444; color: white; border-color: var(--lk-primary); box-shadow: 0 0 0 3px rgba(79,70,229,0.4); }
     .q-btn.q-jolly {
       border-color: #fbbf24;
       background: linear-gradient(135deg, #fef3c7, #fde68a);
@@ -617,6 +620,10 @@
         (domanda && domanda.testo)
           ? domanda.testo
           : '(Il testo del quesito è su carta — consultalo e inserisci qui la risposta)';
+      // Aggiorna valore attuale per questo quesito
+      if (domanda && domanda.puntiBase != null) {
+        document.getElementById('valoreAttuale').textContent = domanda.puntiBase;
+      }
 
       // Badge jolly
       document.getElementById('jollyBadge').style.display = (stato.jolly === num) ? '' : 'none';
@@ -638,11 +645,7 @@
       input.style.background = '';
       btnInvia.disabled = false;
 
-      if (r && r.esito === 'corretta') {
-        feedback.textContent = '✓ Risposta corretta: ' + (r.risposta || '') + '  +' + r.punti + ' punti' +
-          (stato.jolly === num ? ' ⭐ Jolly x2!' : '') + '  (risposte sbagliate applicano penalità)';
-        feedback.style.color = '#065f46';
-      } else if (r && r.esito === 'sbagliata') {
+      if (r && r.esito === 'sbagliata') {
         feedback.textContent = '✗ Risposta sbagliata. Riprova!';
         feedback.style.color = '#dc2626';
       } else {
@@ -682,30 +685,45 @@
           stato.puntiTotali += parseInt(r.punti) || 0;
           aggiornaScore();
 
-          if (r.esito === 'corretta') {
+          if (r.esito === 'corretta' && !precedenteCorretta) {
+            // Prima risposta corretta
             stato.risposte[numDom] = { risposta: rNorm, esito: 'corretta', punti: r.punti };
             flashQBtn(numDom, 'corretta', isJolly);
-            feedback.textContent = '✓ CORRETTA! +' + r.punti + ' punti' +
-              (isJolly ? ' ⭐ Jolly x2!' : '') + '  — puoi riprovare ma i punti non cambiano';
+            feedback.textContent = '✓ CORRETTA! +' + r.punti + ' punti' + (isJolly ? ' ⭐ Jolly x2!' : '');
             feedback.style.color = '#065f46';
             input.value = '';
             // Auto-naviga alla prossima domanda aperta dopo 2s (aspetta fine flash)
             setTimeout(() => {
               const prossima = trovaProssimaDomanda();
               if (prossima) mostraDomanda(prossima);
+              else feedback.textContent = '';
             }, 2000);
+          } else if (r.esito === 'corretta' && precedenteCorretta) {
+            // Seconda risposta corretta: 0 punti, non navigare
+            flashQBtn(numDom, 'corretta', isJolly);
+            feedback.textContent = '✓ Già corretta! Risposta nuovamente giusta (0 pt aggiuntivi).';
+            feedback.style.color = '#065f46';
+            input.value = '';
+            input.focus();
+            setTimeout(() => { feedback.textContent = ''; }, 4000);
           } else if (precedenteCorretta) {
             // Sbagliata dopo corretta: flash rosso poi torna verde; stato rimane corretta
             flashQBtn(numDom, 'sbagliata', false);
-            feedback.textContent = '✗ Sbagliata! ' + r.punti + ' punti. Hai già risposto correttamente a questa domanda.';
+            // Aggiorna puntiBase locale per questa domanda (penalità sbagliata)
+            const domErr = stato.domande.find(d => d.num === numDom);
+            if (domErr) domErr.puntiBase = (parseInt(domErr.puntiBase) || 20) + 5;
+            feedback.textContent = '✗ Sbagliata! ' + r.punti + ' pt. La casella rimane verde (hai già risposto correttamente).';
             feedback.style.color = '#dc2626';
-            // Dopo il flash (1.2s) il btn torna verde da solo (stato.risposte rimane corretta)
             input.value = '';
             input.focus();
+            setTimeout(() => { feedback.textContent = ''; }, 4000);
           } else {
             stato.risposte[numDom] = { risposta: rNorm, esito: 'sbagliata', punti: r.punti };
+            // Aggiorna puntiBase locale per questa domanda (penalità sbagliata)
+            const domErr = stato.domande.find(d => d.num === numDom);
+            if (domErr) domErr.puntiBase = (parseInt(domErr.puntiBase) || 20) + 5;
             flashQBtn(numDom, 'sbagliata', false);
-            feedback.textContent = '✗ Sbagliata! ' + r.punti + ' punti. Riprova.';
+            feedback.textContent = '✗ Sbagliata! ' + r.punti + ' pt. Riprova.';
             feedback.style.color = '#dc2626';
             input.value = '';
             input.focus();
@@ -817,8 +835,12 @@
             let changed = false;
             Object.keys(s.risposte).forEach(k => {
               const num = parseInt(k);
-              if (!stato.risposte[num] || stato.risposte[num].esito !== s.risposte[k].esito) {
-                stato.risposte[num] = s.risposte[k];
+              const loc = stato.risposte[num];
+              const srv = s.risposte[k];
+              // Non sovrascrivere corretta locale con sbagliata dal server
+              if (loc && loc.esito === 'corretta' && srv.esito !== 'corretta') return;
+              if (!loc || loc.esito !== srv.esito) {
+                stato.risposte[num] = srv;
                 changed = true;
               }
             });
