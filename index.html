@@ -287,14 +287,14 @@
         abilita(btn1);
         disabilita(btn2, '2. Iscrivi la Squadra (apre nella Fase 2)');
       } else if (fase === 2) {
-        abilita(btn1);
+        disabilita(btn1, '1. Fase Intenzioni conclusa');
         abilita(btn2);
       } else if (fase < 1) {
         disabilita(btn1, '1. Esprimi Intenzione (non ancora aperta)');
         disabilita(btn2, '2. Iscrivi la Squadra');
       } else {
         // fase >= 3
-        disabilita(btn1, '1. Intenzioni chiuse');
+        disabilita(btn1, '1. Fase Intenzioni conclusa');
         disabilita(btn2, '2. Iscrizioni chiuse');
       }
     }
