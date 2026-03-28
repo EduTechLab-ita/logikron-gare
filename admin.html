@@ -1012,14 +1012,14 @@
     }
 
     function ricominciaRaccolta() {
-      if (!confirm('↩ Ricomincia la raccolta dalla Fase 1?\n\n• Il form Intenzioni verrà riaperto\n• I dati già presenti NON vengono cancellati\n• Le gare già create restano invariate\n• Puoi usare questa funzione per raccogliere intenzioni di una nuova categoria\n\nConfermi?')) return;
+      if (!confirm('↩ Reimposta le fasi allo stato iniziale?\n\n• Le fasi tornano a "non attive" (Fase 0)\n• Potrai riaprire manualmente la Fase 1 quando vuoi\n• I dati già presenti NON vengono cancellati\n• Le gare già create restano invariate\n\nConfermi?')) return;
       const btn = document.getElementById('btnRicominciaRaccolta');
       btn.disabled = true;
       btn.textContent = 'Ripristino...';
-      lkApi(API, { action: 'setFase', fase: 1, pwd: adminPwd })
+      lkApi(API, { action: 'setFase', fase: 0, pwd: adminPwd })
         .then(r => {
           if (r.error) { alert('Errore: ' + r.error); aggiornaIndicatoriFase(faseCorrente); return; }
-          aggiornaIndicatoriFase(1);
+          aggiornaIndicatoriFase(0);
         })
         .catch(err => { alert('Errore: ' + err.message); aggiornaIndicatoriFase(faseCorrente); })
         .finally(() => { btn.disabled = false; btn.textContent = '↩ Ricomincia Raccolta'; });
