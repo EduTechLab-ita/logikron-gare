@@ -140,8 +140,8 @@
       </p>
     </div>
 
-    <!-- FORM -->
-    <form id="formIscrizioni" novalidate>
+    <!-- FORM (nascosto di default, mostrato solo se fase = 2) -->
+    <form id="formIscrizioni" novalidate style="display:none">
 
       <!-- SEZIONE 1: DOCENTE E CLASSE -->
       <div class="card mt-2">
@@ -679,13 +679,15 @@
           if (_faseIscrizioni === null) {
             // Prima chiamata: imposta stato iniziale
             _faseIscrizioni = attiva;
-            if (!attiva) {
+            if (attiva) {
+              document.getElementById('formIscrizioni').style.display = '';
+            } else {
               document.getElementById('formIscrizioni').outerHTML =
                 '<div class="card mt-2" style="background:#fef3c7; border-left:4px solid #f59e0b; text-align:center;">' +
                 '<p style="font-size:1.1rem; font-weight:600; margin:0 0 0.5rem 0;">⏸ Fase Iscrizioni non attiva</p>' +
                 '<p style="margin:0; color:#92400e;">' +
-                  (r.fase < 2 ? 'Le iscrizioni non sono ancora aperte. Attendi la comunicazione.' :
-                   'La fase delle iscrizioni si è conclusa.') +
+                  (r.fase < 2 ? 'Le iscrizioni non sono ancora aperte. Attendi la comunicazione dall\'organizzazione.' :
+                   'La fase delle iscrizioni si è conclusa. Per informazioni contatta l\'organizzazione.') +
                 '</p><p style="margin:0.5rem 0 0 0;"><a href="index.html">← Torna alla Home</a></p>' +
                 '</div>';
             }
