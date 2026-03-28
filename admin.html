@@ -1586,15 +1586,15 @@
               : '<span class="badge-sbagliata">✗ sbagliata</span>';
             const jollyBadge = r.isJolly ? '<span class="badge-jolly-live">⭐ J</span>' : '';
             const puntiColor = r.punti > 0 ? 'color:#065f46;font-weight:700;' : 'color:#991b1b;font-weight:700;';
-            const sqId    = (r.squadraId || '').replace(/'/g,"\\'");
-            const sqNome  = (r.nomeSquadra || '').replace(/</g,'&lt;').replace(/>/g,'&gt;');
-            const sqNomeEsc = (r.nomeSquadra || '').replace(/'/g,"\\'");
-            const rispEsc = (r.risposta || '').replace(/'/g,"\\'");
+            const sqId    = String(r.squadraId || '').replace(/'/g,"\\'");
+            const sqNome  = String(r.nomeSquadra || '').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+            const sqNomeEsc = String(r.nomeSquadra || '').replace(/'/g,"\\'");
+            const rispEsc = String(r.risposta != null ? r.risposta : '').replace(/'/g,"\\'");
             return '<tr>' +
               '<td style="font-variant-numeric:tabular-nums;white-space:nowrap;font-size:0.78rem;">' + ora + '</td>' +
               '<td style="font-weight:600;max-width:150px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="' + sqNome + '">' + sqNome + '</td>' +
               '<td style="text-align:center;font-weight:700;color:var(--lk-primary);">Q' + r.numDomanda + '</td>' +
-              '<td style="text-align:center;font-family:monospace;font-weight:600;">' + (r.risposta || '—') + '</td>' +
+              '<td style="text-align:center;font-family:monospace;font-weight:600;">' + (r.risposta != null ? r.risposta : '—') + '</td>' +
               '<td style="text-align:center;">' + esitoBadge + '</td>' +
               '<td style="text-align:center;' + puntiColor + '">' + (r.punti > 0 ? '+' : '') + r.punti + '</td>' +
               '<td style="text-align:center;">' + jollyBadge + '</td>' +
