@@ -176,8 +176,18 @@
       }
     }
 
+    function semaforino(esito, isJolly) {
+      const col = esito === 'corretta' ? '#22c55e' : esito === 'sbagliata' ? '#ef4444' : '#cbd5e1';
+      const border = isJolly ? '2px solid #f59e0b' : '2px solid transparent';
+      const label = (isJolly ? '⭐ Jolly — ' : '') + (esito || 'non risposta');
+      return '<span title="' + label + '" style="display:inline-block;width:13px;height:13px;border-radius:50%;background:' + col + ';border:' + border + ';margin:1px;vertical-align:middle;"></span>';
+    }
+
     function renderClassifica(container, data) {
       const squadre = data.squadre || [];
+      const griglia  = data.griglia  || {};
+      const domande  = data.domande  || [];
+      const numDom   = domande.length || 10;
 
       if (squadre.length === 0) {
         container.innerHTML = '<p class="text-muted" style="padding:0.5rem;">Nessuna squadra registrata.</p>';
@@ -189,20 +199,34 @@
       html += '<th>Squadra</th>';
       html += '<th>Istituto</th>';
       html += '<th style="text-align:right;">Punti</th>';
+      html += '<th>Risposte</th>';
       html += '</tr></thead><tbody>';
 
       squadre.forEach((sq, idx) => {
         const pos = idx + 1;
         const rowClass = pos <= 3 ? ' class="pos-' + pos + '"' : '';
+        const sqGriglia = griglia[sq.id] || {};
+        let dots = '';
+        for (let n = 1; n <= numDom; n++) {
+          const r = sqGriglia[n];
+          dots += semaforino(r ? r.esito : null, sq.jolly == n);
+        }
         html += '<tr' + rowClass + '>';
         html += '<td style="text-align:center;">' + medaglia(pos) + '</td>';
         html += '<td>' + (sq.nome || '-') + '</td>';
         html += '<td style="font-size:0.8rem; color:var(--lk-text-muted);">' + (sq.ic || '-') + '</td>';
         html += '<td style="text-align:right; font-weight:700; color:#4f46e5;">' + (sq.punti || 0) + '</td>';
+        html += '<td style="white-space:nowrap;">' + dots + '</td>';
         html += '</tr>';
       });
 
       html += '</tbody></table>';
+      html += '<div style="margin-top:0.5rem;font-size:0.75rem;color:var(--lk-text-muted);display:flex;gap:1rem;flex-wrap:wrap;">';
+      html += '<span><span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:#22c55e;"></span> Corretta</span>';
+      html += '<span><span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:#ef4444;"></span> Sbagliata</span>';
+      html += '<span><span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:#cbd5e1;"></span> Non risposta</span>';
+      html += '<span><span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:#cbd5e1;border:2px solid #f59e0b;"></span> Jolly</span>';
+      html += '</div>';
       container.innerHTML = html;
     }
 
