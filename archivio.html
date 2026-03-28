@@ -267,8 +267,13 @@
         return;
       }
 
-      // Ordina per data decrescente (più recenti prima)
-      concluse.sort((a, b) => new Date(b.data) - new Date(a.data));
+      // Ordina per data effettiva decrescente (più recenti prima)
+      // usa oraFine (più precisa), poi oraInizio, poi data pianificata come fallback
+      concluse.sort((a, b) => {
+        const ta = new Date(b.oraFine || b.oraInizio || b.data || 0).getTime();
+        const tb = new Date(a.oraFine || a.oraInizio || a.data || 0).getTime();
+        return ta - tb;
+      });
 
       let html = '';
       concluse.forEach(gara => {

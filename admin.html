@@ -1296,7 +1296,12 @@
         const valPrecedente = sel.value;
         sel.innerHTML = '<option value="">-- Seleziona gara --</option>';
         if (!Array.isArray(gare) || gare.length === 0) return;
-        [...gare].reverse().forEach(g => {
+        // Ordina per data effettiva decrescente (più recenti in cima)
+        [...gare].sort((a, b) => {
+          const ta = new Date(b.oraFine || b.oraInizio || b.data || 0).getTime();
+          const tb = new Date(a.oraFine || a.oraInizio || a.data || 0).getTime();
+          return ta - tb;
+        }).forEach(g => {
           _gareMap[g.id] = g;
           const opt = document.createElement('option');
           opt.value = g.id;
@@ -1891,7 +1896,11 @@
             sel.innerHTML = '<option value="">-- Seleziona gara --</option>';
             if (!Array.isArray(gare)) return;
             gare.forEach(g => { _gareMap[g.id] = g; });
-            [...gare].reverse().forEach(g => {
+            [...gare].sort((a, b) => {
+              const ta = new Date(b.oraFine || b.oraInizio || b.data || 0).getTime();
+              const tb = new Date(a.oraFine || a.oraInizio || a.data || 0).getTime();
+              return ta - tb;
+            }).forEach(g => {
               const opt = document.createElement('option');
               opt.value = g.id;
               const dataLabel = g.dataGara ? g.dataGara.replace('T', ' ').substring(0, 16) : g.data;
