@@ -406,6 +406,7 @@
       jollyFissato: false,
       jollyScaduto: false,
       puntiTotali: 0,
+      garaConclusa: false,
       domandaAttiva: 1
     };
 
@@ -650,6 +651,8 @@
       const btnInvia = document.getElementById('btnInviaRisposta');
       const r = stato.risposte[num];
 
+      // Se la gara è conclusa, mantieni tutto bloccato
+      if (stato.garaConclusa) { input.disabled = true; btnInvia.disabled = true; return; }
       // Mostra lo stato della risposta nel feedback, ma il campo è sempre libero e resettato
       input.value = '';
       input.disabled = false;
@@ -670,6 +673,7 @@
     // ======== INVIA RISPOSTA ========
 
     function inviaRispostaBackend() {
+      if (stato.garaConclusa) return; // gara già terminata, blocca subito
       const input = document.getElementById('rispostaInput');
       const risposta = input.value.trim();
       const feedback = document.getElementById('feedbackRisposta');
@@ -777,7 +781,7 @@
         const m = Math.floor(sec / 60), s = sec % 60;
         el.textContent = String(m).padStart(2,'0') + ':' + String(s).padStart(2,'0');
         el.style.color = sec <= 60 ? '#fca5a5' : (sec <= 300 ? '#fde68a' : 'white');
-        if (sec === 0) { clearInterval(timerInterval); stopPolling(); }
+        if (sec === 0) { clearInterval(timerInterval); timerInterval = null; bloccarGara(); }
       }
       tick();
       timerInterval = setInterval(tick, 1000);
@@ -826,16 +830,29 @@
       if (pollingInterval) { clearInterval(pollingInterval); pollingInterval = null; }
     }
 
+    function bloccarGara(puntiFinali) {
+      if (stato.garaConclusa) return; // già bloccata
+      stato.garaConclusa = true;
+      stopPolling();
+      if (timerInterval) { clearInterval(timerInterval); timerInterval = null; }
+      // Blocca input e pulsante risposta
+      const input = document.getElementById('rispostaInput');
+      const btnInvia = document.getElementById('btnInviaRisposta');
+      if (input) { input.disabled = true; input.value = ''; }
+      if (btnInvia) { btnInvia.disabled = true; }
+      // Mostra overlay gara terminata
+      document.getElementById('timer').textContent = '00:00';
+      document.getElementById('punteggioFinaleVal').textContent = (puntiFinali || stato.puntiTotali || 0) + ' pt';
+      const ov = document.getElementById('overlayGaraTerminata');
+      if (ov) ov.style.display = 'flex';
+    }
+
     function pollStato() {
       if (!stato.garaId) return;
       lkApi(API, { action: 'getStatoSquadra', garaId: stato.garaId, squadraId: stato.squadraId })
         .then(s => {
           if (s.garaStato === 'conclusa') {
-            stopPolling();
-            document.getElementById('timer').textContent = '00:00';
-            document.getElementById('punteggioFinaleVal').textContent = (s.puntiTotali || stato.puntiTotali || 0) + ' pt';
-            const ov = document.getElementById('overlayGaraTerminata');
-            if (ov) ov.style.display = 'flex';
+            bloccarGara(s.puntiTotali);
             return;
           }
           // Aggiorna punti (source of truth = server)
