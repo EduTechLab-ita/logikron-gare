@@ -789,8 +789,26 @@
       caricaListaGare();
     }
 
-    function caricaFase() {
-      lkApi(API, { action: 'getFase' }).then(r => aggiornaIndicatoriFase(r.fase)).catch(() => {});
+    function caricaFase(tentativo) {
+      tentativo = tentativo || 1;
+      lkApi(API, { action: 'getFase' }, 25000)
+        .then(r => aggiornaIndicatoriFase(r.fase))
+        .catch(() => {
+          if (tentativo < 3) {
+            setTimeout(() => caricaFase(tentativo + 1), 3000);
+          } else {
+            // 3 tentativi falliti: mostra stato di errore con pulsante Riprova
+            ['descFase1','descFase2'].forEach(id => {
+              document.getElementById(id).textContent = 'Errore di connessione al server.';
+            });
+            ['btnToggleFase1','btnToggleFase2'].forEach(id => {
+              const btn = document.getElementById(id);
+              btn.textContent = '🔄 Riprova';
+              btn.disabled = false;
+              btn.onclick = () => { btn.textContent = '...'; btn.disabled = true; caricaFase(1); };
+            });
+          }
+        });
     }
 
     let faseCorrente = 0;
