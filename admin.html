@@ -1590,10 +1590,11 @@
               '<td style="text-align:center;' + puntiColor + '">' + (r.punti > 0 ? '+' : '') + r.punti + '</td>' +
               '<td style="text-align:center;">' + jollyBadge + '</td>' +
               '<td style="text-align:center;white-space:nowrap;">' +
-                '<button class="btn-action-sm btn-action-edit" title="Modifica risposta"' +
-                ' onclick="editRispostaLive(\'' + sqId + '\',' + r.numDomanda + ',\'' + r.esito + '\',\'' + rispEsc + '\',\'' + sqNomeEsc + '\')">✏️</button> ' +
-                '<button class="btn-action-sm btn-action-del" title="Elimina risposta"' +
-                ' onclick="deleteRispostaLive(\'' + sqId + '\',' + r.numDomanda + ',\'' + sqNomeEsc + '\')">🗑️</button>' +
+                (r.esito === 'jolly'
+                  ? '<button class="btn-action-sm btn-action-edit" title="Cambia quesito jolly" onclick="editJollyLive(\'' + sqId + '\',' + r.numDomanda + ',\'' + sqNomeEsc + '\')">⭐✏️</button>'
+                  : '<button class="btn-action-sm btn-action-edit" title="Modifica risposta" onclick="editRispostaLive(\'' + sqId + '\',' + r.numDomanda + ',\'' + r.esito + '\',\'' + rispEsc + '\',\'' + sqNomeEsc + '\')">✏️</button> ' +
+                    '<button class="btn-action-sm btn-action-del" title="Elimina risposta" onclick="deleteRispostaLive(\'' + sqId + '\',' + r.numDomanda + ',\'' + sqNomeEsc + '\')">🗑️</button>'
+                ) +
               '</td>';
           }
 
@@ -1671,6 +1672,37 @@
     function chiudiModalModifica() {
       document.getElementById('modalModificaRisposta').style.display = 'none';
       _modRisposta = {};
+    }
+
+    var _modJolly = {};
+    function editJollyLive(squadraId, numJollyCorrente, nomeSquadra) {
+      const garaId = document.getElementById('selGaraLive').value;
+      if (!garaId) return;
+      _modJolly = { garaId: garaId, squadraId: squadraId };
+      document.getElementById('modalJollyTitolo').textContent = '⭐ Cambia Jolly — ' + (nomeSquadra || squadraId);
+      document.getElementById('modJollyVal').value = numJollyCorrente;
+      document.getElementById('modalModificaJolly').style.display = 'block';
+    }
+    function chiudiModalJolly() {
+      document.getElementById('modalModificaJolly').style.display = 'none';
+      _modJolly = {};
+    }
+    function salvaModificaJolly() {
+      const { garaId, squadraId } = _modJolly;
+      if (!garaId || !squadraId) return;
+      const nuovoJolly = parseInt(document.getElementById('modJollyVal').value);
+      if (isNaN(nuovoJolly) || nuovoJolly < 1 || nuovoJolly > 10) { alert('Inserisci un numero quesito valido (1-10)'); return; }
+      const btn = document.querySelector('#modalModificaJolly .btn-primary');
+      btn.disabled = true; btn.textContent = 'Salvataggio...';
+      lkApi(API, { action: 'modificaJolly', garaId: garaId, squadraId: squadraId, nuovoJolly: nuovoJolly, pwd: adminPwd })
+        .then(r => {
+          btn.disabled = false; btn.textContent = 'Salva';
+          if (r.error) { alert('Errore: ' + r.error); return; }
+          alert('✅ ' + r.message);
+          chiudiModalJolly();
+          aggiornaLogRisposte();
+        })
+        .catch(err => { btn.disabled = false; btn.textContent = 'Salva'; alert('Errore: ' + err.message); });
     }
 
     function salvaModificaRisposta() {
@@ -2439,6 +2471,29 @@
       <div style="display:flex; gap:0.75rem;">
         <button class="btn" style="flex:1; background:#dc2626; color:white; border:none;" onclick="confermaEliminaRisposta()">🗑️ Elimina</button>
         <button class="btn btn-outline" onclick="chiudiModalElimina()">Annulla</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL MODIFICA JOLLY -->
+  <div id="modalModificaJolly" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.7); z-index:4000; overflow-y:auto;" onclick="if(event.target===this)chiudiModalJolly()">
+    <div style="background:white; max-width:360px; margin:6rem auto 1.5rem; border-radius:14px; padding:1.5rem; box-shadow:0 10px 40px rgba(0,0,0,0.3); color:#1e293b;">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem;">
+        <h3 id="modalJollyTitolo" style="margin:0; font-size:1rem; color:#92400e;">⭐ Cambia Jolly</h3>
+        <button class="modal-close" onclick="chiudiModalJolly()">✕</button>
+      </div>
+      <div style="display:flex; flex-direction:column; gap:0.85rem;">
+        <div>
+          <label style="display:block; font-size:0.82rem; font-weight:600; color:#475569; margin-bottom:0.3rem;">Numero quesito Jolly (1–10)</label>
+          <input id="modJollyVal" type="number" min="1" max="10" style="width:100%; padding:0.5rem 0.75rem; border:1px solid #cbd5e1; border-radius:8px; font-size:1.1rem; font-family:monospace; color:#1e293b; box-sizing:border-box;">
+        </div>
+        <div style="font-size:0.78rem; color:#92400e; padding:0.5rem 0.75rem; background:#fef3c7; border-radius:6px;">
+          ⚠️ Cambia il quesito jolly per questa squadra. I punti delle risposte già inviate NON vengono ricalcolati automaticamente.
+        </div>
+        <div style="display:flex; gap:0.75rem; margin-top:0.25rem;">
+          <button class="btn btn-primary" style="flex:1;" onclick="salvaModificaJolly()">Salva</button>
+          <button class="btn btn-outline" onclick="chiudiModalJolly()">Annulla</button>
+        </div>
       </div>
     </div>
   </div>

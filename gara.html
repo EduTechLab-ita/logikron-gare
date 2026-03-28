@@ -117,9 +117,9 @@
       color: white;
     }
     .q-btn.q-wrong.q-jolly {
-      background: #ef4444;
-      border-color: #ef4444;
-      color: white;
+      background: linear-gradient(135deg, #fef3c7, #fde68a);
+      border-color: #fbbf24;
+      color: #92400e;
     }
 
     @keyframes flashCorretta {
@@ -538,9 +538,10 @@
       let cls = 'q-btn';
       if (isJolly)                          cls += ' q-jolly';
       if (r && r.esito === 'corretta')      cls += ' q-answered';
-      else if (r && r.esito === 'sbagliata') cls += ' q-wrong';
+      else if (r && r.esito === 'sbagliata' && !isJolly) cls += ' q-wrong';
       if (num === stato.domandaAttiva)      cls += ' q-selected';
       btn.className = cls;
+      btn.textContent = isJolly ? '⭐' : num;
       btn.title = 'Q' + num + (isJolly ? ' ⭐JOLLY' : '') +
                   (r ? (r.esito === 'corretta' ? ' ✓' : ' ✗') : '');
     }
