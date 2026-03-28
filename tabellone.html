@@ -826,13 +826,26 @@
     }
 
     function lanciaConfetti() {
-      if (typeof confetti === 'undefined') return;
-      // Raffica di coriandoli per 4 secondi
-      const end = Date.now() + 4000;
-      const colors = ['#ffd700', '#ff6b6b', '#4ecdc4', '#45b7d1', '#f9ca24', '#6ab04c'];
+      if (typeof confetti === 'undefined') {
+        // Fallback: ricarica il CDN dinamicamente e riprova tra 1s
+        var s = document.createElement('script');
+        s.src = 'https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.2/dist/confetti.browser.min.js';
+        s.onload = function() { setTimeout(lanciaConfetti, 100); };
+        document.head.appendChild(s);
+        return;
+      }
+      const colors = ['#ffd700', '#ff6b6b', '#4ecdc4', '#45b7d1', '#f9ca24', '#6ab04c', '#ffffff', '#f0e6ff'];
+      // Burst esplosivo iniziale dal centro
+      confetti({ particleCount: 200, spread: 120, origin: { x: 0.5, y: 0.5 }, colors: colors, scalar: 1.2 });
+      // Secondo burst dopo 300ms
+      setTimeout(function() {
+        confetti({ particleCount: 150, spread: 100, origin: { x: 0.5, y: 0.4 }, colors: colors });
+      }, 300);
+      // Pioggia continua dai lati per 6 secondi
+      const end = Date.now() + 6000;
       (function frame() {
-        confetti({ particleCount: 6, angle: 60,  spread: 55, origin: { x: 0 }, colors: colors });
-        confetti({ particleCount: 6, angle: 120, spread: 55, origin: { x: 1 }, colors: colors });
+        confetti({ particleCount: 10, angle: 60,  spread: 60, origin: { x: 0 }, colors: colors });
+        confetti({ particleCount: 10, angle: 120, spread: 60, origin: { x: 1 }, colors: colors });
         if (Date.now() < end) requestAnimationFrame(frame);
       })();
     }
