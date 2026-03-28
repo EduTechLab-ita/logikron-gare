@@ -96,6 +96,14 @@
       align-items: center;
       justify-content: center;
       font-family: 'Fredoka', sans-serif;
+      position: relative;
+    }
+    .q-btn .jolly-star {
+      position: absolute;
+      top: 2px;
+      right: 3px;
+      font-size: 0.55em;
+      line-height: 1;
     }
 
     .q-btn:hover { border-color: var(--lk-primary); transform: scale(1.05); }
@@ -541,7 +549,9 @@
       else if (r && r.esito === 'sbagliata' && !isJolly) cls += ' q-wrong';
       if (num === stato.domandaAttiva)      cls += ' q-selected';
       btn.className = cls;
-      btn.textContent = isJolly ? '⭐' : num;
+      btn.innerHTML = isJolly
+        ? '<span class="jolly-star">⭐</span>' + num
+        : num;
       btn.title = 'Q' + num + (isJolly ? ' ⭐JOLLY' : '') +
                   (r ? (r.esito === 'corretta' ? ' ✓' : ' ✗') : '');
     }
