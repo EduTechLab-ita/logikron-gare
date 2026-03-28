@@ -1554,22 +1554,12 @@
           const risposte = results[0].risposte || [];
           const squadre = Array.isArray(results[1]) ? results[1] : [];
 
-          // Righe jolly senza risposta: squadre con jolly scelto ma nessuna risposta per quella domanda
-          const risposteChiave = new Set(risposte.map(function(r) { return r.squadraId + '_' + r.numDomanda; }));
-          const righeJolly = [];
-          squadre.forEach(function(sq) {
-            if (sq.jolly && sq.jolly !== '' && sq.jolly !== null) {
-              const k = sq.id + '_' + sq.jolly;
-              if (!risposteChiave.has(k)) {
-                righeJolly.push({ squadraId: sq.id, nomeSquadra: sq.nome, numJolly: sq.jolly });
-              }
-            }
-          });
-
-          const totale = risposte.length + righeJolly.length;
+          const totale = risposte.length;
+          const nJolly = risposte.filter(function(r){ return r.esito === 'jolly'; }).length;
+          const nRisp = risposte.length - nJolly;
           document.getElementById('logContatoreRisposte').textContent =
-            risposte.length + (risposte.length === 1 ? ' risposta' : ' risposte') +
-            (righeJolly.length > 0 ? ' + ' + righeJolly.length + ' jolly in attesa' : '');
+            nRisp + (nRisp === 1 ? ' risposta' : ' risposte') +
+            (nJolly > 0 ? ' + ' + nJolly + ' jolly' : '');
 
           if (totale === 0) {
             // Mostra vuoto solo se non c'erano già righe (evita flash)
@@ -1595,6 +1585,8 @@
             }
             const esitoBadge = r.esito === 'corretta'
               ? '<span class="badge-corretta">✓ corretta</span>'
+              : r.esito === 'jolly'
+              ? '<span class="badge-jolly-live">⭐ jolly scelto</span>'
               : '<span class="badge-sbagliata">✗ sbagliata</span>';
             const jollyBadge = r.isJolly ? '<span class="badge-jolly-live">⭐ J</span>' : '';
             const puntiColor = r.punti > 0 ? 'color:#065f46;font-weight:700;' : 'color:#991b1b;font-weight:700;';
@@ -1617,18 +1609,6 @@
               '</td>';
           }
 
-          function cellJollyPending(j) {
-            const sqNome = String(j.nomeSquadra || '').replace(/</g,'&lt;').replace(/>/g,'&gt;');
-            return '<td style="font-size:0.78rem;color:#94a3b8;">—</td>' +
-              '<td style="font-weight:600;max-width:150px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="' + sqNome + '">' + sqNome + '</td>' +
-              '<td style="text-align:center;font-weight:700;color:var(--lk-primary);">Q' + j.numJolly + '</td>' +
-              '<td style="text-align:center;color:#94a3b8;font-size:0.8rem;">—</td>' +
-              '<td style="text-align:center;"><span style="background:#fef9c3;color:#78350f;padding:2px 8px;border-radius:9999px;font-size:0.72rem;font-weight:700;">⏳ in attesa</span></td>' +
-              '<td style="text-align:center;color:#94a3b8;">—</td>' +
-              '<td style="text-align:center;"><span class="badge-jolly-live">⭐ J</span></td>' +
-              '<td style="text-align:center;"></td>';
-          }
-
           // DOM diffing: mappa chiave→tr esistenti
           var existingRows = {};
           Array.from(tbody.querySelectorAll('tr[data-log-key]')).forEach(function(tr) {
@@ -1636,10 +1616,8 @@
           });
           var usedKeys = new Set();
 
-          // Costruisce lista ordinata: risposte (più recenti prima) + jolly pending
           var items = [];
           risposte.forEach(function(r) { items.push({ key: 'r_' + r.row, html: cellRisposta(r), style: '' }); });
-          righeJolly.forEach(function(j) { items.push({ key: 'j_' + j.squadraId + '_' + j.numJolly, html: cellJollyPending(j), style: 'opacity:0.7;' }); });
 
           items.forEach(function(item) {
             usedKeys.add(item.key);
