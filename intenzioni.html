@@ -156,23 +156,35 @@
   <script src="js/math-bg.js"></script>
   <script>
     // Verifica fase all'avvio: blocca il form se le intenzioni non sono aperte
-    (function checkFaseIntenzioni() {
+    var _faseIntenzioni = null;
+    function checkFaseIntenzioni() {
       lkApi(LOGIKRON_CONFIG.webAppUrls.intenzioni, { action: 'getFase' })
         .then(r => {
-          if (r && r.fase !== 1) {
-            document.getElementById('formIntenzioni').parentElement.innerHTML =
-              '<div class="card mt-2" style="background:#fef3c7; border-left:4px solid #f59e0b; text-align:center;">' +
-              '<p style="font-size:1.1rem; font-weight:600; margin:0 0 0.5rem 0;">⏸ Fase Intenzioni non attiva</p>' +
-              '<p style="margin:0; color:#92400e;">' +
-                (r.fase === 0 ? 'La raccolta delle intenzioni non è ancora aperta.' :
-                 r.fase >= 2 ? 'La fase delle intenzioni si è conclusa. Ora siamo nella fase ' + r.fase + '.' :
-                 'Fase ' + r.fase + ': questo form non è attivo.') +
-              '</p><p style="margin:0.5rem 0 0 0;"><a href="index.html">← Torna alla Home</a></p>' +
-              '</div>';
+          if (!r) return;
+          const attiva = (r.fase === 1);
+          if (_faseIntenzioni === null) {
+            // Prima chiamata: imposta stato iniziale
+            _faseIntenzioni = attiva;
+            if (!attiva) {
+              document.getElementById('formIntenzioni').parentElement.innerHTML =
+                '<div class="card mt-2" style="background:#fef3c7; border-left:4px solid #f59e0b; text-align:center;">' +
+                '<p style="font-size:1.1rem; font-weight:600; margin:0 0 0.5rem 0;">⏸ Fase Intenzioni non attiva</p>' +
+                '<p style="margin:0; color:#92400e;">' +
+                  (r.fase === 0 ? 'La raccolta delle intenzioni non è ancora aperta.' :
+                   r.fase >= 2 ? 'La fase delle intenzioni si è conclusa. Ora siamo nella fase ' + r.fase + '.' :
+                   'Fase ' + r.fase + ': questo form non è attivo.') +
+                '</p><p style="margin:0.5rem 0 0 0;"><a href="index.html">← Torna alla Home</a></p>' +
+                '</div>';
+            }
+          } else if (attiva !== _faseIntenzioni) {
+            // Fase cambiata mentre la pagina era aperta: ricarica
+            location.reload();
           }
         })
-        .catch(function() { /* in caso di errore mostra il form normalmente */ });
-    })();
+        .catch(function() {});
+    }
+    checkFaseIntenzioni();
+    setInterval(checkFaseIntenzioni, 12000);
 
     // Aggiorna classi quando cambia ordine scolastico
     function updateClassi() {

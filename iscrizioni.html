@@ -670,22 +670,34 @@
     }
 
     // Verifica fase all'avvio: blocca il form se le iscrizioni non sono aperte
-    (function checkFaseIscrizioni() {
+    var _faseIscrizioni = null;
+    function checkFaseIscrizioni() {
       lkApi(LOGIKRON_CONFIG.webAppUrls.iscrizioni, { action: 'getFase' })
         .then(r => {
-          if (r && r.fase !== 2) {
-            document.getElementById('formIscrizioni').outerHTML =
-              '<div class="card mt-2" style="background:#fef3c7; border-left:4px solid #f59e0b; text-align:center;">' +
-              '<p style="font-size:1.1rem; font-weight:600; margin:0 0 0.5rem 0;">⏸ Fase Iscrizioni non attiva</p>' +
-              '<p style="margin:0; color:#92400e;">' +
-                (r.fase < 2 ? 'Le iscrizioni non sono ancora aperte. Attendi la comunicazione.' :
-                 'La fase delle iscrizioni si è conclusa.') +
-              '</p><p style="margin:0.5rem 0 0 0;"><a href="index.html">← Torna alla Home</a></p>' +
-              '</div>';
+          if (!r) return;
+          const attiva = (r.fase === 2);
+          if (_faseIscrizioni === null) {
+            // Prima chiamata: imposta stato iniziale
+            _faseIscrizioni = attiva;
+            if (!attiva) {
+              document.getElementById('formIscrizioni').outerHTML =
+                '<div class="card mt-2" style="background:#fef3c7; border-left:4px solid #f59e0b; text-align:center;">' +
+                '<p style="font-size:1.1rem; font-weight:600; margin:0 0 0.5rem 0;">⏸ Fase Iscrizioni non attiva</p>' +
+                '<p style="margin:0; color:#92400e;">' +
+                  (r.fase < 2 ? 'Le iscrizioni non sono ancora aperte. Attendi la comunicazione.' :
+                   'La fase delle iscrizioni si è conclusa.') +
+                '</p><p style="margin:0.5rem 0 0 0;"><a href="index.html">← Torna alla Home</a></p>' +
+                '</div>';
+            }
+          } else if (attiva !== _faseIscrizioni) {
+            // Fase cambiata mentre la pagina era aperta: ricarica
+            location.reload();
           }
         })
-        .catch(function() { /* in caso di errore mostra il form normalmente */ });
-    })();
+        .catch(function() {});
+    }
+    checkFaseIscrizioni();
+    setInterval(checkFaseIscrizioni, 12000);
 
     // Init
     initIstituti();
