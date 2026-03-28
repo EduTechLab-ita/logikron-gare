@@ -456,6 +456,17 @@
       transition: transform 0.5s ease;
     }
 
+    /* Flash cella quesito quando cambia stato */
+    @keyframes cellPulse {
+      0%, 100% { box-shadow: none; transform: scale(1); }
+      30%  { box-shadow: 0 0 0 3px rgba(255,255,255,0.9); transform: scale(1.12); }
+      60%  { box-shadow: none; transform: scale(1); }
+      80%  { box-shadow: 0 0 0 2px rgba(255,255,255,0.6); transform: scale(1.06); }
+    }
+    .cell-flash {
+      animation: cellPulse 0.6s ease-in-out 3;
+    }
+
     /* Legenda */
     .legenda {
       display: flex;
@@ -559,7 +570,7 @@
 
     <div class="legenda">
       <div class="legenda-item"><span class="legenda-dot" style="background: #10b981;"></span> Corretta (+punti)</div>
-      <div class="legenda-item"><span class="legenda-dot" style="background: #ef4444;"></span> Sbagliata (-5 per tentativo)</div>
+      <div class="legenda-item"><span class="legenda-dot" style="background: #ef4444;"></span> Sbagliata (-5 per tentativo, cumulativo)</div>
       <div class="legenda-item"><span class="legenda-dot" style="background: #fef3c7; border: 1px solid #f59e0b;"></span> In attesa</div>
       <div class="legenda-item"><span class="legenda-dot" style="background: #f1f5f9; border: 1px solid #e2e8f0;"></span> Non risposto</div>
       <div class="legenda-item"><span class="legenda-dot" style="background: #fbbf24; color: #1e1b4b; font-weight: 900; font-size: 0.65rem; text-align: center; line-height: 14px;">J</span> Jolly (x2)</div>
@@ -651,6 +662,7 @@
     let garaId         = null;
     let lastData       = null;
     let secondiLocali  = 0;
+    const prevCelle    = {}; // sqId_n → esito, per rilevare cambiamenti e flash
     let jollyDeadline  = null;
     let domandeDeadline= null;
     let timerInterval  = null;
@@ -894,20 +906,38 @@
           const jTag = isJolly ? '<span class="jolly-tag">J</span>' : '';
           const jCls = isJolly ? ' cell-jolly' : '';
           if (!r) {
-            html += '<td class="cell-empty' + jCls + '">' + jTag + '–</td>';
+            html += '<td class="cell-empty' + jCls + '" data-n="' + n + '">' + jTag + '–</td>';
           } else if (r.esito === 'corretta') {
             const p = parseInt(r.punti) || 0;
-            html += '<td class="cell-correct' + jCls + '">' + jTag + '+' + p + '</td>';
+            html += '<td class="cell-correct' + jCls + '" data-n="' + n + '">' + jTag + '+' + p + '</td>';
           } else {
             const p = parseInt(r.punti) || 0;
-            html += '<td class="cell-wrong' + jCls + '">' + jTag + p + '</td>';
+            html += '<td class="cell-wrong' + jCls + '" data-n="' + n + '">' + jTag + p + '</td>';
           }
         }
 
         html += '<td class="punteggio-cell">' + (parseInt(sq.punti) || 0) + '</td>';
 
         // Aggiorna solo se il contenuto è cambiato
-        if (tr.innerHTML !== html) tr.innerHTML = html;
+        if (tr.innerHTML !== html) {
+          tr.innerHTML = html;
+          // Flash sulle celle quesito che hanno cambiato stato
+          tr.querySelectorAll('td[data-n]').forEach(function(td) {
+            const n = td.dataset.n;
+            const key = sqId + '_' + n;
+            const r = sqGriglia[n];
+            const esito = r ? r.esito : '';
+            if (prevCelle[key] !== esito && (esito === 'corretta' || esito === 'sbagliata')) {
+              td.classList.add('cell-flash');
+              setTimeout(function() { td.classList.remove('cell-flash'); }, 2000);
+            }
+          });
+        }
+
+        // Aggiorna prevCelle per la prossima iterazione
+        for (let n = 1; n <= numDom; n++) {
+          prevCelle[sqId + '_' + n] = (sqGriglia[n] ? sqGriglia[n].esito : '');
+        }
 
         // Aggiungi/riordina in fondo (mantiene ordine classifica)
         tbody.appendChild(tr);
