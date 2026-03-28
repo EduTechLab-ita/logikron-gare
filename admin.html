@@ -1598,26 +1598,26 @@
               '</td>';
           }
 
-          // DOM diffing: mappa chiave→tr esistenti
+          // DOM diffing: aggiorna in-place, appende solo righe nuove
           var existingRows = {};
           Array.from(tbody.querySelectorAll('tr[data-log-key]')).forEach(function(tr) {
             existingRows[tr.dataset.logKey] = tr;
           });
           var usedKeys = new Set();
 
-          var items = [];
-          risposte.forEach(function(r) { items.push({ key: 'r_' + r.row, html: cellRisposta(r), style: '' }); });
-
-          items.forEach(function(item) {
-            usedKeys.add(item.key);
-            var tr = existingRows[item.key];
+          risposte.forEach(function(r) {
+            var key = 'r_' + r.row;
+            var html = cellRisposta(r);
+            usedKeys.add(key);
+            var tr = existingRows[key];
             if (!tr) {
               tr = document.createElement('tr');
-              tr.dataset.logKey = item.key;
+              tr.dataset.logKey = key;
+              tr.innerHTML = html;
+              tbody.appendChild(tr);
+            } else if (tr.innerHTML !== html) {
+              tr.innerHTML = html; // aggiorna solo se cambiato, senza spostare
             }
-            if (item.style) tr.style.cssText = item.style;
-            if (tr.innerHTML !== item.html) tr.innerHTML = item.html;
-            tbody.appendChild(tr); // riordina mantenendo ordine backend
           });
 
           // Rimuovi righe obsolete (risposta eliminata)
