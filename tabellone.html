@@ -969,14 +969,14 @@
       if (elF) elF.textContent = fmt(secondiLocali);
 
       // Valori domande (aggiornamento locale tra un polling e l'altro)
-      if (lastData && lastData.gara && lastData.gara.oraInizio) {
+      // Usa il puntiBase individuale di ogni domanda (già include penalità per risposte sbagliate)
+      if (lastData && lastData.gara && lastData.gara.oraInizio && lastData.domande) {
         const secTrascorsi = Math.floor((Date.now() - new Date(lastData.gara.oraInizio).getTime()) / 1000);
         const minTr = Math.floor(secTrascorsi / 60);
-        const val = PUNTI_BASE + (minTr * INCREMENTO);
-        for (let i = 1; i <= (CFG.numeroDomande || 10); i++) {
-          const el = document.getElementById('val-' + i);
-          if (el) el.textContent = val;
-        }
+        lastData.domande.forEach(function(d) {
+          const el = document.getElementById('val-' + d.num);
+          if (el) el.textContent = (parseInt(d.puntiBase) || PUNTI_BASE) + (minTr * INCREMENTO);
+        });
       }
 
       // Timer Jolly (SX)
