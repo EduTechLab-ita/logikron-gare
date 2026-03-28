@@ -1863,9 +1863,9 @@
 
     function _renderModal(lista, tab) {
       const search = (document.getElementById('searchModal').value || '').toLowerCase();
-      const filtrata = search
+      const filtrata = (search
         ? lista.filter(r => JSON.stringify(r).toLowerCase().includes(search))
-        : lista;
+        : lista.slice()).reverse();
       document.getElementById('modalCount').textContent = filtrata.length + ' record' + (search ? ' (filtrati su ' + lista.length + ')' : '');
       if (filtrata.length === 0) {
         document.getElementById('modalBody').innerHTML = '<div class="modal-empty">Nessun record trovato.</div>';
