@@ -458,13 +458,18 @@
 
     /* Flash cella quesito quando cambia stato */
     @keyframes cellPulse {
-      0%, 100% { box-shadow: none; transform: scale(1); }
-      30%  { box-shadow: 0 0 0 3px rgba(255,255,255,0.9); transform: scale(1.12); }
-      60%  { box-shadow: none; transform: scale(1); }
-      80%  { box-shadow: 0 0 0 2px rgba(255,255,255,0.6); transform: scale(1.06); }
+      0%   { transform: scale(1);    box-shadow: none; filter: brightness(1); }
+      15%  { transform: scale(1.25); box-shadow: 0 0 0 4px rgba(255,255,255,1), 0 0 20px rgba(255,255,255,0.8); filter: brightness(1.6); }
+      30%  { transform: scale(1);    box-shadow: none; filter: brightness(1); }
+      45%  { transform: scale(1.2);  box-shadow: 0 0 0 4px rgba(255,255,255,0.9), 0 0 16px rgba(255,255,255,0.6); filter: brightness(1.5); }
+      60%  { transform: scale(1);    box-shadow: none; filter: brightness(1); }
+      75%  { transform: scale(1.15); box-shadow: 0 0 0 3px rgba(255,255,255,0.7); filter: brightness(1.3); }
+      100% { transform: scale(1);    box-shadow: none; filter: brightness(1); }
     }
     .cell-flash {
-      animation: cellPulse 0.6s ease-in-out 3;
+      animation: cellPulse 0.55s ease-in-out 4;
+      z-index: 2;
+      position: relative;
     }
 
     /* Legenda */
@@ -928,8 +933,12 @@
             const r = sqGriglia[n];
             const esito = r ? r.esito : '';
             if (prevCelle[key] !== esito && (esito === 'corretta' || esito === 'sbagliata')) {
+              td.classList.remove('cell-flash'); // reset per riattivare se già in corso
+              void td.offsetWidth; // force reflow per ripartire l'animazione
               td.classList.add('cell-flash');
-              setTimeout(function() { td.classList.remove('cell-flash'); }, 2000);
+              td.addEventListener('animationend', function() {
+                td.classList.remove('cell-flash');
+              }, { once: true });
             }
           });
         }
