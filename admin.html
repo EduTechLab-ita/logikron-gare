@@ -1602,7 +1602,8 @@
           });
           var usedKeys = new Set();
 
-          risposte.forEach(function(r) {
+          // Itera al contrario: più recente prima → prepend mette l'ultima risposta in cima
+          risposte.slice().reverse().forEach(function(r) {
             var key = 'r_' + r.row;
             var html = cellRisposta(r);
             usedKeys.add(key);
@@ -1611,7 +1612,7 @@
               tr = document.createElement('tr');
               tr.dataset.logKey = key;
               tr.innerHTML = html;
-              tbody.appendChild(tr);
+              tbody.prepend(tr); // nuova riga in cima
             } else if (tr.innerHTML !== html) {
               tr.innerHTML = html; // aggiorna solo se cambiato, senza spostare
             }
