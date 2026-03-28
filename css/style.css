@@ -192,6 +192,12 @@ body::before {
 .container-sm { max-width: 500px; }
 .container-md { max-width: 700px; }
 
+/* Su desktop le pagine si allargano: form e contenuti usano più spazio */
+@media (min-width: 769px) {
+  .container-sm { max-width: 860px; }
+  .container-md { max-width: 1000px; }
+}
+
 /* ==========================================
    CARD - Stile Glass Morphism
    ========================================== */
