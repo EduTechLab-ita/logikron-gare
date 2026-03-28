@@ -368,14 +368,15 @@
 
       <!-- ==================== TRANSIZIONE GARA ==================== -->
       <div id="sezChiudiFasi" style="display:none; margin-bottom: var(--lk-spacing-xl);">
-        <div class="card" style="border:2px solid #f59e0b; background:#fffbeb;">
+        <div class="card" id="cardChiudiFasi" style="border:2px solid #f59e0b; background:#fffbeb;">
           <div style="display:flex; align-items:center; gap:0.75rem; flex-wrap:wrap;">
-            <span style="font-size:1.5rem;">🏁</span>
+            <span style="font-size:1.5rem;" id="iconChiudiFasi">🏁</span>
             <div style="flex:1; min-width:180px;">
               <strong id="chiudiFasiTitolo" style="font-size:0.95rem;">Pronto per la gara?</strong>
               <p id="chiudiFasiDesc" style="margin:2px 0 0 0; font-size:0.85rem; color:#64748b;"></p>
             </div>
             <button id="btnChiudiFasi" class="btn" onclick="chiudiFasiAvviaGara()">Chiudi Fasi e Avvia Gara</button>
+            <button id="btnRicominciaRaccolta" class="btn btn-outline" style="display:none; border-color:#4f46e5; color:#4f46e5;" onclick="ricominciaRaccolta()">↩ Ricomincia Raccolta</button>
           </div>
         </div>
       </div>
@@ -882,11 +883,14 @@
         btnChiudi.disabled     = false;
       } else if (fase >= 3) {
         sezChiudi.style.display = '';
+        document.getElementById('cardChiudiFasi').style.cssText = 'border:2px solid #d1fae5; background:#f0fdf4;';
+        document.getElementById('iconChiudiFasi').textContent = '✅';
         document.getElementById('chiudiFasiTitolo').textContent = '✅ Fasi pre-gara concluse — Buona gara!';
-        document.getElementById('chiudiFasiDesc').textContent   = 'Entrambe le fasi sono state chiuse. Usa la sezione "Gestione Gara" qui sotto.';
+        document.getElementById('chiudiFasiDesc').textContent   = 'Usa "Gestione Gara" per avviare la gara. Oppure ricomincia la raccolta per una nuova tornata (i dati esistenti non vengono cancellati).';
         btnChiudi.className    = 'btn btn-outline';
         btnChiudi.style.cssText = 'border-color:#94a3b8; color:#94a3b8;';
         btnChiudi.disabled     = true;
+        document.getElementById('btnRicominciaRaccolta').style.display = '';
       } else {
         sezChiudi.style.display = 'none';
       }
@@ -1005,6 +1009,20 @@
           btn.textContent = 'Apri Fase 2 + Invia mail';
           alert('Errore: ' + err.message);
         });
+    }
+
+    function ricominciaRaccolta() {
+      if (!confirm('↩ Ricomincia la raccolta dalla Fase 1?\n\n• Il form Intenzioni verrà riaperto\n• I dati già presenti NON vengono cancellati\n• Le gare già create restano invariate\n• Puoi usare questa funzione per raccogliere intenzioni di una nuova categoria\n\nConfermi?')) return;
+      const btn = document.getElementById('btnRicominciaRaccolta');
+      btn.disabled = true;
+      btn.textContent = 'Ripristino...';
+      lkApi(API, { action: 'setFase', fase: 1, pwd: adminPwd })
+        .then(r => {
+          if (r.error) { alert('Errore: ' + r.error); aggiornaIndicatoriFase(faseCorrente); return; }
+          aggiornaIndicatoriFase(1);
+        })
+        .catch(err => { alert('Errore: ' + err.message); aggiornaIndicatoriFase(faseCorrente); })
+        .finally(() => { btn.disabled = false; btn.textContent = '↩ Ricomincia Raccolta'; });
     }
 
     function chiudiFasiAvviaGara() {
