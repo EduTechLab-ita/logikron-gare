@@ -1713,6 +1713,74 @@
         .catch(err => alert('Errore: ' + err.message));
     }
 
+    // ---- Quesiti / Modifica domanda ----
+
+    var _questitiVisible = false;
+    var _modDomandaNum = null;
+
+    function toggleQuesiti() {
+      _questitiVisible = !_questitiVisible;
+      document.getElementById('questitiBody').style.display = _questitiVisible ? 'block' : 'none';
+      document.getElementById('questitiToggleIcon').textContent = _questitiVisible ? '▲' : '▼';
+      if (_questitiVisible) aggiornaQuesiti();
+    }
+
+    function aggiornaQuesiti() {
+      const garaId = document.getElementById('selGaraLive') ? document.getElementById('selGaraLive').value : '';
+      if (!garaId) return;
+      lkApi(API, { action: 'getDomande', garaId: garaId })
+        .then(domande => {
+          if (!Array.isArray(domande) || domande.length === 0) {
+            document.getElementById('questitiTableBody').innerHTML = '<tr><td colspan="4" style="padding:0.75rem;text-align:center;color:#94a3b8;">Nessuna domanda</td></tr>';
+            return;
+          }
+          document.getElementById('questitiTableBody').innerHTML = domande.map(d => `
+            <tr style="border-bottom:1px solid #334155;">
+              <td style="padding:6px 10px;text-align:center;font-weight:700;color:#a5b4fc;">Q${d.num}</td>
+              <td style="padding:6px 10px;color:#cbd5e1;font-size:0.8rem;">${d.testo ? _esc(d.testo) : '<span style="color:#475569;font-style:italic;">—</span>'}</td>
+              <td style="padding:6px 10px;text-align:center;font-family:monospace;font-weight:700;color:#fbbf24;">${_esc(d.rispostaCorretta)}</td>
+              <td style="padding:6px 10px;text-align:center;">
+                <button class="btn-action-sm btn-action-edit" onclick="editDomanda(${d.num},'${_esc(d.rispostaCorretta)}','${_esc(d.testo||'')}')">✏️</button>
+              </td>
+            </tr>`).join('');
+        })
+        .catch(() => {});
+    }
+
+    function editDomanda(numDomanda, rispostaAttuale, testoAttuale) {
+      _modDomandaNum = numDomanda;
+      document.getElementById('modDomandaTitolo').textContent = '✏️ Modifica Q' + numDomanda;
+      document.getElementById('modDomandaRisposta').value = rispostaAttuale;
+      document.getElementById('modDomandaTesto').value = testoAttuale;
+      document.getElementById('modalModificaDomanda').style.display = 'block';
+    }
+
+    function chiudiModalModificaDomanda() {
+      document.getElementById('modalModificaDomanda').style.display = 'none';
+      _modDomandaNum = null;
+    }
+
+    function salvaModificaDomanda() {
+      const garaId = document.getElementById('selGaraLive') ? document.getElementById('selGaraLive').value : '';
+      const nuovaRisposta = document.getElementById('modDomandaRisposta').value.trim();
+      const nuovoTesto = document.getElementById('modDomandaTesto').value.trim();
+      if (!nuovaRisposta || !/^\d{1,4}$/.test(nuovaRisposta)) { alert('Inserisci una risposta valida (0-9999)'); return; }
+      if (!garaId || !_modDomandaNum) return;
+      const btn = document.querySelector('#modalModificaDomanda .btn-primary');
+      btn.disabled = true; btn.textContent = 'Salvataggio...';
+      lkApi(API, { action: 'modificaDomanda', garaId: garaId, numDomanda: _modDomandaNum,
+                   nuovaRisposta: nuovaRisposta, nuovoTesto: nuovoTesto, pwd: adminPwd }, 30000)
+        .then(r => {
+          btn.disabled = false; btn.textContent = 'Salva';
+          if (r.error) { alert('Errore: ' + r.error); return; }
+          alert('✅ ' + r.message);
+          chiudiModalModificaDomanda();
+          aggiornaQuesiti();
+          aggiornaLogRisposte();
+        })
+        .catch(err => { btn.disabled = false; btn.textContent = 'Salva'; alert('Errore: ' + err.message); });
+    }
+
     // ---- Form nuova gara ----
 
     function toggleFormNuovaGara() {
@@ -2274,6 +2342,29 @@
         <div id="squadreGaraList" style="display:flex;flex-wrap:wrap;gap:0.35rem;"></div>
       </div>
 
+      <!-- Quesiti -->
+      <div style="margin-bottom:1rem;">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:0.4rem;cursor:pointer;" onclick="toggleQuesiti()">
+          <strong style="font-size:0.9rem;color:#e2e8f0;">📝 Quesiti (risposte corrette)</strong>
+          <span id="questitiToggleIcon" style="font-size:0.8rem;color:#94a3b8;">▼</span>
+        </div>
+        <div id="questitiBody" style="display:none;background:#1e293b;border-radius:8px;overflow:hidden;">
+          <table style="width:100%;border-collapse:collapse;font-size:0.82rem;">
+            <thead>
+              <tr style="background:#0f172a;">
+                <th style="padding:6px 10px;color:#94a3b8;font-weight:600;text-align:center;width:40px;">Q</th>
+                <th style="padding:6px 10px;color:#94a3b8;font-weight:600;text-align:left;">Testo</th>
+                <th style="padding:6px 10px;color:#94a3b8;font-weight:600;text-align:center;width:80px;">Risposta</th>
+                <th style="padding:6px 10px;width:40px;"></th>
+              </tr>
+            </thead>
+            <tbody id="questitiTableBody">
+              <tr><td colspan="4" style="padding:1rem;text-align:center;color:#94a3b8;">Caricamento...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
       <!-- Log risposte -->
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:0.5rem;">
         <strong style="font-size:0.9rem;color:#e2e8f0;">📋 Log risposte</strong>
@@ -2352,8 +2443,35 @@
     </div>
   </div>
 
+  <!-- MODAL MODIFICA DOMANDA -->
+  <div id="modalModificaDomanda" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.7); z-index:4000; overflow-y:auto;" onclick="if(event.target===this)chiudiModalModificaDomanda()">
+    <div style="background:white; max-width:420px; margin:5rem auto 1.5rem; border-radius:14px; padding:1.5rem; box-shadow:0 10px 40px rgba(0,0,0,0.3); color:#1e293b;">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem;">
+        <h3 id="modDomandaTitolo" style="margin:0; font-size:1rem; color:#1e293b;">✏️ Modifica Domanda</h3>
+        <button class="modal-close" onclick="chiudiModalModificaDomanda()">✕</button>
+      </div>
+      <div style="display:flex; flex-direction:column; gap:0.85rem;">
+        <div>
+          <label style="display:block; font-size:0.82rem; font-weight:600; color:#475569; margin-bottom:0.3rem;">Testo quesito (opzionale)</label>
+          <input id="modDomandaTesto" type="text" style="width:100%; padding:0.5rem 0.75rem; border:1px solid #cbd5e1; border-radius:8px; font-size:0.88rem; color:#1e293b; box-sizing:border-box;" placeholder="Lascia vuoto per non modificare">
+        </div>
+        <div>
+          <label style="display:block; font-size:0.82rem; font-weight:600; color:#475569; margin-bottom:0.3rem;">Risposta corretta *</label>
+          <input id="modDomandaRisposta" type="text" maxlength="4" pattern="[0-9]{4}" style="width:100%; padding:0.5rem 0.75rem; border:1px solid #cbd5e1; border-radius:8px; font-size:1.1rem; font-family:monospace; letter-spacing:0.15em; color:#1e293b; box-sizing:border-box;" placeholder="0000">
+        </div>
+        <div style="font-size:0.78rem; color:#92400e; padding:0.5rem 0.75rem; background:#fef3c7; border-radius:6px;">
+          ⚠️ Tutte le risposte già inviate per questa domanda verranno rivalutate e i punti ricalcolati.
+        </div>
+        <div style="display:flex; gap:0.75rem; margin-top:0.25rem;">
+          <button class="btn btn-primary" style="flex:1;" onclick="salvaModificaDomanda()">Salva</button>
+          <button class="btn btn-outline" onclick="chiudiModalModificaDomanda()">Annulla</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <!-- MODAL IMPORTA SQUADRE -->
-  <div id="modalImportaSquadre" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.55); z-index:2000; overflow-y:auto;" onclick="if(event.target===this)chiudiModalImporta()">
+  <div id="modalImportaSquadre" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.55); z-index:5000; overflow-y:auto;" onclick="if(event.target===this)chiudiModalImporta()">
     <div style="background:white; max-width:820px; margin:1.5rem auto; border-radius:14px; padding:1.5rem; box-shadow:0 10px 40px rgba(0,0,0,0.3); color:#1e293b;">
       <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem;">
         <h3 style="margin:0; font-size:1.1rem; color:#1e293b;">👥 Importa Squadre</h3>
