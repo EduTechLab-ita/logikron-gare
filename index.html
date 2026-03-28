@@ -160,10 +160,12 @@
           Sei un docente e vuoi partecipare con la tua classe? Segui questi passaggi:
         </p>
         <div style="display: flex; flex-direction: column; gap: 0.75rem; margin-top: 0.75rem;">
-          <a href="intenzioni.html" id="btnStep1" class="btn btn-primary btn-lg btn-block">
+          <a href="intenzioni.html" id="btnStep1" class="btn btn-primary btn-lg btn-block"
+             style="opacity:0.4; pointer-events:none;">
             1. Esprimi Intenzione
           </a>
-          <a href="iscrizioni.html" id="btnStep2" class="btn btn-secondary btn-lg btn-block">
+          <a href="iscrizioni.html" id="btnStep2" class="btn btn-secondary btn-lg btn-block"
+             style="opacity:0.4; pointer-events:none;">
             2. Iscrivi la Squadra
           </a>
         </div>
@@ -272,21 +274,29 @@
     function disabilita(btn, testo) {
       btn.style.opacity = '0.4';
       btn.style.pointerEvents = 'none';
-      btn.onclick = e => e.preventDefault();
       if (testo) btn.textContent = testo;
     }
 
+    function abilita(btn) {
+      btn.style.opacity = '';
+      btn.style.pointerEvents = '';
+    }
+
     function applicaFase(fase) {
-      if (fase < 1) {
-        disabilita(btn1, '1. Iscrizioni non ancora aperte');
+      if (fase === 1) {
+        abilita(btn1);
+        disabilita(btn2, '2. Iscrivi la Squadra (apre nella Fase 2)');
+      } else if (fase === 2) {
+        abilita(btn1);
+        abilita(btn2);
+      } else if (fase < 1) {
+        disabilita(btn1, '1. Esprimi Intenzione (non ancora aperta)');
         disabilita(btn2, '2. Iscrivi la Squadra');
-      } else if (fase === 1) {
-        disabilita(btn2, '2. Iscrivi la Squadra (apre dopo le intenzioni)');
-      } else if (fase >= 3) {
+      } else {
+        // fase >= 3
         disabilita(btn1, '1. Intenzioni chiuse');
         disabilita(btn2, '2. Iscrizioni chiuse');
       }
-      // fase === 2: entrambi attivi
     }
 
     // Legge fase dal backend, con fallback a config.js
