@@ -150,6 +150,43 @@
     #modalImportaSquadre .importa-istituto { color: #475569; }
     #modalImportaSquadre h3   { color: #1e293b; }
 
+    /* ===== MODAL GARA LIVE (pannello controllo full-screen) ===== */
+    #modalGaraLive {
+      position: fixed;
+      inset: 0;
+      background: #f1f5f9;
+      z-index: 3000;
+      display: none;
+      flex-direction: column;
+      overflow: hidden;
+    }
+    #modalGaraLive.aperto { display: flex; }
+    .mgara-header {
+      background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+      padding: 0.85rem 1.25rem;
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      flex-shrink: 0;
+      border-bottom: 3px solid var(--lk-primary);
+    }
+    .mgara-titolo { flex: 1; min-width: 0; }
+    .mgara-titolo h2 { margin: 0; font-size: 1.05rem; color: white; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .mgara-body { flex: 1; overflow-y: auto; padding: 1.25rem; }
+    .mgara-close-btn {
+      background: rgba(255,255,255,0.1);
+      border: 1px solid rgba(255,255,255,0.25);
+      color: white;
+      border-radius: 8px;
+      padding: 7px 16px;
+      cursor: pointer;
+      font-size: 0.9rem;
+      white-space: nowrap;
+      flex-shrink: 0;
+      transition: background 0.15s;
+    }
+    .mgara-close-btn:hover { background: rgba(255,255,255,0.2); }
+
     /* ===== MODAL GESTIONE ISCRITTI ===== */
     .modal-overlay { position:fixed; inset:0; background:rgba(0,0,0,0.55); z-index:2000; overflow-y:auto; display:flex; align-items:flex-start; justify-content:center; padding:1.5rem 1rem; }
     .modal-box { background:white; border-radius:14px; width:100%; max-width:960px; box-shadow:0 8px 40px rgba(0,0,0,0.25); display:flex; flex-direction:column; max-height:90vh; }
@@ -413,8 +450,14 @@
             <div class="admin-card-icon">🎯</div>
             <h4 class="admin-card-title">Pannello Squadre</h4>
             <p class="admin-card-desc">Link per le squadre durante la gara</p>
-            <button class="btn btn-outline" onclick="copyLink('gara')">Copia Link</button>
-            <a href="gara.html" target="_blank" class="btn btn-primary mt-1" style="display:block;">Apri Pagina</a>
+            <button class="btn btn-outline" onclick="copyLinkGara()">Copia Link</button>
+            <button class="btn btn-primary mt-1" style="display:block;width:100%;" onclick="apriPaginaGara()">Apri Pagina</button>
+          </div>
+          <div class="admin-card">
+            <div class="admin-card-icon">🏅</div>
+            <h4 class="admin-card-title">Archivio Gare</h4>
+            <p class="admin-card-desc">Classifica e risultati gare concluse</p>
+            <a href="archivio.html" target="_blank" class="btn btn-outline">Apri Archivio</a>
           </div>
         </div>
       </section>
@@ -447,6 +490,7 @@
                 <option value="">-- Seleziona gara --</option>
               </select>
             </div>
+            <button class="btn btn-success" onclick="apriModalGaraLive()" style="white-space:nowrap;" title="Apri pannello controllo">🎮 Apri Controllo</button>
             <button class="btn btn-outline" onclick="caricaListaGare()" style="white-space:nowrap;">🔄 Aggiorna</button>
             <button class="btn btn-primary" onclick="toggleFormNuovaGara()" id="btnToggleFormGara" style="white-space:nowrap;">+ Nuova Gara</button>
           </div>
@@ -486,72 +530,6 @@
           </div>
         </div>
 
-        <!-- Pannello controllo gara selezionata -->
-        <div id="pannelloGaraLive" style="display:none; margin-top:1rem;">
-          <!-- Status bar -->
-          <div class="gara-status-bar">
-            <div>
-              <div style="font-weight:700; font-size:1rem;" id="garaLiveNome">—</div>
-              <div style="font-size:0.78rem; color:var(--lk-text-muted);" id="garaLiveId">—</div>
-            </div>
-            <div id="garaLiveStato"></div>
-            <div style="margin-left:auto; display:flex; flex-direction:column; align-items:flex-end;">
-              <div class="timer-live" id="timerGaraLive">—</div>
-              <div style="font-size:0.72rem; color:var(--lk-text-muted);">tempo rimanente</div>
-            </div>
-          </div>
-
-          <!-- Azioni -->
-          <div style="display:flex; gap:0.75rem; flex-wrap:wrap; margin-bottom:1rem;">
-            <button id="btnGoGara" class="btn btn-success" onclick="goGara()" style="display:none; font-size:1rem; padding:10px 28px;">
-              ▶ GO — Avvia Gara
-            </button>
-            <button id="btnImportaSquadre" class="btn btn-outline" onclick="importaSquadreInGara()" style="display:none;">
-              👥 Importa Squadre
-            </button>
-            <button id="btnJollyUfficio" class="btn btn-outline" onclick="jollyDUfficioLive()" style="display:none;">
-              ⭐ Jolly d'ufficio
-            </button>
-            <button id="btnTerminaGara" class="btn btn-outline" onclick="terminaGaraLive()"
-                    style="border-color:#dc2626; color:#dc2626; display:none;">
-              ■ TERMINA GARA
-            </button>
-            <button id="btnCerimonia" class="btn btn-primary" onclick="avanzaCerimonia()" style="display:none;">
-              🎉 Avvia Cerimonia
-            </button>
-          </div>
-
-          <!-- Squadre importate (preview) -->
-          <div id="squadreGaraPreview" style="display:none; background:#f8fafc; border:1px solid #e2e8f0; border-radius:8px; padding:0.65rem 0.9rem; margin-bottom:1rem;">
-            <div style="font-size:0.78rem; font-weight:700; color:#475569; margin-bottom:0.4rem;">👥 Squadre importate: <span id="squadreGaraCount" style="color:var(--lk-primary);"></span></div>
-            <div id="squadreGaraList" style="display:flex; flex-wrap:wrap; gap:0.35rem;"></div>
-          </div>
-
-          <!-- Log risposte -->
-          <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:0.5rem;">
-            <strong style="font-size:0.9rem;">📋 Log risposte</strong>
-            <span id="logContatoreRisposte" style="font-size:0.8rem; color:var(--lk-text-muted);"></span>
-          </div>
-          <div class="log-container">
-            <table class="log-table">
-              <thead>
-                <tr>
-                  <th>Ora</th>
-                  <th>Squadra</th>
-                  <th style="text-align:center;">Q</th>
-                  <th style="text-align:center;">Risposta</th>
-                  <th style="text-align:center;">Esito</th>
-                  <th style="text-align:center;">Punti</th>
-                  <th style="text-align:center;">Jolly</th>
-                  <th style="text-align:center;">Azioni</th>
-                </tr>
-              </thead>
-              <tbody id="logRisposte">
-                <tr><td colspan="8" style="text-align:center; color:var(--lk-text-muted); padding:1.5rem;">Nessuna risposta ancora</td></tr>
-              </tbody>
-            </table>
-          </div>
-        </div>
       </section>
 
       <!-- ==================== FASE 4: POST-GARA ==================== -->
@@ -776,6 +754,13 @@
       document.getElementById('adminPanel').style.display = 'block';
       loadDashboard();
     }
+
+    // Chiudi modal Gara Live con Escape
+    document.addEventListener('keydown', function(e) {
+      if (e.key === 'Escape' && document.getElementById('modalGaraLive').classList.contains('aperto')) {
+        chiudiModalGaraLive();
+      }
+    });
 
     // ==================== DASHBOARD ====================
 
@@ -1272,6 +1257,17 @@
       navigator.clipboard.writeText(url).then(() => alert('Link copiato:\n' + url));
     }
 
+    function copyLinkGara() {
+      const base = window.location.origin + window.location.pathname.replace('admin.html', '');
+      const url = base + 'gara.html';
+      navigator.clipboard.writeText(url).then(() => alert('Link copiato:\n' + url));
+    }
+
+    function apriPaginaGara() {
+      const base = window.location.origin + window.location.pathname.replace('admin.html', '');
+      window.open(base + 'gara.html', '_blank');
+    }
+
     // Placeholder — da implementare nelle fasi successive
     function setupNuovoAnno() { alert('Setup Nuovo Anno — Da implementare'); }
     function openConfig()     { alert('Configurazione — Da implementare'); }
@@ -1294,7 +1290,8 @@
 
     function _buildOptLabel(g) {
       const dataLabel = g.dataGara ? g.dataGara.replace('T', ' ').substring(0, 16) : g.data;
-      return g.nome + ' — ' + g.stato + ' (' + dataLabel + ')';
+      const prefix = g.stato === 'attiva' ? '🔴 LIVE — ' : '';
+      return prefix + g.nome + ' — ' + g.stato + ' (' + dataLabel + ')';
     }
 
     function caricaListaGare() {
@@ -1319,6 +1316,13 @@
 
     function selezionaGaraLive() {
       const sel = document.getElementById('selGaraLive');
+      if (!sel.value) return;
+      apriModalGaraLive();
+    }
+
+    function apriModalGaraLive() {
+      const sel = document.getElementById('selGaraLive');
+      if (!sel.value) { alert('Seleziona prima una gara dal menu.'); return; }
       stopPollingRisposte();
       stopTimerGara();
 
@@ -1326,25 +1330,23 @@
       const form = document.getElementById('formNuovaGara');
       if (form && form.style.display !== 'none') toggleFormNuovaGara();
 
-      if (!sel.value) {
-        document.getElementById('pannelloGaraLive').style.display = 'none';
-        return;
-      }
       const garaId = sel.value;
-      const nomeGara = sel.options[sel.selectedIndex].text.split(' — ')[0];
-      document.getElementById('pannelloGaraLive').style.display = '';
+      const labelCompleta = sel.options[sel.selectedIndex].text;
+      // Rimuove eventuale prefisso "🔴 LIVE — " per avere il nome pulito
+      const nomeGara = labelCompleta.replace(/^🔴 LIVE — /, '').split(' — ')[0];
+
       document.getElementById('garaLiveNome').textContent = nomeGara;
       document.getElementById('garaLiveId').textContent = 'ID: ' + garaId;
       document.getElementById('garaLiveStato').innerHTML = '<span style="color:#94a3b8;font-size:0.8rem;">Caricamento...</span>';
       document.getElementById('logRisposte').innerHTML =
         '<tr><td colspan="8" style="text-align:center;color:var(--lk-text-muted);padding:1.5rem;">Caricamento...</td></tr>';
 
-      // Scorri al pannello
-      document.getElementById('pannelloGaraLive').scrollIntoView({ behavior: 'smooth', block: 'start' });
+      // Apri modal
+      document.getElementById('modalGaraLive').classList.add('aperto');
+      document.body.style.overflow = 'hidden';
 
-      // Usa cache se disponibile, altrimenti ricarica
+      // Carica dati
       caricaSquadreGara(garaId);
-
       const garaCache = _gareMap[garaId];
       if (garaCache) {
         garaLiveCorrente = garaCache;
@@ -1364,8 +1366,14 @@
           document.getElementById('garaLiveStato').innerHTML = '<span style="color:#dc2626;">Errore caricamento</span>';
         });
       }
-
       aggiornaLogRisposte();
+    }
+
+    function chiudiModalGaraLive() {
+      document.getElementById('modalGaraLive').classList.remove('aperto');
+      document.body.style.overflow = '';
+      stopPollingRisposte();
+      stopTimerGara();
     }
 
     function caricaSquadreGara(garaId) {
@@ -1776,7 +1784,7 @@
           if (r.error) { alert('Errore: ' + r.error); return; }
           alert('✅ ' + r.message);
           stopPollingRisposte(); stopTimerGara();
-          document.getElementById('pannelloGaraLive').style.display = 'none';
+          chiudiModalGaraLive();
           caricaListaGare();
         })
         .catch(err => alert('Errore: ' + err.message));
@@ -2198,6 +2206,76 @@
       </div>
     </div>
   </div>
+  <!-- MODAL GARA LIVE (full-screen pannello controllo) -->
+  <div id="modalGaraLive">
+    <div class="mgara-header">
+      <div class="mgara-titolo">
+        <h2 id="garaLiveNome">—</h2>
+        <div style="display:flex;align-items:center;gap:0.5rem;margin-top:3px;">
+          <span style="font-size:0.75rem;color:#94a3b8;" id="garaLiveId"></span>
+          <span id="garaLiveStato"></span>
+        </div>
+      </div>
+      <div style="text-align:right;flex-shrink:0;">
+        <div class="timer-live" id="timerGaraLive" style="color:white;">—</div>
+        <div style="font-size:0.7rem;color:#64748b;">tempo rimanente</div>
+      </div>
+      <button class="mgara-close-btn" onclick="chiudiModalGaraLive()">✕ Chiudi</button>
+    </div>
+    <div class="mgara-body">
+      <!-- Azioni -->
+      <div style="display:flex;gap:0.75rem;flex-wrap:wrap;margin-bottom:1rem;">
+        <button id="btnGoGara" class="btn btn-success" onclick="goGara()" style="display:none;font-size:1rem;padding:10px 28px;">
+          ▶ GO — Avvia Gara
+        </button>
+        <button id="btnImportaSquadre" class="btn btn-outline" onclick="importaSquadreInGara()" style="display:none;">
+          👥 Importa Squadre
+        </button>
+        <button id="btnJollyUfficio" class="btn btn-outline" onclick="jollyDUfficioLive()" style="display:none;">
+          ⭐ Jolly d'ufficio
+        </button>
+        <button id="btnTerminaGara" class="btn btn-outline" onclick="terminaGaraLive()"
+                style="border-color:#dc2626;color:#dc2626;display:none;">
+          ■ TERMINA GARA
+        </button>
+        <button id="btnCerimonia" class="btn btn-primary" onclick="avanzaCerimonia()" style="display:none;">
+          🎉 Avvia Cerimonia
+        </button>
+      </div>
+
+      <!-- Squadre importate (preview) -->
+      <div id="squadreGaraPreview" style="display:none;background:white;border:1px solid #e2e8f0;border-radius:8px;padding:0.65rem 0.9rem;margin-bottom:1rem;">
+        <div style="font-size:0.78rem;font-weight:700;color:#475569;margin-bottom:0.4rem;">👥 Squadre importate: <span id="squadreGaraCount" style="color:var(--lk-primary);"></span></div>
+        <div id="squadreGaraList" style="display:flex;flex-wrap:wrap;gap:0.35rem;"></div>
+      </div>
+
+      <!-- Log risposte -->
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:0.5rem;">
+        <strong style="font-size:0.9rem;">📋 Log risposte</strong>
+        <span id="logContatoreRisposte" style="font-size:0.8rem;color:var(--lk-text-muted);"></span>
+      </div>
+      <div class="log-container">
+        <table class="log-table">
+          <thead>
+            <tr>
+              <th>Ora</th>
+              <th>Squadra</th>
+              <th style="text-align:center;">Q</th>
+              <th style="text-align:center;">Risposta</th>
+              <th style="text-align:center;">Esito</th>
+              <th style="text-align:center;">Punti</th>
+              <th style="text-align:center;">Jolly</th>
+              <th style="text-align:center;">Azioni</th>
+            </tr>
+          </thead>
+          <tbody id="logRisposte">
+            <tr><td colspan="8" style="text-align:center;color:var(--lk-text-muted);padding:1.5rem;">Nessuna risposta ancora</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
   <!-- MODAL MODIFICA RISPOSTA -->
   <div id="modalModificaRisposta" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.55); z-index:2100; overflow-y:auto;" onclick="if(event.target===this)chiudiModalModifica()">
     <div style="background:white; max-width:420px; margin:4rem auto 1.5rem; border-radius:14px; padding:1.5rem; box-shadow:0 10px 40px rgba(0,0,0,0.3); color:#1e293b;">
