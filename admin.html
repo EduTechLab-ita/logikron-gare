@@ -798,9 +798,9 @@
         .then(r => aggiornaIndicatoriFase(r.fase))
         .catch(() => {
           if (tentativo < 3) {
-            document.getElementById('descFase1').textContent = 'Server in avvio... riprovo tra 5s (' + tentativo + '/3)';
-            document.getElementById('descFase2').textContent = 'Server in avvio... riprovo tra 5s (' + tentativo + '/3)';
-            setTimeout(() => caricaFase(tentativo + 1), 5000);
+            document.getElementById('descFase1').textContent = 'Server in avvio... riprovo (' + tentativo + '/3)';
+            document.getElementById('descFase2').textContent = 'Server in avvio... riprovo (' + tentativo + '/3)';
+            setTimeout(() => caricaFase(tentativo + 1), 1000);
           } else {
             ['descFase1','descFase2'].forEach(id => {
               document.getElementById(id).textContent = 'Errore connessione. Clicca Riprova.';
