@@ -131,10 +131,10 @@
     const API_URL = LOGIKRON_CONFIG.webAppUrls.gare;
 
     function medaglia(pos) {
-      if (pos === 1) return '<span class="pos-medal">🥇</span>';
-      if (pos === 2) return '<span class="pos-medal">🥈</span>';
-      if (pos === 3) return '<span class="pos-medal">🥉</span>';
-      return pos + 'º';
+      if (pos === 1) return '<strong>1</strong> <span class="pos-medal">🥇</span>';
+      if (pos === 2) return '<strong>2</strong> <span class="pos-medal">🥈</span>';
+      if (pos === 3) return '<strong>3</strong> <span class="pos-medal">🥉</span>';
+      return '<strong>' + pos + '</strong>º';
     }
 
     function formatData(dataStr) {
