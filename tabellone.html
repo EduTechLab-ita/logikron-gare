@@ -688,8 +688,13 @@
           if (!data || data.error) return;
           lastData = data;
 
-          // Sincronizza il timer locale col backend
+          // Sincronizza il timer locale col backend e aggiorna subito il display
           secondiLocali = data.secondiRimanenti || 0;
+          const elTSync = document.getElementById('timerDisplay');
+          if (elTSync) {
+            elTSync.textContent = fmt(secondiLocali);
+            elTSync.style.color = secondiLocali <= 60 ? '#fca5a5' : '#fcd34d';
+          }
 
           // Calcola deadline jolly e domande
           if (data.gara && data.gara.oraFine) {
@@ -843,14 +848,29 @@
 
     function renderBody(squadre, griglia, domande) {
       const tbody = document.getElementById('tabelloneBody');
-      tbody.innerHTML = '';
       const numDom = domande.length || CFG.numeroDomande || 10;
 
-      squadre.forEach((sq, index) => {
+      // Mappa id→tr esistenti per DOM diffing (no flash)
+      const existingRows = {};
+      Array.from(tbody.querySelectorAll('tr[data-sq-id]')).forEach(function(tr) {
+        existingRows[tr.dataset.sqId] = tr;
+      });
+      const usedIds = new Set();
+
+      squadre.forEach(function(sq, index) {
         const pos = index + 1;
         const jollyNum = sq.jolly ? parseInt(sq.jolly) : null;
         const posClass = pos === 1 ? 'pos-1' : pos === 2 ? 'pos-2' : pos === 3 ? 'pos-3' : 'pos-other';
         const sqGriglia = griglia[sq.id] || {};
+        const sqId = String(sq.id);
+        usedIds.add(sqId);
+
+        let tr = existingRows[sqId];
+        if (!tr) {
+          tr = document.createElement('tr');
+          tr.className = 'squadra-row';
+          tr.dataset.sqId = sqId;
+        }
 
         let html = '<td class="pos-cell"><span class="pos-num ' + posClass + '">' + pos + '</span></td>';
         html += '<td class="squadra-cell">' + esc(sq.nome) + '</td>';
@@ -858,26 +878,31 @@
         for (let n = 1; n <= numDom; n++) {
           const r = sqGriglia[n];
           const isJolly = (jollyNum === n);
-          const jTag  = isJolly ? '<span class="jolly-tag">J</span>' : '';
-          const jCls  = isJolly ? ' cell-jolly' : '';
-
+          const jTag = isJolly ? '<span class="jolly-tag">J</span>' : '';
+          const jCls = isJolly ? ' cell-jolly' : '';
           if (!r) {
             html += '<td class="cell-empty' + jCls + '">' + jTag + '–</td>';
           } else if (r.esito === 'corretta') {
             const p = parseInt(r.punti) || 0;
             html += '<td class="cell-correct' + jCls + '">' + jTag + '+' + p + '</td>';
           } else {
-            // sbagliata
             const p = parseInt(r.punti) || 0;
             html += '<td class="cell-wrong' + jCls + '">' + jTag + p + '</td>';
           }
         }
 
         html += '<td class="punteggio-cell">' + (parseInt(sq.punti) || 0) + '</td>';
-        const tr = document.createElement('tr');
-        tr.className = 'squadra-row';
-        tr.innerHTML = html;
+
+        // Aggiorna solo se il contenuto è cambiato
+        if (tr.innerHTML !== html) tr.innerHTML = html;
+
+        // Aggiungi/riordina in fondo (mantiene ordine classifica)
         tbody.appendChild(tr);
+      });
+
+      // Rimuovi righe di squadre non più presenti
+      Object.keys(existingRows).forEach(function(id) {
+        if (!usedIds.has(id)) tbody.removeChild(existingRows[id]);
       });
     }
 
