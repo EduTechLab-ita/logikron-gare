@@ -1309,7 +1309,12 @@
           sel.appendChild(opt);
         });
         if (valPrecedente && [...sel.options].some(o => o.value === valPrecedente)) {
+          // Ripristina selezione precedente
           sel.value = valPrecedente;
+        } else {
+          // Nessuna selezione precedente → auto-seleziona la più recente (prima della lista)
+          const primaOpt = [...sel.options].find(o => o.value !== '');
+          if (primaOpt) { sel.value = primaOpt.value; selezionaGaraLive(); }
         }
         // Auto-apri modal se c'è una gara attiva al caricamento pagina
         if (autoApriAttiva) {
