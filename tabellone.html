@@ -852,17 +852,18 @@
         return;
       }
       const colors = ['#ffd700', '#ff6b6b', '#4ecdc4', '#45b7d1', '#f9ca24', '#6ab04c', '#ffffff', '#f0e6ff'];
+      const zIdx = 1000; // sopra l'overlay podio (z-index: 200)
       // Burst esplosivo iniziale dal centro
-      confetti({ particleCount: 200, spread: 120, origin: { x: 0.5, y: 0.5 }, colors: colors, scalar: 1.2 });
+      confetti({ particleCount: 200, spread: 120, origin: { x: 0.5, y: 0.5 }, colors: colors, scalar: 1.2, zIndex: zIdx });
       // Secondo burst dopo 300ms
       setTimeout(function() {
-        confetti({ particleCount: 150, spread: 100, origin: { x: 0.5, y: 0.4 }, colors: colors });
+        confetti({ particleCount: 150, spread: 100, origin: { x: 0.5, y: 0.4 }, colors: colors, zIndex: zIdx });
       }, 300);
       // Pioggia continua dai lati per 6 secondi
       const end = Date.now() + 6000;
       (function frame() {
-        confetti({ particleCount: 10, angle: 60,  spread: 60, origin: { x: 0 }, colors: colors });
-        confetti({ particleCount: 10, angle: 120, spread: 60, origin: { x: 1 }, colors: colors });
+        confetti({ particleCount: 10, angle: 60,  spread: 60, origin: { x: 0 }, colors: colors, zIndex: zIdx });
+        confetti({ particleCount: 10, angle: 120, spread: 60, origin: { x: 1 }, colors: colors, zIndex: zIdx });
         if (Date.now() < end) requestAnimationFrame(frame);
       })();
     }
