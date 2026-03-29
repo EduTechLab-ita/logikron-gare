@@ -667,7 +667,10 @@
     let garaId         = null;
     let lastData       = null;
     let secondiLocali  = 0;
-    const prevCelle    = {}; // sqId_n → esito, per rilevare cambiamenti e flash
+    const prevCelle      = {}; // sqId_n → esito, per rilevare cambiamenti e flash
+    const wasCorrectPunti = {}; // sqId_n → punti quando corretta (per tornare verde)
+    const tempRedUntil   = {}; // sqId_n → timestamp fine rosso temporaneo (10s)
+    const forceGreen     = {}; // sqId_n → true dopo i 10s (override sbagliata→verde)
     let jollyDeadline  = null;
     let domandeDeadline= null;
     let timerInterval  = null;
@@ -913,12 +916,29 @@
           const jCls = isJolly ? ' cell-jolly' : '';
           if (!r) {
             html += '<td class="cell-empty' + jCls + '" data-n="' + n + '">' + jTag + '–</td>';
-          } else if (r.esito === 'corretta') {
-            const p = parseInt(r.punti) || 0;
-            html += '<td class="cell-correct' + jCls + '" data-n="' + n + '">' + jTag + '+' + p + '</td>';
           } else {
-            const p = parseInt(r.punti) || 0;
-            html += '<td class="cell-wrong' + jCls + '" data-n="' + n + '">' + jTag + p + '</td>';
+            const key = sqId + '_' + n;
+            const now = Date.now();
+            let displayEsito = r.esito;
+            let displayPunti = parseInt(r.punti) || 0;
+            if (r.esito === 'corretta') {
+              wasCorrectPunti[key] = displayPunti; // memorizza punti corretti
+              delete forceGreen[key];
+              delete tempRedUntil[key];
+            } else if (forceGreen[key]) {
+              displayEsito = 'corretta';
+              displayPunti = wasCorrectPunti[key] || 0;
+            } else if (tempRedUntil[key] && now >= tempRedUntil[key]) {
+              delete tempRedUntil[key];
+              forceGreen[key] = true;
+              displayEsito = 'corretta';
+              displayPunti = wasCorrectPunti[key] || 0;
+            }
+            if (displayEsito === 'corretta') {
+              html += '<td class="cell-correct' + jCls + '" data-n="' + n + '">' + jTag + '+' + displayPunti + '</td>';
+            } else {
+              html += '<td class="cell-wrong' + jCls + '" data-n="' + n + '">' + jTag + displayPunti + '</td>';
+            }
           }
         }
 
@@ -933,9 +953,16 @@
             const key = sqId + '_' + n;
             const r = sqGriglia[n];
             const esito = r ? r.esito : '';
-            if (prevCelle[key] !== esito && (esito === 'corretta' || esito === 'sbagliata')) {
-              td.classList.remove('cell-flash'); // reset per riattivare se già in corso
-              void td.offsetWidth; // force reflow per ripartire l'animazione
+            const esitoChanged = prevCelle[key] !== esito && (esito === 'corretta' || esito === 'sbagliata');
+            // Penalità su domanda già corretta: rosso 10s poi verde
+            const penalitaDopoCorretta = prevCelle[key] === 'corretta' && esito === 'sbagliata';
+            if (penalitaDopoCorretta) {
+              tempRedUntil[key] = Date.now() + 10000;
+              delete forceGreen[key];
+            }
+            if (esitoChanged || penalitaDopoCorretta) {
+              td.classList.remove('cell-flash');
+              void td.offsetWidth;
               td.classList.add('cell-flash');
               td.addEventListener('animationend', function() {
                 td.classList.remove('cell-flash');
