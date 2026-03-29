@@ -201,7 +201,7 @@
       <!-- NUMERI EDIZIONE CORRENTE (full width) -->
       <section class="card stats-current home-full">
         <div class="card-header">
-          <h2 class="card-title" id="currentTitle">Edizione 2025-2026 - Iscrizioni in corso</h2>
+          <h2 class="card-title">Iscrizioni dell'edizione in corso</h2>
         </div>
         <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 1rem; text-align: center; padding: 0.5rem 0;">
           <div>
@@ -263,10 +263,6 @@
       document.getElementById('prevSquadre').textContent = prev.squadre || '-';
       document.getElementById('prevAlunni').textContent = prev.alunni || '-';
     }
-
-    // Titolo edizione corrente
-    document.getElementById('currentTitle').textContent =
-      `Edizione ${LOGIKRON_CONFIG.annoScolastico} - Iscrizioni in corso`;
 
     const btn1 = document.getElementById('btnStep1');
     const btn2 = document.getElementById('btnStep2');

@@ -260,7 +260,6 @@
           <span class="logo-n" style="color:#f9a8d4;">n</span>
         </div>
         <h1 style="font-size:1.5rem;margin:0.5rem 0;">Pannello Admin</h1>
-        <span class="anno-scolastico" id="annoScolastico">2025-2026</span>
       </div>
 
       <!-- QUICK STATS -->
@@ -305,7 +304,7 @@
           <div class="admin-card">
             <div class="admin-card-icon">📅</div>
             <h4 class="admin-card-title">Nuovo Anno</h4>
-            <p class="admin-card-desc">Crea le cartelle per il nuovo anno scolastico</p>
+            <p class="admin-card-desc" id="descNuovoAnno">Crea le cartelle su Drive per l'anno scolastico <strong id="annoNuovoAnno">—</strong></p>
             <button class="btn btn-primary" onclick="setupNuovoAnno()">Crea Cartelle</button>
           </div>
           <div class="admin-card">
@@ -759,7 +758,7 @@
     // ==================== DASHBOARD ====================
 
     function loadDashboard() {
-      document.getElementById('annoScolastico').textContent = LOGIKRON_CONFIG.annoScolastico;
+      document.getElementById('annoNuovoAnno').textContent = LOGIKRON_CONFIG.annoScolastico;
       caricaFase();
       caricaStatIntenzioni();
       caricaStatIscrizioni();
