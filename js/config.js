@@ -24,10 +24,10 @@ const LOGIKRON_CONFIG = {
   edizionePrecedente: {
     anno: '2024-2025',
     edizione: '10a',
-    istituti: 6,       // Da compilare con dato reale
-    classi: 0,         // Da compilare con dato reale
-    squadre: 0,        // Da compilare con dato reale
-    alunni: 0          // Da compilare con dato reale
+    istituti: 6,
+    classi: 13,
+    squadre: 36,
+    alunni: 239
   },
 
   // ==========================================
