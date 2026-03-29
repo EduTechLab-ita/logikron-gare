@@ -1554,6 +1554,12 @@
     function aggiornaLogRisposte() {
       const garaId = document.getElementById('selGaraLive').value;
       if (!garaId) return;
+      const tbody = document.getElementById('logRisposte');
+      // Clear SINCRONO: se è cambiata la gara, pulisci subito prima della chiamata API
+      if (_logGaraId !== garaId) {
+        tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;color:var(--lk-text-muted);padding:1.5rem;">Caricamento...</td></tr>';
+        _logGaraId = garaId;
+      }
       lkApi(API, { action: 'getRisposteGara', garaId: garaId })
         .then(function(results) {
           // Aggiorna/avvia timer con secondi rimanenti dal server
@@ -1566,14 +1572,7 @@
             }
           }
 
-          const tbody = document.getElementById('logRisposte');
           const risposte = results.risposte || [];
-
-          // Se è cambiata la gara, pulisci subito le righe della gara precedente
-          if (_logGaraId !== garaId) {
-            tbody.innerHTML = '';
-            _logGaraId = garaId;
-          }
 
           const totale = risposte.length;
           const nJolly = risposte.filter(function(r){ return r.esito === 'jolly'; }).length;

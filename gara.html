@@ -413,6 +413,7 @@
     let timerInterval     = null;
     let jollyTimerInt     = null;
     let pollingInterval   = null;
+    let cerimoniaPollInterval = null;
     let attesaInterval    = null;
 
     // ======== LOGIN ========
@@ -428,6 +429,7 @@
 
       lkApi(API, { action: 'loginSquadra', codice: codice })
         .then(r => {
+          console.log('[DEBUG loginSquadra]', JSON.stringify(r));
           btn.disabled = false; btn.textContent = 'Entra';
           if (r.error) {
             errEl.textContent = 'Codice non riconosciuto. Riprova.';
@@ -444,7 +446,7 @@
           } else if (r.garaStato === 'preparazione') {
             sessionStorage.setItem('lkGara', JSON.stringify({ garaId: r.garaId, squadraId: r.squadraId, nomeSquadra: stato.nomeSquadra }));
             mostraBannerAttesa();
-          } else if (r.garaStato === 'conclusa' && r.cerimonia < 3) {
+          } else if (r.garaStato === 'conclusa' && r.cerimonia < 2) {
             // Gara conclusa ma podio non ancora mostrato → in attesa dei risultati
             sessionStorage.removeItem('lkGara');
             const ptEl = document.getElementById('punteggioFinaleVal');
@@ -454,7 +456,7 @@
             const loginEl = document.getElementById('loginSquadra');
             if (loginEl) loginEl.classList.add('hidden');
           } else {
-            // conclusa + cerimonia >= 3 (podio già mostrato) oppure stato sconosciuto
+            // conclusa + cerimonia >= 2 (podio mostrato) oppure stato sconosciuto
             errEl.textContent = 'La gara è conclusa. I risultati sono disponibili nell\'archivio.';
             errEl.classList.remove('hidden');
             btn.disabled = false; btn.textContent = 'Entra';
@@ -839,6 +841,37 @@
       if (pollingInterval) { clearInterval(pollingInterval); pollingInterval = null; }
     }
 
+    function stopPollCerimonia() {
+      if (cerimoniaPollInterval) { clearInterval(cerimoniaPollInterval); cerimoniaPollInterval = null; }
+    }
+
+    // Mostra schermata "credenziali scadute" (podio già mostrato)
+    function mostraCredenzialiScadute() {
+      stopPollCerimonia();
+      sessionStorage.removeItem('lkGara');
+      const ov = document.getElementById('overlayGaraTerminata');
+      if (ov) ov.style.display = 'none';
+      const loginEl = document.getElementById('loginSquadra');
+      if (loginEl) loginEl.classList.remove('hidden');
+      const errEl = document.getElementById('loginError');
+      if (errEl) {
+        errEl.textContent = 'La gara è conclusa. I risultati sono disponibili nell\'archivio.';
+        errEl.classList.remove('hidden');
+      }
+    }
+
+    // Poll leggero post-gara: controlla solo cerimonia per scadere le credenziali
+    function startPollCerimonia() {
+      if (cerimoniaPollInterval) return;
+      cerimoniaPollInterval = setInterval(function() {
+        if (!stato.garaId) return;
+        lkApi(API, { action: 'getStatoSquadra', garaId: stato.garaId, squadraId: stato.squadraId })
+          .then(function(s) {
+            if ((s.cerimonia || 0) >= 2) mostraCredenzialiScadute();
+          }).catch(function(){});
+      }, 5000);
+    }
+
     function bloccarGara(puntiFinali) {
       if (stato.garaConclusa) return; // già bloccata
       stato.garaConclusa = true;
@@ -854,6 +887,8 @@
       document.getElementById('punteggioFinaleVal').textContent = (puntiFinali || stato.puntiTotali || 0) + ' pt';
       const ov = document.getElementById('overlayGaraTerminata');
       if (ov) ov.style.display = 'flex';
+      // Avvia poll leggero: quando cerimonia >= 2 (podio mostrato) scade le credenziali
+      startPollCerimonia();
     }
 
     function pollStato() {
@@ -861,7 +896,13 @@
       lkApi(API, { action: 'getStatoSquadra', garaId: stato.garaId, squadraId: stato.squadraId })
         .then(s => {
           if (s.garaStato === 'conclusa') {
-            bloccarGara(s.puntiTotali);
+            if ((s.cerimonia || 0) >= 2) {
+              // Podio già mostrato: credenziali scadute
+              stopPolling();
+              mostraCredenzialiScadute();
+            } else {
+              bloccarGara(s.puntiTotali);
+            }
             return;
           }
           // Aggiorna oraFine dal server: se la gara è terminata in anticipo,
@@ -923,7 +964,7 @@
               caricaGara();
             } else if (r.garaStato === 'preparazione') {
               mostraBannerAttesa();
-            } else if (r.garaStato === 'conclusa' && r.cerimonia < 3) {
+            } else if (r.garaStato === 'conclusa' && r.cerimonia < 2) {
               // Gara conclusa ma podio non ancora mostrato → in attesa
               sessionStorage.removeItem('lkGara');
               document.getElementById('punteggioFinaleVal').textContent = '—';
@@ -931,7 +972,7 @@
               if (ov) ov.style.display = 'flex';
               document.getElementById('loginSquadra').classList.add('hidden');
             } else {
-              // Podio già mostrato o stato sconosciuto → torna al login pulito
+              // Podio già mostrato (cerimonia >= 2) → credenziali scadute
               sessionStorage.removeItem('lkGara');
             }
           }).catch(() => {});
