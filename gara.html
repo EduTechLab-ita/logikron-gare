@@ -850,6 +850,8 @@
       sessionStorage.removeItem('lkGara');
       const ov = document.getElementById('overlayGaraTerminata');
       if (ov) ov.style.display = 'none';
+      const pannelloGara = document.getElementById('pannelloGara');
+      if (pannelloGara) pannelloGara.classList.add('hidden');
       const loginEl = document.getElementById('loginSquadra');
       if (loginEl) loginEl.classList.remove('hidden');
       const errEl = document.getElementById('loginError');
