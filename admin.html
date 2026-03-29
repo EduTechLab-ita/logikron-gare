@@ -1432,8 +1432,11 @@
         } else {
           btnCer.style.display = 'none';
         }
+        // Rivedi Podio: visibile se cerimonia >= 2 (podio già mostrato o superato)
+        document.getElementById('btnRivediPodio').style.display = _cerimoniaCurrent >= 2 ? '' : 'none';
       } else {
         document.getElementById('btnCerimonia').style.display = 'none';
+        document.getElementById('btnRivediPodio').style.display = 'none';
         _cerimoniaCurrent = 0;
       }
 
@@ -1650,6 +1653,22 @@
     // ==================== CERIMONIA ====================
     var _cerimoniaCurrent = 0;
     var _cerimoniaLabels  = ['🎉 Mostra Classifica', '🏆 Avvia Podio', '📋 Classifica Completa'];
+
+    function rivediPodio() {
+      const garaId = document.getElementById('selGaraLive').value;
+      if (!garaId) return;
+      const btn = document.getElementById('btnRivediPodio');
+      btn.disabled = true;
+      lkApi(API, { action: 'setCerimonia', garaId: garaId, fase: 2, pwd: adminPwd })
+        .then(function(r) {
+          btn.disabled = false;
+          if (r.error) { alert('Errore: ' + r.error); return; }
+          _cerimoniaCurrent = 2;
+          document.getElementById('btnCerimonia').textContent = _cerimoniaLabels[2];
+          document.getElementById('btnCerimonia').style.display = '';
+          window.open('tabellone.html?garaId=' + garaId, '_blank');
+        }).catch(function() { btn.disabled = false; });
+    }
 
     function avanzaCerimonia() {
       const garaId = document.getElementById('selGaraLive').value;
@@ -2385,6 +2404,10 @@
         </button>
         <button id="btnCerimonia" class="btn btn-primary" onclick="avanzaCerimonia()" style="display:none;">
           🎉 Avvia Cerimonia
+        </button>
+        <button id="btnRivediPodio" class="btn" onclick="rivediPodio()"
+                style="display:none;border-color:#a855f7;color:#a855f7;">
+          🔄 Rivedi Podio
         </button>
       </div>
 
