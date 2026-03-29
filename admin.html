@@ -1292,6 +1292,7 @@
         const valPrecedente = sel.value;
         sel.innerHTML = '<option value="">-- Seleziona gara --</option>';
         if (!Array.isArray(gare) || gare.length === 0) return;
+        document.getElementById('statGare').textContent = gare.length;
         // Ordina per data effettiva decrescente (più recenti in cima)
         [...gare].sort((a, b) => {
           const ta = new Date(b.dataGara || b.oraFine || b.oraInizio || b.data || 0).getTime();
