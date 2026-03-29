@@ -30,6 +30,15 @@ const LOGIKRON_CONFIG = {
     alunni: 239
   },
 
+  // Totali cumulativi di tutte le edizioni (aggiornare ogni anno sommando i nuovi dati)
+  totaleStorico: {
+    edizioni: 10,
+    istituti: 6,
+    classi: 13,
+    squadre: 36,
+    alunni: 239
+  },
+
   // ==========================================
   // GOOGLE APPS SCRIPT - WEB APP URLs
   // ==========================================

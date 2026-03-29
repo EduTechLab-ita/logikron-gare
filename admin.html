@@ -909,11 +909,9 @@
     }
 
     function caricaStatIscrizioni() {
-      lkApi(API, { action: 'getIscrizioni', pwd: adminPwd }).then(lista => {
-        const el = document.getElementById('statIscrizioni');
-        if (!el) return;
-        if (!Array.isArray(lista)) { el.textContent = '—'; return; }
-        el.textContent = lista.length + ' squadr' + (lista.length === 1 ? 'a iscritta' : 'e iscritte');
+      lkApi(API, { action: 'getStatIscrizioni' }).then(s => {
+        document.getElementById('statSquadre').textContent = s.squadre > 0 ? s.squadre : '-';
+        document.getElementById('statStudenti').textContent = s.alunni > 0 ? s.alunni : '-';
       }).catch(() => {});
     }
 

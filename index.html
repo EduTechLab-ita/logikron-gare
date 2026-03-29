@@ -88,7 +88,7 @@
       <!-- BANNER EDIZIONE PRECEDENTE (full width) -->
       <section class="card banner-prev home-full">
         <div class="card-header" style="border-bottom-color: rgba(255,255,255,0.2);">
-          <h2 class="card-title" id="bannerTitolo">Nella scorsa edizione (2024-2025)</h2>
+          <h2 class="card-title">Nelle edizioni precedenti</h2>
         </div>
         <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 1rem; text-align: center; padding: 0.5rem 0;">
           <div>
@@ -253,16 +253,24 @@
   <script src="js/api.js"></script>
   <script src="js/math-bg.js"></script>
   <script>
-    // Popola numeri edizione precedente dalla config
-    const prev = LOGIKRON_CONFIG.edizionePrecedente;
-    if (prev) {
-      document.getElementById('bannerTitolo').textContent =
-        `Nella ${prev.edizione} edizione (${prev.anno})`;
-      document.getElementById('prevIstituti').textContent = prev.istituti || '-';
-      document.getElementById('prevClassi').textContent = prev.classi || '-';
-      document.getElementById('prevSquadre').textContent = prev.squadre || '-';
-      document.getElementById('prevAlunni').textContent = prev.alunni || '-';
+    // Popola totali storici cumulativi dalla config
+    const storico = LOGIKRON_CONFIG.totaleStorico;
+    if (storico) {
+      document.getElementById('prevIstituti').textContent = storico.istituti || '-';
+      document.getElementById('prevClassi').textContent = storico.classi || '-';
+      document.getElementById('prevSquadre').textContent = storico.squadre || '-';
+      document.getElementById('prevAlunni').textContent = storico.alunni || '-';
     }
+
+    // Contatori live edizione corrente
+    lkApi(LOGIKRON_CONFIG.webAppUrls.gare, { action: 'getStatIscrizioni' })
+      .then(function(s) {
+        document.getElementById('numIstituti').textContent = s.istituti > 0 ? s.istituti : '-';
+        document.getElementById('numClassi').textContent   = s.classi   > 0 ? s.classi   : '-';
+        document.getElementById('numSquadre').textContent  = s.squadre  > 0 ? s.squadre  : '-';
+        document.getElementById('numAlunni').textContent   = s.alunni   > 0 ? s.alunni   : '-';
+      })
+      .catch(function() {});  // in caso di errore i valori restano 0
 
     const btn1 = document.getElementById('btnStep1');
     const btn2 = document.getElementById('btnStep2');
