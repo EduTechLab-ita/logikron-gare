@@ -1298,8 +1298,8 @@
         if (!Array.isArray(gare) || gare.length === 0) return;
         // Ordina per data effettiva decrescente (più recenti in cima)
         [...gare].sort((a, b) => {
-          const ta = new Date(b.oraFine || b.oraInizio || b.data || 0).getTime();
-          const tb = new Date(a.oraFine || a.oraInizio || a.data || 0).getTime();
+          const ta = new Date(b.dataGara || b.oraFine || b.oraInizio || b.data || 0).getTime();
+          const tb = new Date(a.dataGara || a.oraFine || a.oraInizio || a.data || 0).getTime();
           return ta - tb;
         }).forEach(g => {
           _gareMap[g.id] = g;
