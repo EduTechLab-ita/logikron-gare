@@ -3,7 +3,7 @@
 //  ⚙️  Aggiorna CACHE_NAME ad ogni deploy per forzare il refresh
 // ══════════════════════════════════════════════════════════════════
 
-const CACHE_NAME = 'logikron-v4.15';
+const CACHE_NAME = 'logikron-v4.16';
 
 const STATIC_ASSETS = [
   './',
@@ -53,7 +53,21 @@ self.addEventListener('fetch', event => {
     return;
   }
 
-  // Asset locali: cache-first
+  // File HTML: network-first (così aggiornamenti arrivano subito senza svuotare cache manualmente)
+  if (url.pathname.endsWith('.html') || url.pathname.endsWith('/')) {
+    event.respondWith(
+      fetch(event.request)
+        .then(response => {
+          const clone = response.clone();
+          caches.open(CACHE_NAME).then(cache => cache.put(event.request, clone));
+          return response;
+        })
+        .catch(() => caches.match(event.request))
+    );
+    return;
+  }
+
+  // CSS, JS, assets: cache-first (cambiano solo con nuovo CACHE_NAME)
   event.respondWith(
     caches.match(event.request).then(cached => cached || fetch(event.request))
   );
