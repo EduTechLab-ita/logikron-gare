@@ -429,7 +429,6 @@
 
       lkApi(API, { action: 'loginSquadra', codice: codice })
         .then(r => {
-          console.log('[DEBUG loginSquadra]', JSON.stringify(r));
           btn.disabled = false; btn.textContent = 'Entra';
           if (r.error) {
             errEl.textContent = 'Codice non riconosciuto. Riprova.';
