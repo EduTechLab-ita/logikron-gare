@@ -1267,9 +1267,7 @@
     function openConfig()     { alert('Configurazione — Da implementare'); }
     function createGara()     { document.getElementById('sectionControlloGara').scrollIntoView({ behavior: 'smooth', block: 'start' }); }
     function apriTabelloneAdmin() {
-      const sel = document.getElementById('selGaraLive');
-      const gid = sel && sel.value ? '?garaId=' + sel.value : '';
-      window.open('tabellone.html' + gid, '_blank');
+      window.open('tabellone.html', '_blank');
     }
     function viewClassifica() { window.open('archivio.html', '_blank'); }
     function generateAttestati() { alert('Genera Attestati — Da implementare'); }
