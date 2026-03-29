@@ -447,10 +447,12 @@
           } else if (r.garaStato === 'conclusa' && r.cerimonia < 3) {
             // Gara conclusa ma podio non ancora mostrato → in attesa dei risultati
             sessionStorage.removeItem('lkGara');
-            document.getElementById('punteggioFinaleVal').textContent = '—';
+            const ptEl = document.getElementById('punteggioFinaleVal');
+            if (ptEl) ptEl.textContent = '—';
             const ov = document.getElementById('overlayGaraTerminata');
             if (ov) ov.style.display = 'flex';
-            document.getElementById('loginSquadra').classList.add('hidden');
+            const loginEl = document.getElementById('loginSquadra');
+            if (loginEl) loginEl.classList.add('hidden');
           } else {
             // conclusa + cerimonia >= 3 (podio già mostrato) oppure stato sconosciuto
             errEl.textContent = 'La gara è conclusa. I risultati sono disponibili nell\'archivio.';
