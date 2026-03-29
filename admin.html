@@ -759,12 +759,13 @@
 
     function loadDashboard() {
       document.getElementById('annoNuovoAnno').textContent = LOGIKRON_CONFIG.annoScolastico;
-      caricaFase();
-      caricaStatIntenzioni();
-      caricaStatIscrizioni();
       caricaFiltroIstituti();
       aggiornaFiltroClassi();
-      caricaListaGare(true); // true = auto-apri modal se c'è gara attiva
+      // Prima chiamata sveglia AS; le successive partono con ritardo scalare per evitare cold-start multiplo
+      caricaFase();
+      setTimeout(caricaStatIntenzioni, 1500);
+      setTimeout(caricaStatIscrizioni, 2500);
+      setTimeout(() => caricaListaGare(true), 3500);
     }
 
     function caricaFase(tentativo) {
@@ -1307,11 +1308,11 @@
           // Ripristina selezione precedente
           sel.value = valPrecedente;
         } else {
-          // Nessuna selezione precedente → auto-seleziona la più recente (prima della lista)
+          // Nessuna selezione precedente → auto-seleziona la più recente (prima della lista) senza aprire il modal
           const primaOpt = [...sel.options].find(o => o.value !== '');
-          if (primaOpt) { sel.value = primaOpt.value; selezionaGaraLive(); }
+          if (primaOpt) sel.value = primaOpt.value;
         }
-        // Auto-apri modal se c'è una gara attiva al caricamento pagina
+        // Auto-apri modal SOLO se c'è una gara attiva al caricamento pagina
         if (autoApriAttiva) {
           const garaAttiva = gare.find(g => g.stato === 'attiva');
           if (garaAttiva) {

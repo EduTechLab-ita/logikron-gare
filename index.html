@@ -262,16 +262,6 @@
       document.getElementById('prevAlunni').textContent = storico.alunni || '-';
     }
 
-    // Contatori live edizione corrente
-    lkApi(LOGIKRON_CONFIG.webAppUrls.gare, { action: 'getStatIscrizioni' })
-      .then(function(s) {
-        document.getElementById('numIstituti').textContent = s.istituti > 0 ? s.istituti : '-';
-        document.getElementById('numClassi').textContent   = s.classi   > 0 ? s.classi   : '-';
-        document.getElementById('numSquadre').textContent  = s.squadre  > 0 ? s.squadre  : '-';
-        document.getElementById('numAlunni').textContent   = s.alunni   > 0 ? s.alunni   : '-';
-      })
-      .catch(function() {});  // in caso di errore i valori restano 0
-
     const btn1 = document.getElementById('btnStep1');
     const btn2 = document.getElementById('btnStep2');
 
@@ -303,13 +293,25 @@
       }
     }
 
-    // Legge fase dal backend, con fallback a config.js
+    // Prima chiamata sveglia AS; le successive scaglionate per evitare cold-start multiplo
     lkApi(LOGIKRON_CONFIG.webAppUrls.gare, { action: 'getFase' })
       .then(r => applicaFase(r.fase))
       .catch(() => applicaFase(LOGIKRON_CONFIG.faseAttiva));
 
-    // Carica lista gare pubblica
-    (function caricaGarePublic() {
+    // Contatori live edizione corrente (con ritardo per lasciar svegliare AS)
+    setTimeout(function() {
+      lkApi(LOGIKRON_CONFIG.webAppUrls.gare, { action: 'getStatIscrizioni' })
+        .then(function(s) {
+          document.getElementById('numIstituti').textContent = s.istituti > 0 ? s.istituti : '-';
+          document.getElementById('numClassi').textContent   = s.classi   > 0 ? s.classi   : '-';
+          document.getElementById('numSquadre').textContent  = s.squadre  > 0 ? s.squadre  : '-';
+          document.getElementById('numAlunni').textContent   = s.alunni   > 0 ? s.alunni   : '-';
+        })
+        .catch(function() {});
+    }, 1500);
+
+    // Carica lista gare pubblica (scaglionata per evitare cold-start multiplo)
+    setTimeout(function caricaGarePublic() {
       const div = document.getElementById('sezioneGare');
       lkApi(LOGIKRON_CONFIG.webAppUrls.gare, { action: 'getListaGare' })
         .then(function(gare) {
@@ -348,7 +350,7 @@
         });
 
       function _hesc(s) { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
-    })();
+    }, 2500);
   </script>
 </body>
 </html>
