@@ -748,7 +748,7 @@
             const domErr = stato.domande.find(d => d.num === numDom);
             if (domErr) domErr.puntiBase = (parseInt(domErr.puntiBase) || 20) + 5;
             flashQBtn(numDom, 'sbagliata', false);
-            feedback.textContent = '✗ Sbagliata! ' + r.punti + ' pt. Riprova.';
+            feedback.textContent = '✗ Sbagliata! ' + r.punti + ' pt. Riprova.' + (isJolly ? ' ⭐ Jolly x2!' : '');
             feedback.style.color = '#dc2626';
             input.value = '';
             input.focus();
