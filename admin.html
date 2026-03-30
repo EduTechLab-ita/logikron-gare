@@ -232,10 +232,11 @@
       .print-only { display: block !important; }
       /* Grafici a barre/raggruppati: nascosti in stampa (sostituiti da tabelle) */
       .screen-only { display: none !important; }
-      /* Grafici ciambella: rimangono ma piccoli */
-      #chartOrdine { max-height: 100px !important; max-width: 150px !important; }
-      #chartAccGlob { max-height: 100px !important; max-width: 150px !important; }
+      /* Grafici ciambella: rimangono tondi e piccoli */
+      #chartOrdine, #chartAccGlob { width: 130px !important; height: 130px !important; aspect-ratio: 1 !important; }
       canvas { page-break-inside: avoid; }
+      /* Dettaglio gare: non stampare (i dati dettagliati vanno su Drive) */
+      .stat-gare-detail { display: none !important; }
       td, th { color: #333 !important; }
       .stat-print-table th { background: #f0f0f0 !important; color: #333 !important; border: 1px solid #ccc !important; }
     }
@@ -1967,8 +1968,9 @@
         }
         html += '</div>';
 
-        // Gare — accordion
+        // Gare — accordion (classe no-print: non compare nel PDF)
         if (gareList.length > 0) {
+          html += '<div class="stat-gare-detail">';
           html += '<div class="stat-section-title">Dettaglio Gare</div>';
           gareList.forEach(g => {
             const dl = g.dataGara ? new Date(g.dataGara).toLocaleDateString('it-IT') : (g.data||'—');
@@ -1983,6 +1985,7 @@
             html += '<div style="color:#64748b;font-size:0.85rem;padding-top:0.75rem;">⏳ Caricamento...</div>';
             html += '</div></div>';
           });
+          html += '</div>'; // fine .stat-gare-detail
         }
 
         body.innerHTML = html;
