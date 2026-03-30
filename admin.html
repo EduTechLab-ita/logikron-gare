@@ -1822,7 +1822,52 @@
       window.open('tabellone.html', '_blank');
     }
     function viewClassifica() { window.open('archivio.html', '_blank'); }
-    function generateAttestati() { alert('Genera Attestati — Da implementare'); }
+    function generateAttestati() {
+      // Usa la gara selezionata nel dropdown principale
+      const garaId = document.getElementById('selGaraLive') ? document.getElementById('selGaraLive').value : '';
+      const garaNome = garaId && _gareMap[garaId] ? _gareMap[garaId].nome : '(nessuna gara selezionata)';
+
+      if (!garaId) {
+        alert('Nessuna gara selezionata. Seleziona una gara nel pannello "Controllo Gara Live" prima di generare gli attestati.');
+        return;
+      }
+
+      // Modal di conferma
+      const overlay = document.createElement('div');
+      overlay.style.cssText = 'position:fixed;inset:0;background:rgba(15,23,42,0.92);z-index:9990;display:flex;align-items:center;justify-content:center;';
+      overlay.innerHTML = `
+        <div style="background:#1e293b;border:1px solid #334155;border-radius:16px;padding:2rem;max-width:420px;width:90%;color:#e2e8f0;">
+          <div style="font-size:1.3rem;font-weight:700;margin-bottom:1rem;">📜 Genera Attestati</div>
+          <p style="color:#94a3b8;margin-bottom:1rem;">Verrà creato un <strong style="color:#e2e8f0;">Google Doc</strong> con un attestato per ogni squadra della gara:</p>
+          <div style="background:#0f172a;border-radius:8px;padding:0.75rem 1rem;margin-bottom:1.5rem;font-weight:600;color:#60a5fa;">${_escHtml(garaNome)}</div>
+          <p style="color:#64748b;font-size:0.85rem;margin-bottom:1.5rem;">Il documento verrà aperto automaticamente. Potrai stamparlo o convertirlo in PDF da Google Docs.</p>
+          <div style="display:flex;gap:0.75rem;justify-content:flex-end;">
+            <button id="_attModalCancel" style="background:transparent;border:1px solid #475569;color:#94a3b8;padding:0.6rem 1.2rem;border-radius:8px;cursor:pointer;font-size:0.9rem;">Annulla</button>
+            <button id="_attModalConfirm" style="background:linear-gradient(135deg,#7c3aed,#6d28d9);border:none;color:#fff;padding:0.6rem 1.4rem;border-radius:8px;cursor:pointer;font-size:0.9rem;font-weight:600;">📜 Genera</button>
+          </div>
+        </div>`;
+      document.body.appendChild(overlay);
+      document.getElementById('_attModalCancel').onclick = function() { overlay.remove(); };
+      document.getElementById('_attModalConfirm').onclick = function() {
+        const btn = document.getElementById('_attModalConfirm');
+        btn.disabled = true; btn.textContent = '⏳ Generazione...';
+        lkApi(API, { action: 'generaAttestati', pwd: adminPwd, garaId: garaId }, 120000)
+          .then(function(r) {
+            overlay.remove();
+            if (r.error) { alert('Errore: ' + r.error); return; }
+            const toast = document.createElement('div');
+            toast.style.cssText = 'position:fixed;bottom:1.5rem;right:1.5rem;background:#7c3aed;color:#fff;padding:1rem 1.5rem;border-radius:10px;z-index:9999;font-weight:600;box-shadow:0 4px 20px rgba(0,0,0,0.4);max-width:320px;';
+            toast.innerHTML = '✅ ' + r.count + ' attestati generati!<br><small style="font-weight:400;">Cartella: ' + _escHtml(r.folder) + '</small><br><a href="' + r.docUrl + '" target="_blank" style="color:#e9d5ff;font-size:0.85rem;">Apri documento ↗</a>';
+            document.body.appendChild(toast);
+            setTimeout(function() { toast.remove(); }, 8000);
+            window.open(r.docUrl, '_blank');
+          })
+          .catch(function(err) {
+            overlay.remove();
+            alert('Errore di rete: ' + (err.message || err));
+          });
+      };
+    }
 
     // ==================== STATISTICHE ====================
 
@@ -1847,7 +1892,25 @@
     }
 
     function salvaStatistiche() {
-      alert('Salva su Drive — Da implementare');
+      const btn = document.querySelector('.stat-btn-print[onclick="salvaStatistiche()"]');
+      if (btn) { btn.disabled = true; btn.textContent = '⏳ Salvataggio...'; }
+
+      lkApi(API, { action: 'generaReportStatistiche', pwd: adminPwd }, 90000)
+        .then(function(r) {
+          if (btn) { btn.disabled = false; btn.textContent = '💾 Salva su Drive'; }
+          if (r.error) { alert('Errore: ' + r.error); return; }
+          // Toast di conferma
+          const toast = document.createElement('div');
+          toast.style.cssText = 'position:fixed;bottom:1.5rem;right:1.5rem;background:#10b981;color:#fff;padding:1rem 1.5rem;border-radius:10px;z-index:9999;font-weight:600;box-shadow:0 4px 20px rgba(0,0,0,0.4);max-width:320px;';
+          toast.innerHTML = '✅ Report salvato su Drive!<br><small style="font-weight:400;">Cartella: ' + _escHtml(r.folder) + '</small><br><a href="' + r.docUrl + '" target="_blank" style="color:#d1fae5;font-size:0.85rem;">Apri documento ↗</a>';
+          document.body.appendChild(toast);
+          setTimeout(function() { toast.remove(); }, 8000);
+          window.open(r.docUrl, '_blank');
+        })
+        .catch(function(err) {
+          if (btn) { btn.disabled = false; btn.textContent = '💾 Salva su Drive'; }
+          alert('Errore di rete: ' + (err.message || err));
+        });
     }
 
     function toggleStatGara(id) {
