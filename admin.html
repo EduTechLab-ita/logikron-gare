@@ -235,6 +235,14 @@
     @media (max-width: 600px) { .stat-row-2 { grid-template-columns: 1fr; } }
     .stat-chart-wrap { position: relative; }
     .stat-ic-bar { background: #10b981; height: 8px; border-radius: 4px; min-width: 4px; transition: width 0.4s; }
+    .stat-accordion-item { background: #1e293b; border: 1px solid #334155; border-radius: 10px; margin-bottom: 0.5rem; overflow: hidden; }
+    .stat-accordion-header { display: flex; justify-content: space-between; align-items: center; padding: 0.75rem 1rem; cursor: pointer; user-select: none; }
+    .stat-accordion-header:hover { background: #263548; }
+    .stat-accordion-meta { font-size: 0.78rem; color: #64748b; margin-top: 2px; }
+    .stat-accordion-arrow { font-size: 0.65rem; color: #64748b; transition: transform 0.2s; flex-shrink: 0; margin-left: 0.5rem; }
+    .stat-accordion-item.open .stat-accordion-arrow { transform: rotate(90deg); }
+    .stat-accordion-body { display: none; padding: 0 1rem 1rem 1rem; border-top: 1px solid #334155; }
+    .stat-accordion-item.open .stat-accordion-body { display: block; }
 
     /* ===== MODAL GESTIONE ISCRITTI ===== */
     .modal-overlay { position:fixed; inset:0; background:rgba(0,0,0,0.55); z-index:2000; overflow-y:auto; display:flex; align-items:flex-start; justify-content:center; padding:1.5rem 1rem; }
@@ -1788,10 +1796,26 @@
       document.getElementById('modalStatistiche').classList.remove('aperto');
     }
 
+    function toggleStatGara(id) {
+      const item = document.getElementById('stat-acc-item-' + id);
+      if (item) item.classList.toggle('open');
+    }
+
+    function _parseOrdineClasse(codice) {
+      if (!codice) return { ordine: 'N/D', classe: '?' };
+      const c = String(codice).toUpperCase();
+      const priIdx = c.indexOf('PRI');
+      const secIdx = c.indexOf('SEC');
+      if (priIdx >= 0) return { ordine: 'Primaria',   classe: c[priIdx + 3] || '?' };
+      if (secIdx >= 0) return { ordine: 'Secondaria', classe: c[secIdx + 3] || '?' };
+      return { ordine: 'N/D', classe: '?' };
+    }
+
     function _caricaStatistiche() {
       const body = document.getElementById('mstatBody');
       body.innerHTML = '<div style="text-align:center;padding:3rem;color:#94a3b8;">⏳ Caricamento dati...</div>';
 
+      // FASE 1: dati base
       Promise.all([
         lkApi(API, { action: 'getStatIscrizioni' }, 30000),
         lkApi(API, { action: 'getIntenzioni' }, 30000),
@@ -1804,215 +1828,253 @@
         const gareList = Array.isArray(gare) ? [...gare].sort((a,b) =>
           new Date(b.dataGara||b.oraInizio||0) - new Date(a.dataGara||a.oraInizio||0)) : [];
 
-        // --- Aggregazioni iscrizioni ---
-        const perOrdine = {};
-        const perClasse = {};
-        const perIC = {};
-
+        // Aggregazioni iscrizioni
+        const perOrdine = {}, perClasse = {}, perIC = {};
         iscr.forEach(i => {
-          const ord = String(i.ordine || 'N/D');
-          const cl  = String(i.classe  || '?');
-          const ic  = String(i.istituto || 'N/D');
-          const alunni = parseInt(i.nStudenti) || 0;
-
-          // per ordine
+          const ord = String(i.ordine || 'N/D'), cl = String(i.classe || '?'),
+                ic = String(i.istituto || 'N/D'), alunni = parseInt(i.nStudenti) || 0;
           if (!perOrdine[ord]) perOrdine[ord] = { squadre: 0, alunni: 0 };
-          perOrdine[ord].squadre++;
-          perOrdine[ord].alunni += alunni;
-
-          // per classe — chiave sortabile: "pri03", "sec01"
-          const sortKey = ord.toLowerCase().slice(0,3) + cl.padStart(2,'0');
-          if (!perClasse[sortKey]) perClasse[sortKey] = { label: cl + 'ª ' + ord, squadre: 0 };
-          perClasse[sortKey].squadre++;
-
-          // per istituto
+          perOrdine[ord].squadre++; perOrdine[ord].alunni += alunni;
+          const sk = ord.toLowerCase().slice(0,3) + cl.padStart(2,'0');
+          if (!perClasse[sk]) perClasse[sk] = { label: cl + 'ª ' + ord, squadre: 0 };
+          perClasse[sk].squadre++;
           if (!perIC[ic]) perIC[ic] = { squadre: 0, alunni: 0 };
-          perIC[ic].squadre++;
-          perIC[ic].alunni += alunni;
+          perIC[ic].squadre++; perIC[ic].alunni += alunni;
         });
+        const icEntries = Object.entries(perIC).sort((a,b) => b[1].squadre - a[1].squadre);
+        const classeEntries = Object.entries(perClasse).sort((a,b) => a[0].localeCompare(b[0]));
 
-        // --- Build HTML ---
+        // --- Costruzione HTML scaffold ---
         let html = '';
 
-        // 1. Banner
+        // Banner
         html += '<div class="stat-banner">';
-        html += _statCard(statIscr.istituti || 0, '🏫 Istituti');
-        html += _statCard(statIscr.classi    || 0, '📚 Classi');
-        html += _statCard(statIscr.squadre   || 0, '👥 Squadre');
-        html += _statCard(statIscr.alunni    || 0, '🧒 Alunni');
+        html += _statCard(statIscr.istituti||0,'🏫 Istituti') + _statCard(statIscr.classi||0,'📚 Classi');
+        html += _statCard(statIscr.squadre||0,'👥 Squadre') + _statCard(statIscr.alunni||0,'🧒 Alunni');
         html += '</div>';
 
-        // 2. Partecipazione + donut ordine
-        const pct = nIntenzioni > 0 ? Math.round((statIscr.squadre||0) / nIntenzioni * 100) : 0;
-        html += '<div class="stat-section-title">Partecipazione</div>';
-        html += '<div class="stat-row-2">';
-        html += '<div class="stat-gara-card">';
-        html += '<table style="width:100%;border-collapse:collapse;font-size:0.88rem;">';
+        // Partecipazione + donut ordine
+        const pct = nIntenzioni > 0 ? Math.round((statIscr.squadre||0)/nIntenzioni*100) : 0;
+        html += '<div class="stat-section-title">Partecipazione</div><div class="stat-row-2">';
+        html += '<div class="stat-gara-card"><table style="width:100%;border-collapse:collapse;font-size:0.88rem;">';
         html += '<tr><td style="padding:5px 0;color:#94a3b8;">Docenti con intenzione</td><td style="text-align:right;font-weight:700;color:#e2e8f0;">' + nIntenzioni + '</td></tr>';
         html += '<tr><td style="padding:5px 0;color:#94a3b8;">Squadre iscritte</td><td style="text-align:right;font-weight:700;color:#10b981;">' + (statIscr.squadre||0) + '</td></tr>';
         html += '<tr><td style="padding:5px 0;color:#94a3b8;">Alunni coinvolti</td><td style="text-align:right;font-weight:700;color:#60a5fa;">' + (statIscr.alunni||0) + '</td></tr>';
         if (nIntenzioni > 0) html += '<tr><td style="padding:5px 0;color:#94a3b8;">Tasso conversione</td><td style="text-align:right;font-weight:700;color:#f59e0b;">' + pct + '%</td></tr>';
         html += '</table></div>';
-        html += '<div class="stat-gara-card stat-chart-wrap" style="display:flex;flex-direction:column;align-items:center;justify-content:center;">';
-        html += '<div style="font-size:0.78rem;color:#94a3b8;margin-bottom:0.5rem;font-weight:600;align-self:flex-start;">Squadre per ordine</div>';
-        html += '<canvas id="chartOrdine" style="max-height:160px;"></canvas>';
-        html += '</div>';
-        html += '</div>';
+        html += '<div class="stat-gara-card stat-chart-wrap" style="display:flex;flex-direction:column;">';
+        html += '<div style="font-size:0.78rem;color:#94a3b8;margin-bottom:0.5rem;font-weight:600;">Squadre per ordine</div>';
+        html += '<canvas id="chartOrdine" style="max-height:160px;"></canvas></div></div>';
 
-        // 3. Per istituto
-        const icEntries = Object.entries(perIC).sort((a,b) => b[1].squadre - a[1].squadre);
+        // Per istituto
         if (icEntries.length > 0) {
           const maxSq = icEntries[0][1].squadre;
-          html += '<div class="stat-section-title">Per Istituto</div>';
-          html += '<div class="stat-gara-card"><table style="width:100%;border-collapse:collapse;font-size:0.83rem;">';
-          html += '<tr>';
-          html += '<th style="text-align:left;padding:5px 8px;color:#94a3b8;font-weight:600;border-bottom:1px solid #334155;">Istituto</th>';
-          html += '<th style="padding:5px 8px;color:#94a3b8;font-weight:600;border-bottom:1px solid #334155;text-align:center;">Squadre</th>';
-          html += '<th style="padding:5px 8px;color:#94a3b8;font-weight:600;border-bottom:1px solid #334155;text-align:center;">Alunni</th>';
-          html += '</tr>';
+          html += '<div class="stat-section-title">Per Istituto</div><div class="stat-gara-card">';
+          html += '<table style="width:100%;border-collapse:collapse;font-size:0.83rem;">';
+          html += '<tr><th style="text-align:left;padding:5px 8px;color:#94a3b8;font-weight:600;border-bottom:1px solid #334155;">Istituto</th><th style="padding:5px 8px;color:#94a3b8;font-weight:600;border-bottom:1px solid #334155;text-align:center;">Squadre</th><th style="padding:5px 8px;color:#94a3b8;font-weight:600;border-bottom:1px solid #334155;text-align:center;">Alunni</th></tr>';
           icEntries.forEach(([ic, d]) => {
-            const barW = Math.round(d.squadre / maxSq * 80);
-            html += '<tr>';
-            html += '<td style="padding:5px 8px;color:#e2e8f0;">' + _escHtml(ic) + '</td>';
-            html += '<td style="padding:5px 8px;text-align:center;"><div style="display:flex;align-items:center;gap:6px;justify-content:center;">';
-            html += '<div class="stat-ic-bar" style="width:' + barW + 'px;"></div>';
-            html += '<span style="color:#10b981;font-weight:700;">' + d.squadre + '</span></div></td>';
-            html += '<td style="padding:5px 8px;text-align:center;color:#60a5fa;font-weight:700;">' + d.alunni + '</td>';
-            html += '</tr>';
+            const bw = Math.round(d.squadre/maxSq*80);
+            html += '<tr><td style="padding:5px 8px;color:#e2e8f0;">' + _escHtml(ic) + '</td>';
+            html += '<td style="padding:5px 8px;text-align:center;"><div style="display:flex;align-items:center;gap:6px;justify-content:center;"><div class="stat-ic-bar" style="width:' + bw + 'px;"></div><span style="color:#10b981;font-weight:700;">' + d.squadre + '</span></div></td>';
+            html += '<td style="padding:5px 8px;text-align:center;color:#60a5fa;font-weight:700;">' + d.alunni + '</td></tr>';
           });
           html += '</table></div>';
         }
 
-        // 4. Per classe (barre)
-        const classeEntries = Object.entries(perClasse).sort((a,b) => a[0].localeCompare(b[0]));
+        // Per classe
         if (classeEntries.length > 0) {
           html += '<div class="stat-section-title">Per Classe</div>';
           html += '<div class="stat-gara-card stat-chart-wrap"><canvas id="chartClasse" style="max-height:150px;"></canvas></div>';
         }
 
-        // 5. Gare
+        // Accuratezza globale — placeholder (popolato dopo fase 2)
+        html += '<div class="stat-section-title">Accuratezza Risposte</div>';
+        html += '<div id="stat-acc-globale-wrap">';
         if (gareList.length > 0) {
-          html += '<div class="stat-section-title">Gare</div>';
+          html += '<div style="text-align:center;padding:1.5rem;color:#64748b;font-size:0.85rem;">⏳ Caricamento dati gare...</div>';
+        } else {
+          html += '<div style="color:#64748b;font-size:0.85rem;font-style:italic;padding:0.5rem 0;">Nessuna gara disponibile.</div>';
+        }
+        html += '</div>';
+
+        // Gare — accordion
+        if (gareList.length > 0) {
+          html += '<div class="stat-section-title">Dettaglio Gare</div>';
           gareList.forEach(g => {
-            const dataLabel = g.dataGara ? new Date(g.dataGara).toLocaleDateString('it-IT') : (g.data || '—');
-            const statoColor = g.stato === 'attiva' ? '#f87171' : '#94a3b8';
-            html += '<div class="stat-gara-card" id="stat-gara-' + _escHtml(String(g.id)) + '">';
-            html += '<div class="stat-gara-title">' + _escHtml(g.nome) + '</div>';
-            html += '<div style="font-size:0.8rem;color:#64748b;margin-bottom:0.75rem;">' + dataLabel + ' · <span style="color:' + statoColor + ';">' + g.stato + '</span></div>';
-            html += '<div id="stat-podio-' + _escHtml(String(g.id)) + '" style="color:#64748b;font-size:0.8rem;">⏳ caricamento...</div>';
-            html += '<div id="stat-acc-' + _escHtml(String(g.id)) + '" style="margin-top:0.75rem;"></div>';
-            html += '</div>';
+            const dl = g.dataGara ? new Date(g.dataGara).toLocaleDateString('it-IT') : (g.data||'—');
+            const sc = g.stato === 'attiva' ? '#f87171' : '#94a3b8';
+            const safeId = String(g.id).replace(/[^a-z0-9]/gi,'_');
+            html += '<div class="stat-accordion-item" id="stat-acc-item-' + safeId + '">';
+            html += '<div class="stat-accordion-header" onclick="toggleStatGara(\'' + safeId + '\')">';
+            html += '<div><div style="font-weight:700;font-size:0.9rem;color:#e2e8f0;">' + _escHtml(g.nome) + '</div>';
+            html += '<div class="stat-accordion-meta">' + dl + ' · <span style="color:' + sc + ';">' + g.stato + '</span></div></div>';
+            html += '<span class="stat-accordion-arrow">▶</span></div>';
+            html += '<div class="stat-accordion-body" id="stat-body-' + safeId + '">';
+            html += '<div style="color:#64748b;font-size:0.85rem;padding-top:0.75rem;">⏳ Caricamento...</div>';
+            html += '</div></div>';
           });
         }
 
         body.innerHTML = html;
 
-        // --- Chart: donut ordine ---
+        // Chart ordine (subito)
         const ordLabels = Object.keys(perOrdine);
         if (ordLabels.length > 0) {
           _statCharts.push(new Chart(document.getElementById('chartOrdine'), {
             type: 'doughnut',
-            data: {
-              labels: ordLabels,
-              datasets: [{ data: ordLabels.map(k => perOrdine[k].squadre),
-                backgroundColor: ['#10b981','#60a5fa','#f59e0b','#a78bfa'], borderWidth: 0 }]
-            },
-            options: { plugins: { legend: { position: 'bottom', labels: { color: '#94a3b8', font: { size: 11 } } } }, cutout: '65%' }
+            data: { labels: ordLabels, datasets: [{ data: ordLabels.map(k=>perOrdine[k].squadre), backgroundColor:['#10b981','#60a5fa','#f59e0b','#a78bfa'], borderWidth:0 }] },
+            options: { plugins: { legend: { position:'bottom', labels:{ color:'#94a3b8', font:{size:11} } } }, cutout:'65%' }
           }));
         }
 
-        // --- Chart: barre per classe ---
+        // Chart classi (subito)
         if (classeEntries.length > 0) {
           _statCharts.push(new Chart(document.getElementById('chartClasse'), {
             type: 'bar',
-            data: {
-              labels: classeEntries.map(([,v]) => v.label),
-              datasets: [{ data: classeEntries.map(([,v]) => v.squadre),
-                backgroundColor: '#6366f1', borderRadius: 4, label: 'Squadre' }]
-            },
-            options: {
-              plugins: { legend: { display: false } },
-              scales: {
-                x: { ticks: { color: '#94a3b8', font: { size: 10 } }, grid: { color: '#1e293b' } },
-                y: { ticks: { color: '#94a3b8', stepSize: 1 }, grid: { color: '#334155' } }
-              }
-            }
+            data: { labels: classeEntries.map(([,v])=>v.label), datasets:[{ data:classeEntries.map(([,v])=>v.squadre), backgroundColor:'#6366f1', borderRadius:4, label:'Squadre' }] },
+            options: { plugins:{ legend:{display:false} }, scales:{ x:{ticks:{color:'#94a3b8',font:{size:10}},grid:{color:'#1e293b'}}, y:{ticks:{color:'#94a3b8',stepSize:1},grid:{color:'#334155'}} } }
           }));
         }
 
-        // --- Fetch per ogni gara: podio + accuratezza ---
-        gareList.forEach(g => {
+        if (gareList.length === 0) return;
+
+        // FASE 2: dati per gara (parallelo)
+        const garePromises = gareList.map(g =>
           Promise.all([
-            lkApi(API, { action: 'getSquadre', garaId: g.id }, 20000),
-            lkApi(API, { action: 'getRisposteGara', garaId: g.id }, 20000)
-          ]).then(([squadre, risposteObj]) => {
+            lkApi(API, { action:'getSquadre', garaId:g.id }, 20000),
+            lkApi(API, { action:'getRisposteGara', garaId:g.id }, 20000)
+          ]).then(([sq, ro]) => ({ g, squadre: Array.isArray(sq)?sq:[], risposte: (ro&&Array.isArray(ro.risposte))?ro.risposte:[] }))
+           .catch(() => ({ g, squadre:[], risposte:[] }))
+        );
+
+        Promise.all(garePromises).then(results => {
+          // Accumulatori globali
+          const accTot = { c:0, s:0 };
+          const accOC  = {}; // 'Primaria:4' → { c,s,label,sk }
+
+          results.forEach(({ g, squadre, risposte }) => {
+            const safeId = String(g.id).replace(/[^a-z0-9]/gi,'_');
+
+            // Mappa squadraId → { ordine, classe } dal codice
+            const sqMap = {};
+            squadre.forEach(sq => {
+              const { ordine, classe } = _parseOrdineClasse(sq.codice);
+              sqMap[sq.id] = { ordine, classe };
+            });
+
+            // Accumulo globale
+            const reali = risposte.filter(r => r.esito==='corretta'||r.esito==='sbagliata');
+            reali.forEach(r => {
+              if (r.esito==='corretta') accTot.c++; else accTot.s++;
+              const sq = sqMap[r.squadraId];
+              if (sq && sq.ordine !== 'N/D') {
+                const key = sq.ordine + ':' + sq.classe;
+                if (!accOC[key]) {
+                  const sk = sq.ordine.toLowerCase().slice(0,3) + sq.classe.padStart(2,'0');
+                  accOC[key] = { c:0, s:0, label:sq.classe+'ª '+sq.ordine, sk };
+                }
+                if (r.esito==='corretta') accOC[key].c++; else accOC[key].s++;
+              }
+            });
+
+            // Popola accordion
+            const bodyEl = document.getElementById('stat-body-' + safeId);
+            if (!bodyEl) return;
+            let bh = '<div style="padding-top:0.75rem;">';
 
             // Podio
-            const elPodio = document.getElementById('stat-podio-' + g.id);
-            if (elPodio) {
-              const sorted = Array.isArray(squadre) ? [...squadre].sort((a,b) => (b.punti||0)-(a.punti||0)) : [];
-              if (sorted.length === 0) { elPodio.textContent = 'Nessuna squadra.'; }
-              else {
-                const med = ['🥇','🥈','🥉'];
-                let ph = '<div style="font-size:0.78rem;color:#64748b;margin-bottom:0.4rem;">' + sorted.length + ' squadre partecipanti</div>';
-                ph += '<div class="stat-podio">';
-                sorted.slice(0,3).forEach((s,i) => {
-                  ph += '<div class="stat-podio-item">' + med[i] + ' <span style="color:#e2e8f0;">' + _escHtml(s.nome||s.codice||'?') + '</span><span style="color:#10b981;font-weight:700;margin-left:4px;">' + (s.punti||0) + ' pt</span></div>';
-                });
-                ph += '</div>';
-                elPodio.innerHTML = ph;
-              }
+            const sorted = [...squadre].sort((a,b)=>(b.punti||0)-(a.punti||0));
+            if (sorted.length > 0) {
+              const med=['🥇','🥈','🥉'];
+              bh += '<div style="font-size:0.78rem;color:#64748b;margin-bottom:0.5rem;">' + sorted.length + ' squadre partecipanti</div>';
+              bh += '<div class="stat-podio" style="margin-bottom:0.75rem;">';
+              sorted.slice(0,3).forEach((s,i) => {
+                bh += '<div class="stat-podio-item">' + med[i] + ' <span style="color:#e2e8f0;">' + _escHtml(s.nome||s.codice||'?') + '</span><span style="color:#10b981;font-weight:700;margin-left:4px;">' + (s.punti||0) + ' pt</span></div>';
+              });
+              bh += '</div>';
+            } else { bh += '<div style="color:#64748b;font-size:0.85rem;margin-bottom:0.75rem;">Nessuna squadra.</div>'; }
+
+            // Grafico accuratezza per domanda
+            if (reali.length > 0) {
+              const perDom = {};
+              reali.forEach(r => {
+                const d = String(r.numDomanda);
+                if (!perDom[d]) perDom[d] = {c:0,s:0};
+                if (r.esito==='corretta') perDom[d].c++; else perDom[d].s++;
+              });
+              const domande = Object.keys(perDom).sort((a,b)=>parseInt(a)-parseInt(b));
+              const accData = domande.map(d => { const t=perDom[d].c+perDom[d].s; return t>0?Math.round(perDom[d].c/t*100):0; });
+              const globPct = Math.round(reali.filter(r=>r.esito==='corretta').length/reali.length*100);
+              const cId = 'chartGara_' + safeId;
+              bh += '<div style="font-size:0.78rem;color:#94a3b8;margin-bottom:0.4rem;">Accuratezza per domanda · <span style="color:#10b981;font-weight:700;">' + globPct + '% globale</span></div>';
+              bh += '<canvas id="' + cId + '" style="max-height:110px;"></canvas>';
+              bh += '</div>';
+              bodyEl.innerHTML = bh;
+              setTimeout(() => {
+                const cv = document.getElementById(cId);
+                if (!cv) return;
+                _statCharts.push(new Chart(cv, {
+                  type:'bar',
+                  data:{ labels:domande.map(d=>'Q'+d), datasets:[{ data:accData, borderRadius:4, label:'%', backgroundColor:accData.map(v=>v>=60?'#10b981':v>=35?'#f59e0b':'#f87171') }] },
+                  options:{ plugins:{legend:{display:false}}, scales:{ x:{ticks:{color:'#94a3b8',font:{size:10}},grid:{color:'#1e293b'}}, y:{min:0,max:100,ticks:{color:'#94a3b8',callback:v=>v+'%'},grid:{color:'#334155'}} } }
+                }));
+              }, 50);
+            } else {
+              bh += '<div style="color:#64748b;font-size:0.85rem;font-style:italic;">Nessuna risposta registrata.</div></div>';
+              bodyEl.innerHTML = bh;
             }
-
-            // Accuratezza per domanda
-            const elAcc = document.getElementById('stat-acc-' + g.id);
-            if (!elAcc) return;
-            const risposte = (risposteObj && Array.isArray(risposteObj.risposte)) ? risposteObj.risposte : [];
-            const reali = risposte.filter(r => r.esito === 'corretta' || r.esito === 'sbagliata');
-            if (reali.length === 0) return;
-
-            const perDom = {};
-            reali.forEach(r => {
-              const d = String(r.numDomanda);
-              if (!perDom[d]) perDom[d] = { c: 0, s: 0 };
-              if (r.esito === 'corretta') perDom[d].c++; else perDom[d].s++;
-            });
-            const domande = Object.keys(perDom).sort((a,b) => parseInt(a)-parseInt(b));
-            const accData = domande.map(d => {
-              const tot = perDom[d].c + perDom[d].s;
-              return tot > 0 ? Math.round(perDom[d].c / tot * 100) : 0;
-            });
-            const globale = Math.round(reali.filter(r => r.esito==='corretta').length / reali.length * 100);
-            const canvasId = 'chartAcc_' + String(g.id).replace(/[^a-z0-9]/gi,'_');
-
-            elAcc.innerHTML =
-              '<div style="font-size:0.78rem;color:#94a3b8;margin-bottom:0.4rem;">Accuratezza risposte · <span style="color:#10b981;font-weight:700;">' + globale + '% globale</span></div>' +
-              '<div class="stat-chart-wrap"><canvas id="' + canvasId + '" style="max-height:110px;"></canvas></div>';
-
-            setTimeout(() => {
-              const canvas = document.getElementById(canvasId);
-              if (!canvas) return;
-              _statCharts.push(new Chart(canvas, {
-                type: 'bar',
-                data: {
-                  labels: domande.map(d => 'Q' + d),
-                  datasets: [{ data: accData, borderRadius: 4, label: '%',
-                    backgroundColor: accData.map(v => v >= 60 ? '#10b981' : v >= 35 ? '#f59e0b' : '#f87171') }]
-                },
-                options: {
-                  plugins: { legend: { display: false } },
-                  scales: {
-                    x: { ticks: { color: '#94a3b8', font: { size: 10 } }, grid: { color: '#1e293b' } },
-                    y: { min: 0, max: 100, ticks: { color: '#94a3b8', callback: v => v + '%' }, grid: { color: '#334155' } }
-                  }
-                }
-              }));
-            }, 50);
-
-          }).catch(() => {
-            const el = document.getElementById('stat-podio-' + g.id);
-            if (el) el.textContent = 'Dati non disponibili.';
           });
+
+          // GRAFICI GLOBALI ACCURATEZZA
+          const wrapEl = document.getElementById('stat-acc-globale-wrap');
+          if (!wrapEl) return;
+          const totRisposte = accTot.c + accTot.s;
+          if (totRisposte === 0) {
+            wrapEl.innerHTML = '<div style="color:#64748b;font-size:0.85rem;font-style:italic;padding:0.5rem 0;">Nessuna risposta registrata nelle gare.</div>';
+            return;
+          }
+          const pctGlob = Math.round(accTot.c / totRisposte * 100);
+          const ocEntries = Object.entries(accOC).sort((a,b)=>a[1].sk.localeCompare(b[1].sk));
+
+          wrapEl.innerHTML =
+            '<div class="stat-row-2">' +
+            '<div class="stat-gara-card stat-chart-wrap" style="display:flex;flex-direction:column;">' +
+            '<div style="font-size:0.78rem;color:#94a3b8;margin-bottom:0.5rem;font-weight:600;">Totale su tutte le gare</div>' +
+            '<canvas id="chartAccGlob" style="max-height:160px;"></canvas></div>' +
+            '<div class="stat-gara-card stat-chart-wrap" style="display:flex;flex-direction:column;">' +
+            '<div style="font-size:0.78rem;color:#94a3b8;margin-bottom:0.5rem;font-weight:600;">Per ordine e classe</div>' +
+            '<canvas id="chartAccOC" style="max-height:160px;"></canvas></div>' +
+            '</div>';
+
+          setTimeout(() => {
+            // Donut globale
+            _statCharts.push(new Chart(document.getElementById('chartAccGlob'), {
+              type:'doughnut',
+              data:{ labels:['Corrette','Sbagliate'], datasets:[{ data:[accTot.c, accTot.s], backgroundColor:['#10b981','#f87171'], borderWidth:0 }] },
+              options:{
+                plugins:{
+                  legend:{ position:'bottom', labels:{ color:'#94a3b8', font:{size:11} } },
+                  tooltip:{ callbacks:{ label: ctx => ctx.label + ': ' + ctx.parsed + ' (' + Math.round(ctx.parsed/(accTot.c+accTot.s)*100) + '%)' } }
+                },
+                cutout:'60%'
+              }
+            }));
+
+            // Barre per ordine/classe
+            const ocLabels = ocEntries.map(([,v])=>v.label);
+            const ocAcc    = ocEntries.map(([,v])=>{ const t=v.c+v.s; return t>0?Math.round(v.c/t*100):0; });
+            _statCharts.push(new Chart(document.getElementById('chartAccOC'), {
+              type:'bar',
+              data:{ labels:ocLabels, datasets:[{ data:ocAcc, borderRadius:4, label:'% corrette', backgroundColor:ocAcc.map(v=>v>=60?'#10b981':v>=35?'#f59e0b':'#f87171') }] },
+              options:{
+                plugins:{ legend:{display:false} },
+                scales:{
+                  x:{ ticks:{color:'#94a3b8',font:{size:10}}, grid:{color:'#1e293b'} },
+                  y:{ min:0, max:100, ticks:{color:'#94a3b8',callback:v=>v+'%'}, grid:{color:'#334155'} }
+                }
+              }
+            }));
+          }, 50);
         });
 
       }).catch(err => {
