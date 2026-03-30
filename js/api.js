@@ -4,9 +4,10 @@
  * fetch() fallisce a causa dei redirect Google; <script> injection no.
  */
 
+let _lkSeq = 0;
 function lkApi(url, params, timeoutMs) {
   return new Promise((resolve, reject) => {
-    const cbName = '_lkCb_' + Date.now();
+    const cbName = '_lkCb_' + (++_lkSeq) + '_' + Date.now();
 
     const timer = setTimeout(() => {
       cleanup();
