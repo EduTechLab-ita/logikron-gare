@@ -1784,9 +1784,9 @@
       body.innerHTML = '<div style="text-align:center;padding:3rem;color:#94a3b8;">⏳ Caricamento dati...</div>';
 
       Promise.all([
-        lkApi(API, { action: 'getStatIscrizioni' }),
-        lkApi(API, { action: 'getIntenzioni' }),
-        lkApi(API, { action: 'getListaGare' })
+        lkApi(API, { action: 'getStatIscrizioni' }, 30000),
+        lkApi(API, { action: 'getIntenzioni' }, 30000),
+        lkApi(API, { action: 'getListaGare' }, 30000)
       ]).then(([statIscr, intenzioni, gare]) => {
         const nIntenzioni = Array.isArray(intenzioni) ? intenzioni.length : 0;
         const gareList = Array.isArray(gare) ? [...gare].sort((a, b) => {
