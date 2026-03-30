@@ -568,15 +568,21 @@
         <div class="card">
           <table style="width:100%;border-collapse:collapse;">
             <tr>
-              <td style="padding:8px;border-bottom:1px solid var(--lk-border);"><strong>Google Sheet Master</strong></td>
+              <td style="padding:8px;border-bottom:1px solid var(--lk-border);"><strong>Google Sheet Master</strong><br><small style="color:#64748b;">Unico per tutti gli anni — si resetta a inizio anno</small></td>
               <td style="padding:8px;border-bottom:1px solid var(--lk-border);text-align:right;">
-                <a href="#" id="linkSheetMaster" target="_blank" class="btn btn-outline" style="padding:4px 12px;font-size:0.85rem;">Apri</a>
+                <a href="https://docs.google.com/spreadsheets/d/1V9_1oV9M1KnIm5GJoKITUR092GX-erFcYaGTbPvvnNE" id="linkSheetMaster" target="_blank" class="btn btn-outline" style="padding:4px 12px;font-size:0.85rem;">Apri</a>
               </td>
             </tr>
             <tr>
-              <td style="padding:8px;border-bottom:1px solid var(--lk-border);"><strong>Cartella Drive Anno</strong></td>
+              <td style="padding:8px;border-bottom:1px solid var(--lk-border);"><strong>Cartella Drive LogiKron</strong><br><small style="color:#64748b;">Root con sheet + cartelle per anno scolastico</small></td>
               <td style="padding:8px;border-bottom:1px solid var(--lk-border);text-align:right;">
-                <a href="#" id="linkDriveAnno" target="_blank" class="btn btn-outline" style="padding:4px 12px;font-size:0.85rem;">Apri</a>
+                <a href="https://drive.google.com/drive/folders/1RZf2PT8xnLVJnK7EMuKbOhacx0nU0iDw" id="linkDriveRoot" target="_blank" class="btn btn-outline" style="padding:4px 12px;font-size:0.85rem;">Apri</a>
+              </td>
+            </tr>
+            <tr>
+              <td style="padding:8px;border-bottom:1px solid var(--lk-border);"><strong>Cartella Drive <span id="labelAnnoLink">Anno corrente</span></strong><br><small style="color:#64748b;">Attestati, Statistiche, Dati Gara</small></td>
+              <td style="padding:8px;border-bottom:1px solid var(--lk-border);text-align:right;">
+                <a href="#" id="linkDriveAnno" target="_blank" class="btn btn-outline" style="padding:4px 12px;font-size:0.85rem;color:#94a3b8;" title="Crea le cartelle con il pulsante Setup per attivare questo link">Apri</a>
               </td>
             </tr>
             <tr>
@@ -1272,9 +1278,14 @@
           btn.disabled = false;
           btn.textContent = 'Crea Cartelle';
           if (r.error) { alert('Errore: ' + r.error); return; }
-          if (r.sheetUrl)      document.getElementById('linkSheetMaster').href = r.sheetUrl;
-          if (r.annoFolderUrl) document.getElementById('linkDriveAnno').href    = r.annoFolderUrl;
-          alert('✅ Setup completato per ' + r.annoScolastico + '!\n\nCartelle Drive create. I Link Rapidi sono stati aggiornati.');
+          if (r.annoFolderUrl) {
+            const linkAnno = document.getElementById('linkDriveAnno');
+            linkAnno.href = r.annoFolderUrl;
+            linkAnno.style.color = '';
+            linkAnno.title = '';
+            document.getElementById('labelAnnoLink').textContent = r.annoScolastico;
+          }
+          alert('✅ Setup completato per ' + r.annoScolastico + '!\n\nCreate su Drive:\n📁 ' + r.annoScolastico + '\n  ├── 📁 Attestati\n  ├── 📁 Statistiche\n  └── 📁 Dati Gara\n\nI Link Rapidi sono stati aggiornati.');
         })
         .catch(err => { btn.disabled = false; btn.textContent = 'Crea Cartelle'; alert('Errore: ' + err.message); });
     }
@@ -1283,8 +1294,13 @@
       lkApi(API, { action: 'getSetupInfo' })
         .then(r => {
           if (!r || r.error) return;
-          if (r.sheetUrl)      document.getElementById('linkSheetMaster').href = r.sheetUrl;
-          if (r.annoFolderUrl) document.getElementById('linkDriveAnno').href    = r.annoFolderUrl;
+          if (r.annoFolderUrl) {
+            const linkAnno = document.getElementById('linkDriveAnno');
+            linkAnno.href = r.annoFolderUrl;
+            linkAnno.style.color = '';
+            linkAnno.title = '';
+            document.getElementById('labelAnnoLink').textContent = LOGIKRON_CONFIG.annoScolastico;
+          }
         })
         .catch(() => {});
     }

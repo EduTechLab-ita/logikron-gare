@@ -56,14 +56,15 @@ const LOGIKRON_CONFIG = {
   // Proprietà: animatoredigitale@icgottolengo.edu.it
   // Condiviso con: fabiorizzotto75@gmail.com
   drive: {
-    // Cartella root LogiKron nel Drive di animatore
-    rootFolderId: '',    // Da compilare: ID cartella /LogiKron/
+    // Cartella root LogiKron nel Drive di animatoredigitale@
+    // IL MIO DRIVE > GIOCHI MATEMATICI > LOGIKRON
+    rootFolderId: '1RZf2PT8xnLVJnK7EMuKbOhacx0nU0iDw',
 
-    // Cartella anno corrente (creata automaticamente)
-    annoFolderId: '',    // Da compilare: ID cartella /LogiKron/2025-2026/
+    // Cartella anno corrente — popolata da setupNuovoAnno()
+    annoFolderId: '',
 
-    // Sheet Master con tutti i dati
-    sheetMasterId: '',   // Da compilare: ID dello Sheet Master
+    // Sheet Master con tutti i dati (unico, permanente, resettato ogni anno)
+    sheetMasterId: '1V9_1oV9M1KnIm5GJoKITUR092GX-erFcYaGTbPvvnNE',
   },
 
   // ==========================================
