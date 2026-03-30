@@ -209,6 +209,7 @@
     .stat-btn-print:hover { background: rgba(255,255,255,0.2); }
     @media print {
       * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+      body { background: white !important; margin: 0 !important; padding: 0 !important; }
       body > *:not(#modalStatistiche) { display: none !important; }
       #modalStatistiche { position: static !important; background: white !important; display: block !important; height: auto !important; }
       .mstat-header { background: white !important; border-bottom: 2px solid #333 !important; padding: 0.75rem 1rem !important; }
@@ -224,7 +225,7 @@
       .stat-accordion-body { display: block !important; }
       .stat-accordion-arrow { display: none !important; }
       .stat-accordion-header { background: #f0f0f0 !important; }
-      .stat-section-title { color: #555 !important; border-bottom-color: #ddd !important; }
+      .stat-section-title { color: #555 !important; border-bottom-color: #ddd !important; break-after: avoid; page-break-after: avoid; }
       .stat-ic-bar { background: #16a34a !important; }
       .stat-podio-item { background: #f0f0f0 !important; border-color: #ddd !important; }
       .stat-row-2 { grid-template-columns: 1fr 1fr !important; }
@@ -233,7 +234,7 @@
       /* Grafici a barre/raggruppati: nascosti in stampa (sostituiti da tabelle) */
       .screen-only { display: none !important; }
       /* Grafici ciambella: rimangono tondi e piccoli */
-      #chartOrdine, #chartAccGlob { width: 130px !important; height: 130px !important; aspect-ratio: 1 !important; }
+      #chartOrdine, #chartAccGlob { display: block !important; width: 130px !important; height: 130px !important; aspect-ratio: 1 / 1 !important; max-height: none !important; }
       canvas { page-break-inside: avoid; }
       /* Dettaglio gare: non stampare (i dati dettagliati vanno su Drive) */
       .stat-gare-detail { display: none !important; }
