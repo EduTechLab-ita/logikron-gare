@@ -204,7 +204,28 @@
       padding: 0.85rem 1.25rem; display: flex; align-items: center; gap: 1rem;
       flex-shrink: 0; border-bottom: 3px solid #10b981;
     }
-    .mstat-body { flex: 1; overflow-y: auto; padding: 1.5rem; background: #0f172a; color: #e2e8f0; }
+    .mstat-body { flex: 1; overflow-y: auto; padding: 1.5rem; background: #0f172a; color: #e2e8f0; font-size: 0.93rem; }
+    .stat-btn-print { background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.25); color: white; border-radius: 6px; padding: 5px 14px; font-size: 0.82rem; cursor: pointer; white-space: nowrap; }
+    .stat-btn-print:hover { background: rgba(255,255,255,0.2); }
+    @media print {
+      body > *:not(#modalStatistiche) { display: none !important; }
+      #modalStatistiche { position: static !important; background: white !important; display: block !important; height: auto !important; }
+      .mstat-header { background: white !important; border-bottom: 2px solid #333 !important; padding: 0.75rem 1rem !important; }
+      .mstat-header h2 { color: #1e293b !important; }
+      .mstat-header div { color: #555 !important; }
+      .mgara-close-btn, .stat-btn-print { display: none !important; }
+      .mstat-body { background: white !important; color: #1e293b !important; padding: 1rem !important; overflow: visible !important; }
+      .stat-banner-card { background: #f5f7fa !important; border: 1px solid #ddd !important; break-inside: avoid; }
+      .stat-banner-value { color: #16a34a !important; }
+      .stat-gara-card { background: #f9fafb !important; border: 1px solid #ddd !important; break-inside: avoid; }
+      .stat-accordion-item { background: #f9fafb !important; border: 1px solid #ddd !important; break-inside: avoid; }
+      .stat-accordion-body { display: block !important; }
+      .stat-accordion-arrow { display: none !important; }
+      .stat-section-title { color: #555 !important; border-bottom-color: #ddd !important; }
+      .stat-ic-bar { background: #16a34a !important; }
+      .stat-podio-item { background: #f0f0f0 !important; border-color: #ddd !important; }
+      td, th { color: #333 !important; }
+    }
     .stat-banner {
       display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
       gap: 1rem; margin-bottom: 1.5rem;
@@ -779,7 +800,11 @@
         <h2 style="margin:0;font-size:1.05rem;color:white;">📈 Statistiche LogiKron</h2>
         <div style="font-size:0.8rem;color:#94a3b8;margin-top:2px;">Anno <span id="mstatAnno"></span></div>
       </div>
-      <button class="mgara-close-btn" onclick="chiudiStatistiche()">✕ Chiudi</button>
+      <div style="display:flex;gap:0.5rem;align-items:center;">
+        <button class="stat-btn-print" onclick="stampaPDF()">🖨️ Stampa / PDF</button>
+        <button class="stat-btn-print" onclick="salvaStatistiche()">💾 Salva su Drive</button>
+        <button class="mgara-close-btn" onclick="chiudiStatistiche()">✕ Chiudi</button>
+      </div>
     </div>
     <div class="mstat-body" id="mstatBody">
       <div style="text-align:center;padding:3rem;color:#94a3b8;">Caricamento...</div>
@@ -1796,6 +1821,16 @@
       document.getElementById('modalStatistiche').classList.remove('aperto');
     }
 
+    function stampaPDF() {
+      // Espandi tutti gli accordion prima di stampare
+      document.querySelectorAll('.stat-accordion-item').forEach(el => el.classList.add('open'));
+      window.print();
+    }
+
+    function salvaStatistiche() {
+      alert('Salva su Drive — Da implementare');
+    }
+
     function toggleStatGara(id) {
       const item = document.getElementById('stat-acc-item-' + id);
       if (item) item.classList.toggle('open');
@@ -1836,8 +1871,8 @@
           if (!perOrdine[ord]) perOrdine[ord] = { squadre: 0, alunni: 0 };
           perOrdine[ord].squadre++; perOrdine[ord].alunni += alunni;
           const sk = ord.toLowerCase().slice(0,3) + cl.padStart(2,'0');
-          if (!perClasse[sk]) perClasse[sk] = { label: cl + 'ª ' + ord, squadre: 0 };
-          perClasse[sk].squadre++;
+          if (!perClasse[sk]) perClasse[sk] = { label: cl + 'ª ' + ord, squadre: 0, alunni: 0 };
+          perClasse[sk].squadre++; perClasse[sk].alunni += alunni;
           if (!perIC[ic]) perIC[ic] = { squadre: 0, alunni: 0 };
           perIC[ic].squadre++; perIC[ic].alunni += alunni;
         });
@@ -1863,8 +1898,17 @@
         if (nIntenzioni > 0) html += '<tr><td style="padding:5px 0;color:#94a3b8;">Tasso conversione</td><td style="text-align:right;font-weight:700;color:#f59e0b;">' + pct + '%</td></tr>';
         html += '</table></div>';
         html += '<div class="stat-gara-card stat-chart-wrap" style="display:flex;flex-direction:column;">';
-        html += '<div style="font-size:0.78rem;color:#94a3b8;margin-bottom:0.5rem;font-weight:600;">Squadre per ordine</div>';
-        html += '<canvas id="chartOrdine" style="max-height:160px;"></canvas></div></div>';
+        html += '<div style="font-size:0.78rem;color:#94a3b8;margin-bottom:0.5rem;font-weight:600;">Per ordine di scuola</div>';
+        html += '<canvas id="chartOrdine" style="max-height:120px;"></canvas>';
+        // mini-tabella ordine → squadre + alunni
+        html += '<table style="width:100%;border-collapse:collapse;font-size:0.82rem;margin-top:0.6rem;">';
+        html += '<tr><th style="color:#64748b;font-weight:600;padding:3px 0;text-align:left;">Ordine</th><th style="color:#64748b;font-weight:600;padding:3px 6px;text-align:center;">Squadre</th><th style="color:#64748b;font-weight:600;padding:3px 0;text-align:center;">Alunni</th></tr>';
+        Object.entries(perOrdine).forEach(([ord, d]) => {
+          html += '<tr><td style="padding:3px 0;color:#e2e8f0;">' + _escHtml(ord) + '</td>';
+          html += '<td style="padding:3px 6px;text-align:center;color:#10b981;font-weight:700;">' + d.squadre + '</td>';
+          html += '<td style="padding:3px 0;text-align:center;color:#60a5fa;font-weight:700;">' + d.alunni + '</td></tr>';
+        });
+        html += '</table></div></div>';
 
         // Per istituto
         if (icEntries.length > 0) {
@@ -1884,7 +1928,7 @@
         // Per classe
         if (classeEntries.length > 0) {
           html += '<div class="stat-section-title">Per Classe</div>';
-          html += '<div class="stat-gara-card stat-chart-wrap"><canvas id="chartClasse" style="max-height:150px;"></canvas></div>';
+          html += '<div class="stat-gara-card stat-chart-wrap"><canvas id="chartClasse" style="max-height:160px;"></canvas></div>';
         }
 
         // Accuratezza globale — placeholder (popolato dopo fase 2)
@@ -1931,8 +1975,17 @@
         if (classeEntries.length > 0) {
           _statCharts.push(new Chart(document.getElementById('chartClasse'), {
             type: 'bar',
-            data: { labels: classeEntries.map(([,v])=>v.label), datasets:[{ data:classeEntries.map(([,v])=>v.squadre), backgroundColor:'#6366f1', borderRadius:4, label:'Squadre' }] },
-            options: { plugins:{ legend:{display:false} }, scales:{ x:{ticks:{color:'#94a3b8',font:{size:10}},grid:{color:'#1e293b'}}, y:{ticks:{color:'#94a3b8',stepSize:1},grid:{color:'#334155'}} } }
+            data: {
+              labels: classeEntries.map(([,v])=>v.label),
+              datasets: [
+                { label:'Squadre', data:classeEntries.map(([,v])=>v.squadre), backgroundColor:'#6366f1', borderRadius:4 },
+                { label:'Alunni',  data:classeEntries.map(([,v])=>v.alunni),  backgroundColor:'#60a5fa', borderRadius:4 }
+              ]
+            },
+            options: {
+              plugins:{ legend:{ position:'bottom', labels:{ color:'#94a3b8', font:{size:10} } } },
+              scales:{ x:{ticks:{color:'#94a3b8',font:{size:10}},grid:{color:'#1e293b'}}, y:{ticks:{color:'#94a3b8',stepSize:1},grid:{color:'#334155'}} }
+            }
           }));
         }
 
