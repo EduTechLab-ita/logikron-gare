@@ -296,8 +296,9 @@
         <div class="info-panel" id="info-setup">
           <strong>Quando usare questa sezione:</strong> una sola volta all'inizio di ogni anno scolastico.
           <ul>
-            <li><strong>Crea Cartelle:</strong> prepara le cartelle su Google Drive per l'anno corrente. Fallo prima di aprire le intenzioni.</li>
-            <li><strong>Configura:</strong> modifica parametri come durata gara, numero quesiti, istituti partecipanti.</li>
+            <li><strong>Crea Cartelle:</strong> prepara le cartelle su Google Drive per l'anno corrente (sottocartelle Attestati, Statistiche, Dati Gara). Fallo prima di aprire le intenzioni.</li>
+            <li><strong>Configura → tab Parametri:</strong> modifica durata gara, numero quesiti, punteggi, password admin, email notifiche. Usa "Reset da regolamento" per tornare ai valori deliberati il 17/03/2026.</li>
+            <li><strong>Configura → tab Istituti:</strong> gestisci la lista degli IC e dei loro plessi. Al primo avvio clicca "Carica 19 IC predefiniti" per popolare l'Ambito 10. Le sigle qui definite vengono usate per generare automaticamente i codici/nomi delle squadre (es. GT+FI → GTFIPRI4A1). Puoi aggiungere nuovi IC o plessi in qualsiasi momento — le sigle devono essere univoche.</li>
           </ul>
         </div>
         <div class="admin-grid">
@@ -327,9 +328,11 @@
         <div class="info-panel" id="info-fase1">
           <strong>Cosa fare:</strong>
           <ul>
+            <li>Prima di aprire la fase 1, assicurati di aver caricato la lista IC in <strong>Configura → tab Istituti</strong>: i docenti troveranno il loro IC in un menu a tendina (non più campo libero).</li>
             <li>Clicca <strong>Apri Fase 1 + Attiva form</strong>: abilita il pulsante Intenzioni sul sito pubblico. Al termine ti mostra il link da condividere.</li>
             <li>Condividi il link ai docenti (email, WhatsApp, registro elettronico).</li>
             <li>Aspetta che compilino il form. Visualizza chi si è iscritto con <em>Visualizza lista</em>.</li>
+            <li>Se un docente ha lasciato una <strong>nota</strong> nel form, riceverai una notifica via email all'indirizzo configurato in Parametri → "Email notifiche admin".</li>
             <li>Quando sei pronto, usa <strong>Apri Fase 2 + Invia mail</strong>: abilita le iscrizioni e invia automaticamente una mail a tutti i docenti con il link.</li>
           </ul>
           <strong>Tornare indietro / resettare:</strong>
@@ -373,8 +376,8 @@
         <div class="info-panel" id="info-fase2">
           <strong>Come funziona:</strong>
           <ul>
-            <li>I docenti aprono il form e registrano i nomi dei loro studenti per ogni squadra.</li>
-            <li>Il sistema assegna automaticamente un <strong>codice univoco</strong> a ogni squadra (es. <code>GTFIPRI4A1</code>). Questo è anche il <strong>codice di accesso il giorno della gara</strong>.</li>
+            <li>I docenti aprono il form, scelgono il loro IC dal menu a tendina e il plesso (con suggerimento automatico). Il sistema mostra in anteprima i nomi delle squadre prima dell'invio.</li>
+            <li>Il sistema assegna automaticamente un <strong>codice univoco</strong> a ogni squadra (es. <code>GTFIPRI4A1</code> = sigla IC + sigla plesso + ordine + classe + sezione + numero). Questo è anche il <strong>codice di accesso il giorno della gara</strong>. Le sigle si gestiscono in <strong>Configura → tab Istituti</strong>.</li>
             <li>I docenti ricevono una mail di conferma con tutti i codici squadra.</li>
             <li>Puoi visualizzare e gestire le squadre iscritte direttamente da qui (pulsante "Visualizza Iscrizioni").</li>
           </ul>
@@ -607,7 +610,7 @@
           <ul>
             <li><strong>Filtra per ordine:</strong> scrivi solo ai docenti della primaria o solo alla secondaria.</li>
             <li><strong>Filtra per classe:</strong> es. solo ai docenti delle classi quarte, o solo delle quinte.</li>
-            <li><strong>Filtra per istituto:</strong> scrivi solo ai docenti di un IC specifico.</li>
+            <li><strong>Filtra per istituto:</strong> scrivi solo ai docenti di un IC specifico. Il menu mostra tutti gli IC registrati in <em>Configura → Istituti</em> — lascia "Tutti" per scrivere a tutti.</li>
           </ul>
           Puoi combinare i filtri. Usa <em>Vedi destinatari</em> per verificare prima di inviare.
           <br><strong>Nota:</strong> la mail arriverà sempre con il logo LogiKron e firmata da EduTechLab.
