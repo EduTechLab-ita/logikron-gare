@@ -44,10 +44,10 @@ const LOGIKRON_CONFIG = {
   // ==========================================
   // Questi URL vengono generati dopo il deploy degli script
   webAppUrls: {
-    intenzioni: 'https://script.google.com/macros/s/AKfycbzJMnKWLUbS5Cy7mh5EGYs-0vwyo1wOIo2hWMRgdUAiPPkiZV0sNGpFsENa7IeknQUaSQ/exec',
-    iscrizioni: 'https://script.google.com/macros/s/AKfycbzJMnKWLUbS5Cy7mh5EGYs-0vwyo1wOIo2hWMRgdUAiPPkiZV0sNGpFsENa7IeknQUaSQ/exec',
-    gare: 'https://script.google.com/macros/s/AKfycbzJMnKWLUbS5Cy7mh5EGYs-0vwyo1wOIo2hWMRgdUAiPPkiZV0sNGpFsENa7IeknQUaSQ/exec',
-    admin: 'https://script.google.com/macros/s/AKfycbzJMnKWLUbS5Cy7mh5EGYs-0vwyo1wOIo2hWMRgdUAiPPkiZV0sNGpFsENa7IeknQUaSQ/exec'
+    intenzioni: 'https://script.google.com/macros/s/AKfycbyBE3SRp0xlgEhhX1jYMGbKLCGbcOWkLfXoXjBMxZ3nDpvmV1EJXekrxkJhTpxE9ghjvg/exec',
+    iscrizioni: 'https://script.google.com/macros/s/AKfycbyBE3SRp0xlgEhhX1jYMGbKLCGbcOWkLfXoXjBMxZ3nDpvmV1EJXekrxkJhTpxE9ghjvg/exec',
+    gare: 'https://script.google.com/macros/s/AKfycbyBE3SRp0xlgEhhX1jYMGbKLCGbcOWkLfXoXjBMxZ3nDpvmV1EJXekrxkJhTpxE9ghjvg/exec',
+    admin: 'https://script.google.com/macros/s/AKfycbyBE3SRp0xlgEhhX1jYMGbKLCGbcOWkLfXoXjBMxZ3nDpvmV1EJXekrxkJhTpxE9ghjvg/exec'
   },
 
   // ==========================================
