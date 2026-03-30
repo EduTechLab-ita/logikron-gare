@@ -208,23 +208,36 @@
     .stat-btn-print { background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.25); color: white; border-radius: 6px; padding: 5px 14px; font-size: 0.82rem; cursor: pointer; white-space: nowrap; }
     .stat-btn-print:hover { background: rgba(255,255,255,0.2); }
     @media print {
+      * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
       body > *:not(#modalStatistiche) { display: none !important; }
       #modalStatistiche { position: static !important; background: white !important; display: block !important; height: auto !important; }
       .mstat-header { background: white !important; border-bottom: 2px solid #333 !important; padding: 0.75rem 1rem !important; }
       .mstat-header h2 { color: #1e293b !important; }
       .mstat-header div { color: #555 !important; }
       .mgara-close-btn, .stat-btn-print { display: none !important; }
-      .mstat-body { background: white !important; color: #1e293b !important; padding: 1rem !important; overflow: visible !important; }
+      .mstat-body { background: white !important; color: #1e293b !important; padding: 1rem !important; overflow: visible !important; font-size: 0.88rem !important; }
       .stat-banner-card { background: #f5f7fa !important; border: 1px solid #ddd !important; break-inside: avoid; }
       .stat-banner-value { color: #16a34a !important; }
+      .stat-banner-label { color: #555 !important; }
       .stat-gara-card { background: #f9fafb !important; border: 1px solid #ddd !important; break-inside: avoid; }
       .stat-accordion-item { background: #f9fafb !important; border: 1px solid #ddd !important; break-inside: avoid; }
       .stat-accordion-body { display: block !important; }
       .stat-accordion-arrow { display: none !important; }
+      .stat-accordion-header { background: #f0f0f0 !important; }
       .stat-section-title { color: #555 !important; border-bottom-color: #ddd !important; }
       .stat-ic-bar { background: #16a34a !important; }
       .stat-podio-item { background: #f0f0f0 !important; border-color: #ddd !important; }
+      .stat-row-2 { grid-template-columns: 1fr 1fr !important; }
+      /* Tabelle dati: visibili in stampa */
+      .print-only { display: block !important; }
+      /* Grafici a barre/raggruppati: nascosti in stampa (sostituiti da tabelle) */
+      .screen-only { display: none !important; }
+      /* Grafici ciambella: rimangono ma piccoli */
+      #chartOrdine { max-height: 100px !important; max-width: 150px !important; }
+      #chartAccGlob { max-height: 100px !important; max-width: 150px !important; }
+      canvas { page-break-inside: avoid; }
       td, th { color: #333 !important; }
+      .stat-print-table th { background: #f0f0f0 !important; color: #333 !important; border: 1px solid #ccc !important; }
     }
     .stat-banner {
       display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
@@ -264,6 +277,10 @@
     .stat-accordion-item.open .stat-accordion-arrow { transform: rotate(90deg); }
     .stat-accordion-body { display: none; padding: 0 1rem 1rem 1rem; border-top: 1px solid #334155; }
     .stat-accordion-item.open .stat-accordion-body { display: block; }
+    .print-only { display: none; }
+    .stat-print-table { width:100%; border-collapse:collapse; font-size:0.85rem; }
+    .stat-print-table th { padding:5px 8px; text-align:center; font-weight:600; }
+    .stat-print-table td { padding:5px 8px; text-align:center; border:1px solid #e2e8f0; }
 
     /* ===== MODAL GESTIONE ISCRITTI ===== */
     .modal-overlay { position:fixed; inset:0; background:rgba(0,0,0,0.55); z-index:2000; overflow-y:auto; display:flex; align-items:flex-start; justify-content:center; padding:1.5rem 1rem; }
@@ -1928,7 +1945,16 @@
         // Per classe
         if (classeEntries.length > 0) {
           html += '<div class="stat-section-title">Per Classe</div>';
-          html += '<div class="stat-gara-card stat-chart-wrap"><canvas id="chartClasse" style="max-height:160px;"></canvas></div>';
+          html += '<div class="stat-gara-card">';
+          html += '<div class="screen-only stat-chart-wrap"><canvas id="chartClasse" style="max-height:160px;"></canvas></div>';
+          html += '<table class="print-only stat-print-table">';
+          html += '<tr><th style="text-align:left;background:#f0f0f0;border:1px solid #ccc;">Classe</th><th style="background:#ede9fe;border:1px solid #ccc;">Squadre</th><th style="background:#dbeafe;border:1px solid #ccc;">Alunni</th></tr>';
+          classeEntries.forEach(([,v]) => {
+            html += '<tr><td style="text-align:left;font-weight:600;background:#fafafa;border:1px solid #e2e8f0;">' + _escHtml(v.label) + '</td>';
+            html += '<td style="background:#f5f3ff;color:#5b21b6;font-weight:700;border:1px solid #e2e8f0;">' + v.squadre + '</td>';
+            html += '<td style="background:#eff6ff;color:#1d4ed8;font-weight:700;border:1px solid #e2e8f0;">' + v.alunni + '</td></tr>';
+          });
+          html += '</table></div>';
         }
 
         // Accuratezza globale — placeholder (popolato dopo fase 2)
@@ -2060,7 +2086,15 @@
               const globPct = Math.round(reali.filter(r=>r.esito==='corretta').length/reali.length*100);
               const cId = 'chartGara_' + safeId;
               bh += '<div style="font-size:0.78rem;color:#94a3b8;margin-bottom:0.4rem;">Accuratezza per domanda · <span style="color:#10b981;font-weight:700;">' + globPct + '% globale</span></div>';
-              bh += '<canvas id="' + cId + '" style="max-height:110px;"></canvas>';
+              // Grafico (schermo) + tabella (stampa)
+              bh += '<div class="screen-only"><canvas id="' + cId + '" style="max-height:110px;"></canvas></div>';
+              const _gc = v => v>=60?'#dcfce7':v>=35?'#fef9c3':'#fee2e2';
+              const _tc = v => v>=60?'#166534':v>=35?'#92400e':'#991b1b';
+              bh += '<table class="print-only stat-print-table"><tr>';
+              domande.forEach(d => { bh += '<th style="background:#f0f0f0;border:1px solid #ccc;">Q' + d + '</th>'; });
+              bh += '<th style="background:#f0f0f0;border:1px solid #ccc;">Glob.</th></tr><tr>';
+              accData.forEach(v => { bh += '<td style="background:' + _gc(v) + ';color:' + _tc(v) + ';font-weight:700;border:1px solid #e2e8f0;">' + v + '%</td>'; });
+              bh += '<td style="background:' + _gc(globPct) + ';color:' + _tc(globPct) + ';font-weight:700;border:1px solid #e2e8f0;">' + globPct + '%</td></tr></table>';
               bh += '</div>';
               bodyEl.innerHTML = bh;
               setTimeout(() => {
@@ -2089,14 +2123,35 @@
           const pctGlob = Math.round(accTot.c / totRisposte * 100);
           const ocEntries = Object.entries(accOC).sort((a,b)=>a[1].sk.localeCompare(b[1].sk));
 
+          // Build tabella OC per stampa
+          const _gc2 = v => v>=60?'#dcfce7':v>=35?'#fef9c3':'#fee2e2';
+          const _tc2 = v => v>=60?'#166534':v>=35?'#92400e':'#991b1b';
+          let ocPrintTable = '<table class="print-only stat-print-table" style="margin-top:0.5rem;">';
+          ocPrintTable += '<tr><th style="text-align:left;background:#f0f0f0;border:1px solid #ccc;">Classe</th><th style="background:#f0f0f0;border:1px solid #ccc;">Risposte</th><th style="background:#f0f0f0;border:1px solid #ccc;">Corrette</th><th style="background:#f0f0f0;border:1px solid #ccc;">Sbagliate</th><th style="background:#f0f0f0;border:1px solid #ccc;">%</th></tr>';
+          ocEntries.forEach(([,v]) => {
+            const tot = v.c+v.s, pv = tot>0?Math.round(v.c/tot*100):0;
+            ocPrintTable += '<tr><td style="text-align:left;font-weight:600;background:#fafafa;border:1px solid #e2e8f0;">' + v.label + '</td>';
+            ocPrintTable += '<td style="border:1px solid #e2e8f0;">' + tot + '</td>';
+            ocPrintTable += '<td style="background:#dcfce7;color:#166534;font-weight:700;border:1px solid #e2e8f0;">' + v.c + '</td>';
+            ocPrintTable += '<td style="background:#fee2e2;color:#991b1b;font-weight:700;border:1px solid #e2e8f0;">' + v.s + '</td>';
+            ocPrintTable += '<td style="background:' + _gc2(pv) + ';color:' + _tc2(pv) + ';font-weight:700;border:1px solid #e2e8f0;">' + pv + '%</td></tr>';
+          });
+          const globRow = '<tr style="border-top:2px solid #ccc;"><td style="text-align:left;font-weight:700;background:#f0f0f0;border:1px solid #ccc;">Totale</td>';
+          ocPrintTable += globRow + '<td style="font-weight:700;background:#f0f0f0;border:1px solid #ccc;">' + (accTot.c+accTot.s) + '</td>';
+          ocPrintTable += '<td style="background:#dcfce7;color:#166534;font-weight:700;border:1px solid #ccc;">' + accTot.c + '</td>';
+          ocPrintTable += '<td style="background:#fee2e2;color:#991b1b;font-weight:700;border:1px solid #ccc;">' + accTot.s + '</td>';
+          ocPrintTable += '<td style="background:' + _gc2(pctGlob) + ';color:' + _tc2(pctGlob) + ';font-weight:700;border:1px solid #ccc;">' + pctGlob + '%</td></tr></table>';
+
           wrapEl.innerHTML =
             '<div class="stat-row-2">' +
-            '<div class="stat-gara-card stat-chart-wrap" style="display:flex;flex-direction:column;">' +
+            '<div class="stat-gara-card" style="display:flex;flex-direction:column;">' +
             '<div style="font-size:0.78rem;color:#94a3b8;margin-bottom:0.5rem;font-weight:600;">Totale su tutte le gare</div>' +
             '<canvas id="chartAccGlob" style="max-height:160px;"></canvas></div>' +
-            '<div class="stat-gara-card stat-chart-wrap" style="display:flex;flex-direction:column;">' +
+            '<div class="stat-gara-card" style="display:flex;flex-direction:column;">' +
             '<div style="font-size:0.78rem;color:#94a3b8;margin-bottom:0.5rem;font-weight:600;">Per ordine e classe</div>' +
-            '<canvas id="chartAccOC" style="max-height:160px;"></canvas></div>' +
+            '<div class="screen-only stat-chart-wrap"><canvas id="chartAccOC" style="max-height:160px;"></canvas></div>' +
+            ocPrintTable +
+            '</div>' +
             '</div>';
 
           setTimeout(() => {
