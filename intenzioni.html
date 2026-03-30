@@ -59,22 +59,19 @@
 
         <div class="form-group">
           <label class="form-label">Istituto Comprensivo *</label>
-          <div style="display: flex; align-items: center; gap: 0.5rem;">
-            <span style="white-space: nowrap; font-weight: 600; color: var(--lk-text-muted);">IC di</span>
-            <input type="text" id="istituto" class="form-control" required
-                   placeholder="es. Gottolengo, Calvisano, Orzinuovi...">
-          </div>
-          <p class="form-hint">Scrivi solo il nome del comune sede dell'Istituto.</p>
+          <select id="istituto" class="form-control" required onchange="aggiornaPlessiSuggeriti()">
+            <option value="">— Seleziona il tuo Istituto Comprensivo —</option>
+          </select>
+          <p class="form-hint" id="istitutoHint">Caricamento lista istituti...</p>
         </div>
 
         <div class="form-group">
           <label class="form-label">Plesso *</label>
-          <div style="display: flex; align-items: center; gap: 0.5rem;">
-            <span style="white-space: nowrap; font-weight: 600; color: var(--lk-text-muted);">Plesso di</span>
-            <input type="text" id="plesso" class="form-control" required
-                   placeholder="es. Gottolengo, Gambara, Fiesse...">
-          </div>
-          <p class="form-hint">Se la sede è unica, ripeti il nome dell'Istituto.</p>
+          <input type="text" id="plesso" class="form-control" required
+                 placeholder="es. Gottolengo, Gambara, Fiesse..."
+                 list="plessiSuggeriti" autocomplete="off">
+          <datalist id="plessiSuggeriti"></datalist>
+          <p class="form-hint">Se sei l'unica sede, scrivi il nome del tuo comune. Se il plesso non è nell'elenco, scrivilo direttamente: sarà aggiunto al sistema.</p>
         </div>
 
         <div class="form-group">
@@ -120,6 +117,7 @@
           <label class="form-label">Note (opzionale)</label>
           <textarea id="note" class="form-control" rows="3"
                     placeholder="Eventuali comunicazioni o richieste..."></textarea>
+          <p class="form-hint">Se riscontrate errori nei dati dell'istituto/plesso, o avete richieste particolari, scrivetele qui: l'organizzazione provvederà a rispondere o a correggere.</p>
         </div>
 
         <button type="submit" class="btn btn-primary btn-lg btn-block mt-3">
@@ -155,6 +153,60 @@
   <script src="js/api.js"></script>
   <script src="js/math-bg.js"></script>
   <script>
+    // Carica lista IC dal backend e popola il dropdown
+    var _icList = []; // [{nome, sigla}]
+    var _plessiMap = {}; // { 'IC Gottolengo': ['Gottolengo','Gambara',...] }
+
+    function caricaIstitutiForm() {
+      lkApi(LOGIKRON_CONFIG.webAppUrls.intenzioni, { action: 'getIstituti' })
+        .then(r => {
+          const sel = document.getElementById('istituto');
+          const hint = document.getElementById('istitutoHint');
+          if (!r || r.error || !r.istituti) {
+            hint.textContent = 'Impossibile caricare la lista. Scrivi il nome del tuo IC nel campo.';
+            sel.outerHTML = '<input type="text" id="istituto" class="form-control" required placeholder="Nome Istituto Comprensivo (es. IC Gottolengo)" onchange="aggiornaPlessiSuggeriti()">';
+            return;
+          }
+          _icList = r.istituti;
+          _icList.forEach(ic => {
+            const opt = document.createElement('option');
+            opt.value = ic.nome;
+            opt.textContent = ic.nome;
+            sel.appendChild(opt);
+          });
+          hint.textContent = 'Seleziona il tuo Istituto Comprensivo dall\'elenco.';
+        })
+        .catch(() => {
+          document.getElementById('istitutoHint').textContent = 'Impossibile caricare la lista. Scrivi il nome del tuo IC.';
+        });
+      // Carica anche tutti i plessi per l'autocomplete
+      lkApi(LOGIKRON_CONFIG.webAppUrls.intenzioni, { action: 'getPlessi', ic: '' })
+        .then(r => {
+          if (!r || !r.plessi) return;
+          r.plessi.forEach(p => {
+            if (!_plessiMap[p.ic]) _plessiMap[p.ic] = [];
+            _plessiMap[p.ic].push(p.nome);
+          });
+        })
+        .catch(() => {});
+    }
+
+    function aggiornaPlessiSuggeriti() {
+      const ic = document.getElementById('istituto').value;
+      const dl = document.getElementById('plessiSuggeriti');
+      dl.innerHTML = '';
+      const plessi = _plessiMap[ic] || [];
+      plessi.forEach(p => {
+        const opt = document.createElement('option');
+        opt.value = p;
+        dl.appendChild(opt);
+      });
+      // Svuota il campo plesso quando cambia IC
+      document.getElementById('plesso').value = '';
+    }
+
+    caricaIstitutiForm();
+
     // Verifica fase all'avvio: blocca il form se le intenzioni non sono aperte
     var _faseIntenzioni = null;
     function checkFaseIntenzioni() {
@@ -220,8 +272,8 @@
         action: 'salvaIntenzione',
         email: document.getElementById('emailDocente').value,
         nome: document.getElementById('nomeDocente').value,
-        istituto: 'IC di ' + document.getElementById('istituto').value.trim(),
-        plesso: 'Plesso di ' + document.getElementById('plesso').value.trim(),
+        istituto: document.getElementById('istituto').value.trim(),
+        plesso: document.getElementById('plesso').value.trim(),
         ordine: document.getElementById('ordine').value,
         classe: document.getElementById('classe').value,
         sezione: document.getElementById('sezione').value,

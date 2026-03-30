@@ -256,46 +256,12 @@
     const MAX_STUDENTI = 9;
     let squadraCount = 0;
 
-    // Dati IC/Plessi caricati dalle Intenzioni
+    // Dati IC/Plessi (per compatibilità con fallback)
     let istitutiDaIntenzioni = [];
 
-    // Mappe abbreviazioni per nomi squadra univoci
-    let icAbbr = {};      // "Gottolengo" → "GO"
-    let plessiAbbr = {};  // "Gottolengo" → { "Fiesse": "FI", "Gambara": "GA", ... }
-
-    /**
-     * Costruisce un mapping nome→abbreviazione univoca.
-     * Parte da 2 lettere, estende finché non ci sono conflitti.
-     */
-    function buildAbbreviazioni(nomi) {
-      const clean = s => s.toUpperCase().replace(/[^A-Z0-9]/g, '');
-      const result = {};
-      for (let len = 2; len <= 8; len++) {
-        const remaining = nomi.filter(n => !result[n]);
-        if (remaining.length === 0) break;
-        const groups = {};
-        remaining.forEach(n => {
-          const prefix = clean(n).substring(0, len);
-          if (!groups[prefix]) groups[prefix] = [];
-          groups[prefix].push(n);
-        });
-        Object.entries(groups).forEach(([prefix, group]) => {
-          if (group.length === 1) result[group[0]] = prefix;
-        });
-      }
-      // Fallback estremo: usa i primi 2 char + indice
-      nomi.forEach((n, i) => {
-        if (!result[n]) result[n] = clean(n).substring(0, 2) + (i + 1);
-      });
-      return result;
-    }
-
-    function estraiCittaIC(label) {
-      return label.replace(/^IC di /i, '').replace(/^IC /i, '').trim();
-    }
-    function estraiCittaPlesso(label) {
-      return label.replace(/^Plesso di /i, '').trim();
-    }
+    // Mappe sigle ufficiali dal backend
+    let _icSigleMap = {};      // 'IC Gottolengo' → 'GT'
+    let _plessiSigleMap = {};  // 'Fiesse' → 'FI'
     function abbreviaClasse(nome) {
       if (nome.toLowerCase().includes('pluriclasse')) {
         return 'P' + nome.replace(/[^0-9]/g, '');  // "Pluriclasse 3^-4^" → "P34"
@@ -315,13 +281,10 @@
       const sezione   = document.getElementById('sezione').value;
       if (!icVal || !plessoVal || !ordine || !classe || !sezione) return '';
 
-      const icCitta     = estraiCittaIC(icVal);
-      const plessoCitta = estraiCittaPlesso(plessoVal);
-      const icCode      = icAbbr[icCitta] || icCitta.substring(0, 2).toUpperCase();
-      const pAbbrMap    = plessiAbbr[icCitta] || {};
-      const plessoCode  = pAbbrMap[plessoCitta] || plessoCitta.substring(0, 2).toUpperCase();
-      const scuolaPart  = icCitta.toUpperCase() === plessoCitta.toUpperCase()
-                          ? icCode : icCode + plessoCode;
+      const icCode     = _icSigleMap[icVal]       || icVal.replace(/^IC /i, '').substring(0, 2).toUpperCase();
+      const plessoCode = _plessiSigleMap[plessoVal] || plessoVal.substring(0, 2).toUpperCase();
+      // Se le due sigle coincidono (IC a sede unica) non duplicare
+      const scuolaPart  = (icCode === plessoCode) ? icCode : icCode + plessoCode;
       const ordinePart  = ordine === 'primaria' ? 'PRI' : 'SEC';
       const classePart  = abbreviaClasse(classe);
       const sezionePart = sezione === 'Unica' ? 'U' : sezione;
@@ -400,30 +363,22 @@
       }
     }
 
-    function buildMappeAbbreviazioni() {
-      const icCitta = istitutiDaIntenzioni.map(ic => estraiCittaIC(ic.nome));
-      icAbbr = buildAbbreviazioni(icCitta);
-      istitutiDaIntenzioni.forEach(ic => {
-        const citta = estraiCittaIC(ic.nome);
-        const plessiCitta = ic.plessi.map(p => estraiCittaPlesso(p));
-        plessiAbbr[citta] = buildAbbreviazioni(plessiCitta);
-      });
-    }
-
     function initIstituti() {
       const sel = document.getElementById('istituto');
       sel.innerHTML = '<option value="">Caricamento...</option>';
       sel.disabled = true;
 
-      lkApi(LOGIKRON_CONFIG.webAppUrls.iscrizioni, { action: 'getIstitutiDaIntenzioni' })
-        .then(data => {
-          istitutiDaIntenzioni = Array.isArray(data) ? data : [];
-          buildMappeAbbreviazioni();
+      lkApi(LOGIKRON_CONFIG.webAppUrls.iscrizioni, { action: 'getIstituti' })
+        .then(r => {
+          const list = (r && r.istituti) ? r.istituti : [];
+          _icSigleMap = {};
+          list.forEach(ic => { _icSigleMap[ic.nome] = ic.sigla; });
+          istitutiDaIntenzioni = list.map(ic => ({ nome: ic.nome, plessi: [] }));
           sel.innerHTML = '<option value="">Seleziona l\'Istituto</option>';
-          if (istitutiDaIntenzioni.length === 0) {
-            sel.innerHTML += '<option value="" disabled>Nessun istituto iscritto</option>';
+          if (list.length === 0) {
+            sel.innerHTML += '<option value="" disabled>Nessun istituto registrato</option>';
           } else {
-            istitutiDaIntenzioni.forEach(ic => {
+            list.forEach(ic => {
               const opt = document.createElement('option');
               opt.value = ic.nome;
               opt.textContent = ic.nome;
@@ -433,40 +388,59 @@
           sel.disabled = false;
         })
         .catch(() => {
-          // Fallback alla lista statica di config
-          istitutiDaIntenzioni = LOGIKRON_CONFIG.istituti.map(ic => ({
-            nome: ic.nome,
-            plessi: ic.plessi.map(p => 'Plesso di ' + p.nome)
-          }));
-          buildMappeAbbreviazioni();
-          sel.innerHTML = '<option value="">Seleziona l\'Istituto</option>';
-          istitutiDaIntenzioni.forEach(ic => {
-            const opt = document.createElement('option');
-            opt.value = ic.nome;
-            opt.textContent = ic.nome;
-            sel.appendChild(opt);
-          });
-          sel.disabled = false;
+          // Fallback alla lista da Intenzioni
+          lkApi(LOGIKRON_CONFIG.webAppUrls.iscrizioni, { action: 'getIstitutiDaIntenzioni' })
+            .then(data => {
+              istitutiDaIntenzioni = Array.isArray(data) ? data : [];
+              sel.innerHTML = '<option value="">Seleziona l\'Istituto</option>';
+              istitutiDaIntenzioni.forEach(ic => {
+                const opt = document.createElement('option');
+                opt.value = ic.nome;
+                opt.textContent = ic.nome;
+                sel.appendChild(opt);
+              });
+              sel.disabled = false;
+            })
+            .catch(() => { sel.innerHTML = '<option value="">Errore caricamento</option>'; sel.disabled = false; });
         });
     }
 
     function updatePlessi() {
       const icNome = document.getElementById('istituto').value;
       const sel = document.getElementById('plesso');
-      sel.innerHTML = '<option value="">Seleziona il plesso</option>';
-      const ic = istitutiDaIntenzioni.find(i => i.nome === icNome);
-      if (ic && ic.plessi && ic.plessi.length > 0) {
-        ic.plessi.forEach(p => {
-          const opt = document.createElement('option');
-          opt.value = p;
-          opt.textContent = p.replace('Plesso di ', '');
-          sel.appendChild(opt);
-        });
-        sel.disabled = false;
-      } else {
+      _plessiSigleMap = {};
+      if (!icNome) {
+        sel.innerHTML = '<option value="">Seleziona prima l\'Istituto</option>';
         sel.disabled = true;
+        aggiornaNoiSquadre();
+        return;
       }
-      aggiornaNoiSquadre();
+      sel.innerHTML = '<option value="">Caricamento...</option>';
+      sel.disabled = true;
+      lkApi(LOGIKRON_CONFIG.webAppUrls.iscrizioni, { action: 'getPlessi', ic: icNome })
+        .then(r => {
+          const plessi = (r && r.plessi) ? r.plessi.filter(p => p.ic === icNome) : [];
+          plessi.forEach(p => { _plessiSigleMap[p.nome] = p.sigla; });
+          sel.innerHTML = '<option value="">Seleziona il plesso</option>';
+          if (plessi.length > 0) {
+            plessi.forEach(p => {
+              const opt = document.createElement('option');
+              opt.value = p.nome;
+              opt.textContent = p.nome;
+              sel.appendChild(opt);
+            });
+            sel.disabled = false;
+          } else {
+            sel.innerHTML = '<option value="" disabled>Nessun plesso ancora registrato — contatta l\'organizzazione</option>';
+            sel.disabled = true;
+          }
+          aggiornaNoiSquadre();
+        })
+        .catch(() => {
+          sel.innerHTML = '<option value="">Errore caricamento plessi</option>';
+          sel.disabled = false;
+          aggiornaNoiSquadre();
+        });
     }
 
     function updateClassi() {
