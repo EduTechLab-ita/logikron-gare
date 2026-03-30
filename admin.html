@@ -1324,25 +1324,42 @@
           const tbody = document.getElementById('cfgParamsTbody');
           tbody.innerHTML = '';
           r.meta.forEach(p => {
-            const val = r.params[p.key] !== undefined ? r.params[p.key] : '';
-            const isPwd = p.type === 'password';
+            const val = String(r.params[p.key] !== undefined ? r.params[p.key] : '');
+            const isPwd  = p.type === 'password';
+            const isText = p.type === 'text'; // campi bonus comma-separated
             const inputId = 'cfg_' + p.key;
+            let inputHtml;
+            if (isText) {
+              // Bonus: split in 3 input separati (1°, 2°, 3°)
+              const parts = val.split(',').map(v => v.trim());
+              inputHtml = `
+                <div style="display:flex;gap:6px;align-items:center;">
+                  ${['1°','2°','3°'].map((lbl, i) => `
+                    <div style="display:flex;flex-direction:column;align-items:center;gap:2px;">
+                      <span style="font-size:0.7rem;color:#94a3b8;">${lbl}</span>
+                      <input type="number" data-bonus="${p.key}" data-idx="${i}"
+                        value="${parts[i] || ''}" min="0"
+                        style="width:58px;padding:4px 6px;border:1px solid #e2e8f0;border-radius:6px;font-size:0.88rem;text-align:center;">
+                    </div>`).join('')}
+                </div>`;
+            } else {
+              inputHtml = `
+                <div style="display:flex;align-items:center;gap:4px;">
+                  <input id="${inputId}" type="${isPwd ? 'password' : 'number'}" data-key="${p.key}"
+                    value="${val}" ${isPwd ? '' : 'min="-999"'}
+                    style="flex:1;padding:5px 8px;border:1px solid #e2e8f0;border-radius:6px;font-size:0.88rem;box-sizing:border-box;"
+                    ${isPwd ? 'autocomplete="new-password"' : ''}>
+                  ${isPwd ? `<button type="button" onclick="toggleCfgPwd('${inputId}')"
+                    style="background:none;border:1px solid #e2e8f0;border-radius:6px;padding:4px 7px;cursor:pointer;font-size:0.9rem;color:#64748b;" title="Mostra/nascondi">👁</button>` : ''}
+                </div>`;
+            }
             tbody.innerHTML += `
               <tr style="border-bottom:1px solid #f1f5f9;">
                 <td style="padding:10px 6px 6px;color:#475569;vertical-align:top;width:52%;">
                   <div>${p.label}${p.unit ? ' <span style="color:#94a3b8;font-size:0.78rem;">('+p.unit+')</span>' : ''}</div>
                   ${p.hint ? '<div style="color:#94a3b8;font-size:0.75rem;margin-top:2px;">' + p.hint + '</div>' : ''}
                 </td>
-                <td style="padding:10px 6px 6px;vertical-align:top;">
-                  <div style="display:flex;align-items:center;gap:4px;">
-                    <input id="${inputId}" type="${isPwd ? 'password' : 'number'}" data-key="${p.key}"
-                      value="${val}" ${isPwd ? '' : 'min="0"'}
-                      style="flex:1;padding:5px 8px;border:1px solid #e2e8f0;border-radius:6px;font-size:0.88rem;box-sizing:border-box;"
-                      ${isPwd ? 'autocomplete="new-password"' : ''}>
-                    ${isPwd ? `<button type="button" onclick="toggleCfgPwd('${inputId}')"
-                      style="background:none;border:1px solid #e2e8f0;border-radius:6px;padding:4px 7px;cursor:pointer;font-size:0.9rem;color:#64748b;" title="Mostra/nascondi">👁</button>` : ''}
-                  </div>
-                </td>
+                <td style="padding:10px 6px 6px;vertical-align:top;">${inputHtml}</td>
               </tr>`;
           });
         })
@@ -1355,9 +1372,18 @@
     }
 
     function salvaConfigParams() {
-      const inputs = document.querySelectorAll('#cfgParamsTbody input[data-key]');
       const updates = {};
-      inputs.forEach(inp => { if (inp.value !== '') updates[inp.dataset.key] = inp.value; });
+      // Campi normali
+      document.querySelectorAll('#cfgParamsTbody input[data-key]').forEach(inp => {
+        if (inp.value !== '') updates[inp.dataset.key] = inp.value;
+      });
+      // Campi bonus (3 input separati → ricomponi stringa CSV)
+      const bonusKeys = ['bonus_posizione', 'bonus_completamento'];
+      bonusKeys.forEach(key => {
+        const parts = Array.from(document.querySelectorAll(`#cfgParamsTbody input[data-bonus="${key}"]`))
+                          .map(inp => inp.value.trim()).filter(v => v !== '');
+        if (parts.length === 3) updates[key] = parts.join(',');
+      });
       if (!Object.keys(updates).length) return;
       const btn = document.getElementById('btnSalvaConfig');
       btn.disabled = true; btn.textContent = '⏳ Salvataggio...';
@@ -1369,6 +1395,20 @@
           chiudiModalConfig();
         })
         .catch(err => { btn.disabled = false; btn.textContent = '💾 Salva'; alert('Errore: ' + err.message); });
+    }
+
+    function resetConfigDefault() {
+      if (!confirm('⚠️ Riportare TUTTE le impostazioni ai valori da regolamento?\n\nValori deliberati il 17/03/2026 dal gruppo Matematica.\nLe modifiche personalizzate andranno perse.')) return;
+      const btn = document.getElementById('btnResetConfig');
+      btn.disabled = true; btn.textContent = '⏳ Reset...';
+      lkApi(API, { action: 'resetConfigDefault', pwd: adminPwd })
+        .then(r => {
+          btn.disabled = false; btn.textContent = '🔄 Reset impostazioni da regolamento';
+          if (r.error) { alert('Errore: ' + r.error); return; }
+          alert('✅ ' + r.message);
+          caricaConfigParams(); // Ricarica i valori aggiornati
+        })
+        .catch(err => { btn.disabled = false; btn.textContent = '🔄 Reset impostazioni da regolamento'; alert('Errore: ' + err.message); });
     }
     function createGara()     { document.getElementById('sectionControlloGara').scrollIntoView({ behavior: 'smooth', block: 'start' }); }
     function apriTabelloneAdmin() {
@@ -2750,9 +2790,16 @@
           <table style="width:100%;border-collapse:collapse;font-size:0.88rem;">
             <tbody id="cfgParamsTbody"></tbody>
           </table>
-          <div style="display:flex;gap:0.75rem;justify-content:flex-end;margin-top:1.25rem;padding-top:1rem;border-top:1px solid #e2e8f0;">
-            <button type="button" class="btn btn-outline" onclick="chiudiModalConfig()">Annulla</button>
-            <button type="button" class="btn btn-primary" id="btnSalvaConfig" onclick="salvaConfigParams()">💾 Salva</button>
+          <div style="display:flex;gap:0.75rem;justify-content:space-between;align-items:center;margin-top:1.25rem;padding-top:1rem;border-top:1px solid #e2e8f0;flex-wrap:wrap;gap:0.5rem;">
+            <button type="button" id="btnResetConfig" onclick="resetConfigDefault()"
+              style="background:none;border:1px solid #fca5a5;color:#dc2626;border-radius:6px;padding:5px 12px;font-size:0.82rem;cursor:pointer;"
+              title="Riporta tutti i valori a quelli deliberati dal gruppo Matematica (17/03/2026)">
+              🔄 Reset impostazioni da regolamento
+            </button>
+            <div style="display:flex;gap:0.75rem;">
+              <button type="button" class="btn btn-outline" onclick="chiudiModalConfig()">Annulla</button>
+              <button type="button" class="btn btn-primary" id="btnSalvaConfig" onclick="salvaConfigParams()">💾 Salva</button>
+            </div>
           </div>
         </form>
       </div>
