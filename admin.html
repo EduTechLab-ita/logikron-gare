@@ -766,6 +766,7 @@
       setTimeout(caricaStatIntenzioni, 1500);
       setTimeout(caricaStatIscrizioni, 2500);
       setTimeout(() => caricaListaGare(true), 3500);
+      setTimeout(caricaSetupInfo, 4500);
     }
 
     function caricaFase(tentativo) {
@@ -1260,8 +1261,33 @@
       window.open(base + 'gara.html', '_blank');
     }
 
-    // Placeholder — da implementare nelle fasi successive
-    function setupNuovoAnno() { alert('Setup Nuovo Anno — Da implementare'); }
+    function setupNuovoAnno() {
+      const anno = LOGIKRON_CONFIG.annoScolastico;
+      if (!confirm('Creare le cartelle su Google Drive per l\'anno ' + anno + '?\n\nVerranno create (se non esistono):\n• Cartella "LogiKron Gare"\n• Sottocartella "' + anno + '"')) return;
+      const btn = event.currentTarget;
+      btn.disabled = true;
+      btn.textContent = '⏳ Creazione...';
+      lkApi(API, { action: 'setupNuovoAnno', anno: anno, pwd: adminPwd })
+        .then(r => {
+          btn.disabled = false;
+          btn.textContent = 'Crea Cartelle';
+          if (r.error) { alert('Errore: ' + r.error); return; }
+          if (r.sheetUrl)      document.getElementById('linkSheetMaster').href = r.sheetUrl;
+          if (r.annoFolderUrl) document.getElementById('linkDriveAnno').href    = r.annoFolderUrl;
+          alert('✅ Setup completato per ' + r.annoScolastico + '!\n\nCartelle Drive create. I Link Rapidi sono stati aggiornati.');
+        })
+        .catch(err => { btn.disabled = false; btn.textContent = 'Crea Cartelle'; alert('Errore: ' + err.message); });
+    }
+
+    function caricaSetupInfo() {
+      lkApi(API, { action: 'getSetupInfo' })
+        .then(r => {
+          if (!r || r.error) return;
+          if (r.sheetUrl)      document.getElementById('linkSheetMaster').href = r.sheetUrl;
+          if (r.annoFolderUrl) document.getElementById('linkDriveAnno').href    = r.annoFolderUrl;
+        })
+        .catch(() => {});
+    }
     function openConfig()     { alert('Configurazione — Da implementare'); }
     function createGara()     { document.getElementById('sectionControlloGara').scrollIntoView({ behavior: 'smooth', block: 'start' }); }
     function apriTabelloneAdmin() {
