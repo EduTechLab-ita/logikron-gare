@@ -192,6 +192,46 @@
     }
     .mgara-close-btn:hover { background: rgba(255,255,255,0.2); }
 
+    /* ===== MODAL STATISTICHE ===== */
+    #modalStatistiche {
+      position: fixed; inset: 0;
+      background: rgba(15, 23, 42, 0.97);
+      z-index: 1000; display: none; flex-direction: column; overflow: hidden;
+    }
+    #modalStatistiche.aperto { display: flex; }
+    .mstat-header {
+      background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+      padding: 0.85rem 1.25rem; display: flex; align-items: center; gap: 1rem;
+      flex-shrink: 0; border-bottom: 3px solid #10b981;
+    }
+    .mstat-body { flex: 1; overflow-y: auto; padding: 1.5rem; background: #0f172a; color: #e2e8f0; }
+    .stat-banner {
+      display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+      gap: 1rem; margin-bottom: 1.5rem;
+    }
+    .stat-banner-card {
+      background: #1e293b; border: 1px solid #334155;
+      border-radius: 10px; padding: 1rem; text-align: center;
+    }
+    .stat-banner-value { font-size: 2rem; font-weight: 800; color: #10b981; line-height: 1; }
+    .stat-banner-label { font-size: 0.78rem; color: #94a3b8; margin-top: 0.3rem; }
+    .stat-section-title {
+      font-size: 0.8rem; font-weight: 700; color: #94a3b8;
+      text-transform: uppercase; letter-spacing: 0.08em;
+      margin: 1.5rem 0 0.75rem 0; padding-bottom: 0.4rem; border-bottom: 1px solid #334155;
+    }
+    .stat-gara-card {
+      background: #1e293b; border: 1px solid #334155;
+      border-radius: 10px; padding: 1rem; margin-bottom: 0.75rem;
+    }
+    .stat-gara-title { font-weight: 700; font-size: 0.95rem; color: #e2e8f0; margin-bottom: 0.5rem; }
+    .stat-podio { display: flex; gap: 0.5rem; flex-wrap: wrap; }
+    .stat-podio-item {
+      display: flex; align-items: center; gap: 0.35rem;
+      background: #0f172a; border: 1px solid #334155;
+      border-radius: 6px; padding: 4px 10px; font-size: 0.82rem;
+    }
+
     /* ===== MODAL GESTIONE ISCRITTI ===== */
     .modal-overlay { position:fixed; inset:0; background:rgba(0,0,0,0.55); z-index:2000; overflow-y:auto; display:flex; align-items:flex-start; justify-content:center; padding:1.5rem 1rem; }
     .modal-box { background:white; color:#1e293b; border-radius:14px; width:100%; max-width:960px; box-shadow:0 8px 40px rgba(0,0,0,0.25); display:flex; flex-direction:column; max-height:90vh; }
@@ -720,6 +760,20 @@
     </div><!-- /adminPanel -->
   </div><!-- /container -->
 
+  <!-- ==================== MODAL STATISTICHE ==================== -->
+  <div id="modalStatistiche">
+    <div class="mstat-header">
+      <div class="mgara-titolo">
+        <h2 style="margin:0;font-size:1.05rem;color:white;">📈 Statistiche LogiKron</h2>
+        <div style="font-size:0.8rem;color:#94a3b8;margin-top:2px;">Anno <span id="mstatAnno"></span></div>
+      </div>
+      <button class="mgara-close-btn" onclick="chiudiStatistiche()">✕ Chiudi</button>
+    </div>
+    <div class="mstat-body" id="mstatBody">
+      <div style="text-align:center;padding:3rem;color:#94a3b8;">Caricamento...</div>
+    </div>
+  </div>
+
   <script src="js/config.js"></script>
   <script src="js/api.js"></script>
   <script src="js/math-bg.js"></script>
@@ -759,8 +813,9 @@
 
     // Chiudi modal Gara Live con Escape
     document.addEventListener('keydown', function(e) {
-      if (e.key === 'Escape' && document.getElementById('modalGaraLive').classList.contains('aperto')) {
-        chiudiModalGaraLive();
+      if (e.key === 'Escape') {
+        if (document.getElementById('modalGaraLive').classList.contains('aperto')) chiudiModalGaraLive();
+        if (document.getElementById('modalStatistiche').classList.contains('aperto')) chiudiStatistiche();
       }
     });
 
@@ -1711,7 +1766,101 @@
     }
     function viewClassifica() { window.open('archivio.html', '_blank'); }
     function generateAttestati() { alert('Genera Attestati — Da implementare'); }
-    function viewStatistiche()   { alert('Statistiche — Da implementare'); }
+
+    // ==================== STATISTICHE ====================
+
+    function viewStatistiche() {
+      document.getElementById('modalStatistiche').classList.add('aperto');
+      document.getElementById('mstatAnno').textContent = LOGIKRON_CONFIG.annoScolastico || '';
+      _caricaStatistiche();
+    }
+
+    function chiudiStatistiche() {
+      document.getElementById('modalStatistiche').classList.remove('aperto');
+    }
+
+    function _caricaStatistiche() {
+      const body = document.getElementById('mstatBody');
+      body.innerHTML = '<div style="text-align:center;padding:3rem;color:#94a3b8;">⏳ Caricamento dati...</div>';
+
+      Promise.all([
+        lkApi(API, { action: 'getStatIscrizioni' }),
+        lkApi(API, { action: 'getIntenzioni' }),
+        lkApi(API, { action: 'getListaGare' })
+      ]).then(([statIscr, intenzioni, gare]) => {
+        const nIntenzioni = Array.isArray(intenzioni) ? intenzioni.length : 0;
+        const gareList = Array.isArray(gare) ? [...gare].sort((a, b) => {
+          return new Date(b.dataGara || b.oraInizio || 0) - new Date(a.dataGara || a.oraInizio || 0);
+        }) : [];
+
+        // Banner numeri chiave
+        let html = '<div class="stat-banner">';
+        html += _statCard(statIscr.istituti || 0, '🏫 Istituti');
+        html += _statCard(statIscr.classi || 0, '📚 Classi');
+        html += _statCard(statIscr.squadre || 0, '👥 Squadre');
+        html += _statCard(statIscr.alunni || 0, '🧒 Alunni');
+        html += '</div>';
+
+        // Confronto intenzioni vs iscrizioni
+        const pct = nIntenzioni > 0 ? Math.round((statIscr.squadre || 0) / nIntenzioni * 100) : 0;
+        html += '<div class="stat-section-title">Partecipazione</div>';
+        html += '<div class="stat-gara-card">';
+        html += '<table style="width:100%;border-collapse:collapse;font-size:0.88rem;">';
+        html += '<tr><td style="padding:5px 0;color:#94a3b8;">Docenti con intenzione</td><td style="text-align:right;font-weight:700;color:#e2e8f0;">' + nIntenzioni + '</td></tr>';
+        html += '<tr><td style="padding:5px 0;color:#94a3b8;">Squadre iscritte</td><td style="text-align:right;font-weight:700;color:#10b981;">' + (statIscr.squadre || 0) + '</td></tr>';
+        html += '<tr><td style="padding:5px 0;color:#94a3b8;">Alunni coinvolti</td><td style="text-align:right;font-weight:700;color:#60a5fa;">' + (statIscr.alunni || 0) + '</td></tr>';
+        if (nIntenzioni > 0) html += '<tr><td style="padding:5px 0;color:#94a3b8;">Tasso conversione</td><td style="text-align:right;font-weight:700;color:#f59e0b;">' + pct + '%</td></tr>';
+        html += '</table>';
+        html += '</div>';
+
+        // Gare
+        if (gareList.length > 0) {
+          html += '<div class="stat-section-title">Gare</div>';
+          gareList.forEach(g => {
+            const dataLabel = g.dataGara ? new Date(g.dataGara).toLocaleDateString('it-IT') : (g.data || '—');
+            const statoColor = g.stato === 'attiva' ? '#f87171' : '#94a3b8';
+            html += '<div class="stat-gara-card" id="stat-gara-' + _escHtml(String(g.id)) + '">';
+            html += '<div class="stat-gara-title">' + _escHtml(g.nome) + '</div>';
+            html += '<div style="font-size:0.8rem;color:#64748b;margin-bottom:0.5rem;">' + dataLabel + ' · <span style="color:' + statoColor + ';">' + g.stato + '</span></div>';
+            html += '<div id="stat-podio-' + _escHtml(String(g.id)) + '" style="color:#64748b;font-size:0.8rem;">⏳ caricamento...</div>';
+            html += '</div>';
+          });
+        } else {
+          html += '<div class="stat-section-title">Gare</div>';
+          html += '<div style="color:#64748b;font-size:0.88rem;font-style:italic;padding:0.5rem 0;">Nessuna gara trovata.</div>';
+        }
+
+        body.innerHTML = html;
+
+        // Fetch asincrona podio per ogni gara
+        gareList.forEach(g => {
+          lkApi(API, { action: 'getSquadre', garaId: g.id }).then(squadre => {
+            const el = document.getElementById('stat-podio-' + g.id);
+            if (!el) return;
+            const sorted = Array.isArray(squadre) ? [...squadre].sort((a, b) => (b.punti || 0) - (a.punti || 0)) : [];
+            if (sorted.length === 0) { el.textContent = 'Nessuna squadra.'; return; }
+            const medaglie = ['🥇', '🥈', '🥉'];
+            let ph = '<div style="font-size:0.78rem;color:#64748b;margin-bottom:0.4rem;">' + sorted.length + ' squadre partecipanti</div>';
+            ph += '<div class="stat-podio">';
+            sorted.slice(0, 3).forEach((s, i) => {
+              ph += '<div class="stat-podio-item">' + medaglie[i] + ' <span style="color:#e2e8f0;">' + _escHtml(s.nome || s.codice || '?') + '</span> <span style="color:#10b981;font-weight:700;margin-left:4px;">' + (s.punti || 0) + ' pt</span></div>';
+            });
+            ph += '</div>';
+            el.innerHTML = ph;
+          }).catch(() => {
+            const el = document.getElementById('stat-podio-' + g.id);
+            if (el) el.textContent = 'Dati non disponibili.';
+          });
+        });
+
+      }).catch(err => {
+        body.innerHTML = '<div style="color:#f87171;padding:2rem;text-align:center;">Errore caricamento: ' + _escHtml(err.message) + '</div>';
+      });
+    }
+
+    function _statCard(val, label) {
+      return '<div class="stat-banner-card"><div class="stat-banner-value">' + val + '</div><div class="stat-banner-label">' + label + '</div></div>';
+    }
 
     // ==================== CONTROLLO GARA LIVE ====================
 
