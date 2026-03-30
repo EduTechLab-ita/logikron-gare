@@ -1116,17 +1116,30 @@
     }
 
     function caricaFiltroIstituti() {
-      lkApi(API, { action: 'getIntenzioni' }).then(lista => {
-        if (!Array.isArray(lista)) return;
+      lkApi(API, { action: 'getIstituti' }).then(r => {
+        const lista = (r && r.istituti) ? r.istituti : [];
         const sel = document.getElementById('filtroIstituto');
-        const istituti = [...new Set(lista.map(i => i.istituto))].sort();
-        istituti.forEach(ic => {
+        sel.innerHTML = '<option value="">Tutti</option>';
+        lista.forEach(ic => {
           const opt = document.createElement('option');
-          opt.value = ic;
-          opt.textContent = ic;
+          opt.value = ic.nome;
+          opt.textContent = ic.nome;
           sel.appendChild(opt);
         });
-      }).catch(() => {});
+      }).catch(() => {
+        // Fallback: popola dagli IC nelle intenzioni
+        lkApi(API, { action: 'getIntenzioni' }).then(lista => {
+          if (!Array.isArray(lista)) return;
+          const sel = document.getElementById('filtroIstituto');
+          sel.innerHTML = '<option value="">Tutti</option>';
+          const istituti = [...new Set(lista.map(i => i.istituto))].sort();
+          istituti.forEach(ic => {
+            const opt = document.createElement('option');
+            opt.value = ic; opt.textContent = ic;
+            sel.appendChild(opt);
+          });
+        }).catch(() => {});
+      });
     }
 
     function filtraDocenti(lista, filtri) {
