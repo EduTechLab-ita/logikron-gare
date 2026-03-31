@@ -726,26 +726,21 @@
       return e;
     }
 
-    // ── Sep 1 (ora in cima) ──
-    lay.appendChild(mk('div',
-      'position:absolute;top:28px;left:70px;right:70px;height:1px;background:rgba(130,130,130,0.7);'
-    ));
-
     // ── Header sinistra ──
     if (_imgCache['logo-stato']) {
-      const imgEl = mk('img', 'position:absolute;top:40px;left:70px;width:65px;height:65px;object-fit:contain;');
+      const imgEl = mk('img', 'position:absolute;top:72px;left:70px;width:65px;height:65px;object-fit:contain;');
       imgEl.src = _imgCache['logo-stato'];
       lay.appendChild(imgEl);
     }
     lay.appendChild(mk('div',
-      'position:absolute;top:43px;left:145px;'
+      'position:absolute;top:74px;left:145px;'
       + 'font-family:\'Special Elite\',monospace;font-size:17px;color:#1a1a1a;line-height:1.5;',
       "Ministero<br>dell'Istruzione<br>e del Merito"
     ));
 
     // ── Header destra ──
     lay.appendChild(mk('div',
-      'position:absolute;top:43px;right:70px;'
+      'position:absolute;top:74px;right:70px;'
       + 'font-family:\'Special Elite\',monospace;font-size:21px;color:#1a1a1a;'
       + 'text-align:right;line-height:1.5;',
       'ISTITUTO COMPRENSIVO<br>di GOTTOLENGO'
@@ -834,8 +829,8 @@
     // ── Timbro centrato ──
     if (_imgCache['timbro']) {
       const timbEl = mk('img',
-        'position:absolute;top:572px;left:' + Math.round((W - 170) / 2) + 'px;'
-        + 'width:170px;height:170px;object-fit:contain;'
+        'position:absolute;top:572px;left:' + Math.round((W - 130) / 2) + 'px;'
+        + 'width:130px;height:130px;object-fit:contain;'
       );
       timbEl.src = _imgCache['timbro'];
       lay.appendChild(timbEl);
