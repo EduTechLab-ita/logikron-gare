@@ -939,17 +939,53 @@
     document.getElementById('modalInfo').style.display = 'block';
   }
 
-  // ===================== POST BACKEND =====================
+  // ===================== UPLOAD PDF CHUNKED (JSONP — evita il redirect POST→GET) =====================
 
-  async function postBackend(params) {
-    const resp = await fetch(API, {
-      method: 'POST',
-      body: JSON.stringify(params),
-      redirect: 'follow'
-    });
-    const text = await resp.text();
-    try { return JSON.parse(text); }
-    catch(e) { throw new Error('Risposta non valida dal backend'); }
+  const _CHUNK_SZ = 8000; // caratteri base64 per chunk (URL ~8700 chars, sicuro per Apps Script)
+
+  function _genSid() {
+    return 'att' + Date.now() + Math.floor(Math.random() * 9999);
+  }
+
+  // Carica un PDF base64 su Drive via più richieste JSONP GET
+  // Ritorna Promise<{ ok, fileId, fileName }>
+  async function uploadPdfToBackend(pdfBase64, meta) {
+    const sid = _genSid();
+    const chunks = [];
+    for (let i = 0; i < pdfBase64.length; i += _CHUNK_SZ) {
+      chunks.push(pdfBase64.slice(i, i + _CHUNK_SZ));
+    }
+    const tot = chunks.length;
+
+    // Invia i chunk in lotti da 5 in parallelo
+    const BATCH = 5;
+    for (let b = 0; b < tot; b += BATCH) {
+      const slice = chunks.slice(b, b + BATCH);
+      const promises = slice.map(function(d, j) {
+        return lkApi(API, { action: 'uploadPdfChunk', sid: sid, idx: b + j, tot: tot, d: d }, 25000);
+      });
+      const results = await Promise.all(promises);
+      for (let k = 0; k < results.length; k++) {
+        if (results[k].error) throw new Error('Chunk ' + (b + k) + ': ' + results[k].error);
+      }
+    }
+
+    // Finalizza: assembla in cache e salva su Drive
+    const r = await lkApi(API, {
+      action:     'finalizeAttestatoDrive',
+      pwd:        adminPwd,
+      sid:        sid,
+      tot:        tot,
+      nomeAlunno: meta.nomeAlunno,
+      ordine:     meta.ordine,
+      classe:     meta.classe,
+      sezione:    meta.sezione,
+      istituto:   meta.istituto,
+      plesso:     meta.plesso
+    }, 35000);
+
+    if (r.error) throw new Error(r.error);
+    return r; // { ok, fileId, fileName }
   }
 
   // ===================== GENERA + DRIVE + EMAIL (FLUSSO COMPLETO) =====================
@@ -961,50 +997,44 @@
     });
     if (lista.length === 0) { toast('Nessun alunno trovato.'); return; }
 
-    const campi = getCampi();
     const btn = document.getElementById('btnDriveEmail');
     btn.disabled = true;
     document.getElementById('btnTutti').disabled = true;
-
     document.getElementById('progressWrap').style.display = 'block';
     document.getElementById('progressBar').style.width = '0%';
 
     // byDocente: email → { nomeDocente, fileIds:[] }
     const byDocente = {};
-    let errori = 0;
+    let salvati = 0, errori = 0;
 
-    // FASE 1: genera PDF + salva Drive
+    // FASE 1: genera PDF + upload Drive
     for (let i = 0; i < lista.length; i++) {
       const sq = lista[i].sq, nome = lista[i].nome;
-      const pct = Math.round((i / lista.length) * 80);
-      document.getElementById('progressBar').style.width = pct + '%';
+      document.getElementById('progressBar').style.width = Math.round((i / lista.length) * 80) + '%';
       document.getElementById('progressLabel').textContent =
-        '☁️ Drive ' + (i + 1) + '/' + lista.length + ' \u2014 ' + nome + '...';
+        '\u2601\uFE0F Drive ' + (i + 1) + '/' + lista.length + ' \u2014 ' + nome + '...';
 
       try {
         const doc = await generaPDF(sq, nome);
         const pdfBase64 = doc.output('datauristring').split(',')[1];
-        const r = await postBackend({
-          action: 'salvaAttestatoDrive',
-          pwd: adminPwd,
+        const r = await uploadPdfToBackend(pdfBase64, {
           nomeAlunno: nome,
           ordine:   sq.ordine,
           classe:   sq.classe,
           sezione:  sq.sezione,
           istituto: sq.istituto,
-          plesso:   sq.plesso,
-          pdfBase64: pdfBase64
+          plesso:   sq.plesso
         });
-        if (r.error) throw new Error(r.error);
-
-        const key = sq.email || sq.docente || '_';
+        salvati++;
+        const key = sq.email || '_';
         if (!byDocente[key]) byDocente[key] = { nomeDocente: sq.docente, fileIds: [] };
         byDocente[key].fileIds.push(r.fileId);
       } catch(e) {
         console.error('Errore Drive per', nome, e);
         errori++;
+        toast('\u26A0\uFE0F Errore per ' + nome + ': ' + e.message);
       }
-      await new Promise(function(r){ setTimeout(r, 150); });
+      await new Promise(function(r){ setTimeout(r, 200); });
     }
 
     // FASE 2: invia email per docente
@@ -1013,20 +1043,20 @@
 
     for (let d = 0; d < docenti.length; d++) {
       const email = docenti[d][0], info = docenti[d][1];
-      const pct = 80 + Math.round(((d + 1) / Math.max(docenti.length, 1)) * 20);
-      document.getElementById('progressBar').style.width = pct + '%';
+      document.getElementById('progressBar').style.width =
+        (80 + Math.round(((d + 1) / Math.max(docenti.length, 1)) * 20)) + '%';
       document.getElementById('progressLabel').textContent =
         '\uD83D\uDCE7 Email ' + (d + 1) + '/' + docenti.length + ' \u2192 ' + email + '...';
 
       try {
-        const r = await postBackend({
-          action: 'inviaEmailDocente',
-          pwd: adminPwd,
+        const r = await lkApi(API, {
+          action:       'inviaEmailDocente',
+          pwd:          adminPwd,
           emailDocente: email,
           nomeDocente:  info.nomeDocente,
           garaNome:     _garaNome,
-          fileIds:      info.fileIds
-        });
+          fileIds:      JSON.stringify(info.fileIds)
+        }, 30000);
         if (r.ok) emailOk++;
       } catch(e) {
         console.error('Errore email per', email, e);
@@ -1036,13 +1066,14 @@
 
     document.getElementById('progressBar').style.width = '100%';
     document.getElementById('progressLabel').textContent =
-      '\u2705 ' + lista.length + ' attestati su Drive' + (errori ? ' (' + errori + ' errori)' : '') +
+      '\u2705 ' + salvati + '/' + lista.length + ' su Drive' +
+      (errori ? ' (' + errori + ' errori)' : '') +
       ' \u00b7 ' + emailOk + '/' + docenti.length + ' email inviate';
 
     btn.disabled = false;
     document.getElementById('btnTutti').disabled = false;
     setTimeout(function(){ document.getElementById('progressWrap').style.display = 'none'; }, 6000);
-    toast('\u2705 ' + lista.length + ' PDF su Drive \u00b7 ' + emailOk + ' email inviate');
+    toast('\u2705 ' + salvati + ' PDF su Drive \u00b7 ' + emailOk + ' email inviate');
   }
 
   // ===================== SALVA SINGOLO SU DRIVE (con confirm) =====================
@@ -1064,21 +1095,18 @@
     newOk.addEventListener('click', async function() {
       modal.style.display = 'none';
       const orig = btn.textContent;
-      btn.disabled = true; btn.textContent = '⏳';
+      btn.disabled = true; btn.textContent = '\u23F3';
 
       try {
         const doc = await generaPDF(sq, nome);
         const pdfBase64 = doc.output('datauristring').split(',')[1];
-        const r = await postBackend({
-          action: 'salvaAttestatoDrive',
-          pwd: adminPwd,
+        const r = await uploadPdfToBackend(pdfBase64, {
           nomeAlunno: nome,
           ordine:   sq.ordine,
           classe:   sq.classe,
           sezione:  sq.sezione,
           istituto: sq.istituto,
-          plesso:   sq.plesso,
-          pdfBase64: pdfBase64
+          plesso:   sq.plesso
         });
         if (r.error) throw new Error(r.error);
         btn.textContent = '\u2705'; btn.disabled = false;
