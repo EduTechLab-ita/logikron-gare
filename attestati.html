@@ -709,7 +709,6 @@
     const wrap = document.createElement('div');
     wrap.style.cssText = 'width:' + W + 'px;height:' + H + 'px;position:relative;overflow:hidden;background:#fff;';
 
-    // Sfondo
     if (_imgCache['sfondo']) {
       const bg = document.createElement('img');
       bg.src = _imgCache['sfondo'];
@@ -717,7 +716,6 @@
       wrap.appendChild(bg);
     }
 
-    // Layer contenuto
     const lay = document.createElement('div');
     lay.style.cssText = 'position:absolute;top:0;left:0;width:' + W + 'px;height:' + H + 'px;z-index:1;';
 
@@ -728,149 +726,146 @@
       return e;
     }
 
-    // ── Header sinistra: logo stato + Ministero ──
+    // ── Header sinistra ──
     if (_imgCache['logo-stato']) {
-      const imgEl = mk('img', 'position:absolute;top:28px;left:48px;width:66px;height:66px;object-fit:contain;');
+      const imgEl = mk('img', 'position:absolute;top:30px;left:70px;width:54px;height:54px;object-fit:contain;');
       imgEl.src = _imgCache['logo-stato'];
       lay.appendChild(imgEl);
     }
     lay.appendChild(mk('div',
-      'position:absolute;top:30px;left:124px;'
-      + 'font-family:\'Special Elite\',monospace;font-size:21px;color:#1a1a1a;'
-      + 'line-height:1.5;letter-spacing:0.2px;',
+      'position:absolute;top:32px;left:133px;'
+      + 'font-family:\'Special Elite\',monospace;font-size:17px;color:#1a1a1a;line-height:1.5;',
       "Ministero<br>dell'Istruzione<br>e del Merito"
     ));
 
-    // ── Header destra: IC Gottolengo (solo istituto, senza elenco scuole) ──
+    // ── Header destra ──
     lay.appendChild(mk('div',
-      'position:absolute;top:30px;right:48px;'
-      + 'font-family:\'Special Elite\',monospace;font-size:26px;color:#1a1a1a;'
+      'position:absolute;top:32px;right:70px;'
+      + 'font-family:\'Special Elite\',monospace;font-size:21px;color:#1a1a1a;'
       + 'text-align:right;line-height:1.5;',
       'ISTITUTO COMPRENSIVO<br>di GOTTOLENGO'
     ));
 
-    // ── Riga separatrice 1 ──
+    // ── Sep 1 ──
     lay.appendChild(mk('div',
-      'position:absolute;top:108px;left:48px;right:48px;height:1px;background:rgba(130,130,130,0.75);'
+      'position:absolute;top:98px;left:70px;right:70px;height:1px;background:rgba(130,130,130,0.7);'
     ));
 
-    // ── Logo LogiKron centrato ──
+    // ── Logo LogiKron ──
     if (_imgCache['logo-logikron']) {
       const dim = _imgDim['logo-logikron'] || { w: 600, h: 163 };
-      const lw = 480, lh = Math.round(lw * dim.h / dim.w);
+      const lw = 400, lh = Math.round(lw * dim.h / dim.w);
       const imgEl = mk('img',
-        'position:absolute;top:116px;left:' + Math.round((W - lw) / 2) + 'px;'
+        'position:absolute;top:106px;left:' + Math.round((W - lw) / 2) + 'px;'
         + 'width:' + lw + 'px;height:' + lh + 'px;object-fit:contain;'
       );
       imgEl.src = _imgCache['logo-logikron'];
       lay.appendChild(imgEl);
     }
 
-    // ── "Giochi Matematici a Squadre" ──
+    // ── Giochi Matematici a Squadre ──
     lay.appendChild(mk('div',
-      'position:absolute;top:252px;left:0;right:0;text-align:center;'
-      + 'font-family:\'Playfair Display\',serif;font-size:40px;font-weight:700;'
-      + 'color:#141414;letter-spacing:0.4px;',
+      'position:absolute;top:218px;left:0;right:0;text-align:center;'
+      + 'font-family:\'Playfair Display\',serif;font-size:33px;font-weight:700;'
+      + 'color:#141414;letter-spacing:0.3px;',
       'Giochi Matematici a Squadre'
     ));
 
     // ── Data ──
     lay.appendChild(mk('div',
-      'position:absolute;top:298px;left:0;right:0;text-align:center;'
-      + 'font-family:\'EB Garamond\',serif;font-size:29px;font-style:italic;color:#222;',
+      'position:absolute;top:257px;left:0;right:0;text-align:center;'
+      + 'font-family:\'EB Garamond\',serif;font-size:24px;font-style:italic;color:#222;',
       esc(campi.dataCerimonia)
     ));
 
     // ── Classe / plesso ──
     lay.appendChild(mk('div',
-      'position:absolute;top:332px;left:0;right:0;text-align:center;'
-      + 'font-family:\'EB Garamond\',serif;font-size:27px;color:#2a2a2a;',
+      'position:absolute;top:286px;left:0;right:0;text-align:center;'
+      + 'font-family:\'EB Garamond\',serif;font-size:22px;color:#2a2a2a;',
       esc(classeStr)
     ));
 
-    // ── Riga separatrice 2 ──
+    // ── Sep 2 ──
     lay.appendChild(mk('div',
-      'position:absolute;top:368px;left:160px;right:160px;height:1px;background:rgba(140,140,140,0.65);'
+      'position:absolute;top:318px;left:170px;right:170px;height:1px;background:rgba(140,140,140,0.6);'
     ));
 
-    // ── "Attestato di" ──
+    // ── Attestato di ──
     lay.appendChild(mk('div',
-      'position:absolute;top:375px;left:0;right:0;text-align:center;'
-      + 'font-family:\'Playfair Display\',serif;font-size:46px;font-weight:400;color:#141414;',
+      'position:absolute;top:326px;left:0;right:0;text-align:center;'
+      + 'font-family:\'Playfair Display\',serif;font-size:38px;font-weight:400;color:#141414;',
       'Attestato di'
     ));
 
-    // ── "Merito" / "Partecipazione" ──
+    // ── Merito / Partecipazione ──
     const tipoColor = isMerito ? '#6b2400' : '#0f2d7a';
     lay.appendChild(mk('div',
-      'position:absolute;top:420px;left:0;right:155px;text-align:center;'
-      + 'font-family:\'Playfair Display\',serif;font-size:74px;font-weight:700;'
+      'position:absolute;top:367px;left:0;right:140px;text-align:center;'
+      + 'font-family:\'Playfair Display\',serif;font-size:62px;font-weight:700;'
       + 'font-style:italic;color:' + tipoColor + ';line-height:1;',
       esc(sq.tipo)
     ));
 
-    // ── Badge edizione (destra, allineato con "Attestato di") ──
+    // ── Badge (destra) ──
     const badgeImg = creaImgBadge(campi.edizioni);
-    const badgeEl = mk('img',
-      'position:absolute;top:362px;right:44px;width:142px;height:142px;object-fit:contain;'
-    );
+    const badgeEl = mk('img', 'position:absolute;top:314px;right:56px;width:118px;height:118px;object-fit:contain;');
     badgeEl.src = badgeImg;
     lay.appendChild(badgeEl);
 
-    // ── "Conferito a" ──
+    // ── Conferito a ──
     lay.appendChild(mk('div',
-      'position:absolute;top:500px;left:0;right:0;text-align:center;'
-      + 'font-family:\'EB Garamond\',serif;font-size:30px;color:#1e1e1e;',
+      'position:absolute;top:440px;left:0;right:0;text-align:center;'
+      + 'font-family:\'EB Garamond\',serif;font-size:25px;color:#1e1e1e;',
       'Conferito a'
     ));
 
-    // ── Nome alunno (Great Vibes calligrafico) — scala per nomi lunghi ──
+    // ── Nome alunno — Great Vibes, scala aggressiva per nomi lunghi ──
+    // Great Vibes è ~0.75em per carattere → nomi sicuri (non overflow su 982px)
     const nlen = nomeAlunno.length;
-    const nfs  = nlen > 28 ? 52 : nlen > 22 ? 60 : nlen > 16 ? 68 : nlen > 12 ? 76 : 84;
-    const nWrap = nlen > 22 ? 'normal' : 'nowrap';
+    const nfs  = nlen > 30 ? 36 : nlen > 24 ? 42 : nlen > 18 ? 48 : nlen > 13 ? 54 : 62;
     lay.appendChild(mk('div',
-      'position:absolute;top:534px;left:60px;right:60px;text-align:center;'
+      'position:absolute;top:468px;left:70px;right:70px;text-align:center;'
       + 'font-family:\'Great Vibes\',cursive;font-size:' + nfs + 'px;'
-      + 'color:#080808;line-height:1.1;white-space:' + nWrap + ';overflow:hidden;',
+      + 'color:#080808;line-height:1.15;white-space:normal;overflow:hidden;',
       esc(nomeAlunno)
     ));
 
     // ── Sottolineatura oro ──
     lay.appendChild(mk('div',
-      'position:absolute;top:622px;left:240px;right:240px;height:2px;'
-      + 'background:linear-gradient(90deg,transparent 0%,#b08820 25%,#b08820 75%,transparent 100%);'
+      'position:absolute;top:545px;left:270px;right:270px;height:2px;'
+      + 'background:linear-gradient(90deg,transparent 0%,#b08820 30%,#b08820 70%,transparent 100%);'
     ));
 
-    // ── Riga separatrice footer ──
+    // ── Sep footer ──
     lay.appendChild(mk('div',
-      'position:absolute;top:634px;left:48px;right:48px;height:1px;background:rgba(130,130,130,0.7);'
+      'position:absolute;top:558px;left:70px;right:70px;height:1px;background:rgba(130,130,130,0.65);'
     ));
 
-    // ── Timbro scuola (centrato) ──
+    // ── Timbro centrato ──
     if (_imgCache['timbro']) {
       const timbEl = mk('img',
-        'position:absolute;top:630px;left:' + Math.round((W - 120) / 2) + 'px;'
-        + 'width:120px;height:120px;object-fit:contain;'
+        'position:absolute;top:554px;left:' + Math.round((W - 100) / 2) + 'px;'
+        + 'width:100px;height:100px;object-fit:contain;'
       );
       timbEl.src = _imgCache['timbro'];
       lay.appendChild(timbEl);
     }
 
-    // ── Referente del Progetto (sinistra) ──
+    // ── Referente (sinistra) ──
     lay.appendChild(mk('div',
-      'position:absolute;top:642px;left:48px;width:260px;text-align:center;'
-      + 'font-family:\'EB Garamond\',serif;font-size:23px;color:#141414;line-height:1.55;',
+      'position:absolute;top:566px;left:70px;width:240px;text-align:center;'
+      + 'font-family:\'EB Garamond\',serif;font-size:20px;color:#141414;line-height:1.5;',
       'Il Referente del Progetto<br>'
-      + '<strong style="font-size:25px;">' + esc(campi.nomeRef) + '</strong>'
+      + '<strong style="font-size:22px;">' + esc(campi.nomeRef) + '</strong>'
     ));
 
-    // ── Dirigente Scolastica + nota legale (destra) ──
+    // ── Dirigente + nota legale (destra) ──
     lay.appendChild(mk('div',
-      'position:absolute;top:642px;right:48px;width:290px;text-align:center;'
-      + 'font-family:\'EB Garamond\',serif;font-size:23px;color:#141414;line-height:1.55;',
+      'position:absolute;top:566px;right:70px;width:270px;text-align:center;'
+      + 'font-family:\'EB Garamond\',serif;font-size:20px;color:#141414;line-height:1.5;',
       'La Dirigente Scolastica<br>'
-      + '<strong style="font-size:25px;">' + esc(campi.nomeDS) + '</strong><br>'
-      + '<span style="font-size:16px;color:#555;line-height:1.4;display:block;margin-top:5px;">'
+      + '<strong style="font-size:22px;">' + esc(campi.nomeDS) + '</strong><br>'
+      + '<span style="font-size:14px;color:#555;line-height:1.4;display:block;margin-top:4px;">'
       + 'Firma autografa sostituita a mezzo stampa<br>'
       + 'ai sensi e per gli effetti dell\u2019art.\u00a03, C.\u00a02,<br>D.Lgs\u00a0n.\u00a039/1993'
       + '</span>'
