@@ -169,6 +169,7 @@
     <div class="page-header">
       <span style="font-size:1.5rem;">📜</span>
       <h1>Genera <span>Attestati</span></h1>
+      <button class="back-btn" onclick="mostraInfo()" title="Come funziona">ℹ️ Guida</button>
       <a href="admin.html" class="back-btn">← Admin</a>
     </div>
 
@@ -222,19 +223,90 @@
           <div style="font-weight:700;font-size:1rem;">Squadre e Alunni</div>
           <div id="riepilogoCount" class="squadre-count"></div>
         </div>
-        <div style="margin-left:auto;display:flex;gap:0.75rem;align-items:center;">
-          <div id="progressWrap" style="display:none;min-width:160px;">
+        <div style="margin-left:auto;display:flex;gap:0.75rem;align-items:center;flex-wrap:wrap;">
+          <div id="progressWrap" style="display:none;min-width:200px;">
             <div style="font-size:0.75rem;color:var(--lk-text-muted);margin-bottom:2px;" id="progressLabel">Generazione...</div>
             <div class="progress-bar-wrap"><div class="progress-bar" id="progressBar" style="width:0%"></div></div>
           </div>
-          <button class="btn btn-gold" onclick="scaricaTutti()" id="btnTutti">
-            ⬇️ Scarica tutti i PDF
+          <button class="btn btn-outline" onclick="scaricaTutti()" id="btnTutti">
+            ⬇️ Scarica tutti (locale)
+          </button>
+          <button class="btn btn-gold" onclick="generaTuttiDriveEmail()" id="btnDriveEmail">
+            🚀 Genera + Drive + Email
           </button>
         </div>
       </div>
       <div id="squadreList"></div>
     </div>
 
+  </div>
+</div>
+
+<!-- MODALE INFO -->
+<div id="modalInfo" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:9000;overflow-y:auto;">
+  <div style="max-width:560px;margin:60px auto;background:#1e293b;border:1px solid #334155;border-radius:16px;padding:2rem;">
+    <div style="display:flex;align-items:center;gap:0.75rem;margin-bottom:1.5rem;">
+      <span style="font-size:1.5rem;">📜</span>
+      <h2 style="font-size:1.1rem;font-weight:700;">Come funziona — Guida Attestati</h2>
+      <button onclick="document.getElementById('modalInfo').style.display='none'"
+              style="margin-left:auto;background:transparent;border:1px solid #334155;color:#94a3b8;
+                     padding:0.3rem 0.8rem;border-radius:8px;cursor:pointer;font-size:0.85rem;">✕ Chiudi</button>
+    </div>
+
+    <div style="font-size:0.9rem;color:#e2e8f0;line-height:1.7;">
+
+      <p style="font-weight:700;color:#fbbf24;margin-bottom:0.5rem;">🚀 FLUSSO COMPLETO (prima volta)</p>
+      <ol style="margin:0 0 1.25rem 1.2rem;color:#cbd5e1;">
+        <li>Seleziona la gara e compila <em>Dirigente</em>, <em>Referente</em>, <em>Data cerimonia</em></li>
+        <li>Clicca <strong>Carica dati gara</strong> e verifica i nomi degli alunni</li>
+        <li>Clicca <strong>🚀 Genera + Drive + Email</strong></li>
+        <li>Il sistema genera ogni PDF, lo salva su Drive nella cartella giusta e alla fine invia un'email per ogni docente con i PDF allegati</li>
+        <li>Struttura Drive: <code style="background:#0f172a;padding:1px 5px;border-radius:4px;">ATTESTATI / [Primaria Nª] / [IC] / [Plesso] / [Nª Sez]</code></li>
+      </ol>
+
+      <p style="font-weight:700;color:#6ee7b7;margin-bottom:0.5rem;">☁️ CORREGGERE UN ERRORE (singolo alunno)</p>
+      <ol style="margin:0 0 1.25rem 1.2rem;color:#cbd5e1;">
+        <li>Correggi il nome nello <strong>Sheet Iscrizioni</strong> su Google Drive</li>
+        <li>Torna qui e clicca <strong>Carica dati gara</strong> (ricarica i dati aggiornati)</li>
+        <li>Trova l'alunno e clicca <strong>☁️</strong> (icona nuvola)</li>
+        <li>Conferma nel dialogo</li>
+      </ol>
+
+      <div style="background:#7c3aed22;border:1px solid #7c3aed55;border-radius:8px;padding:0.85rem;margin-bottom:1rem;">
+        <p style="margin:0;font-weight:600;color:#c4b5fd;">⚠️ Quando usi ☁️ su un singolo alunno:</p>
+        <ul style="margin:0.5rem 0 0 1.1rem;color:#cbd5e1;">
+          <li>Il vecchio file su Drive viene <strong>cancellato e sostituito</strong> con quello nuovo</li>
+          <li>La mail <strong>NON viene reinviata</strong> automaticamente alla docente</li>
+          <li>Dovrai inviare <strong>tu manualmente</strong> la mail con il nuovo attestato alla docente interessata</li>
+        </ul>
+      </div>
+
+      <p style="font-weight:700;color:#93c5fd;margin-bottom:0.5rem;">📄 SCARICA SOLO IN LOCALE</p>
+      <p style="margin:0;color:#94a3b8;">Il pulsante <strong>⬇️ Scarica tutti (locale)</strong> e il pulsante <strong>📄 PDF</strong> scaricano solo sul tuo PC — nulla viene salvato su Drive né inviato per email. Utile per anteprima rapida.</p>
+    </div>
+  </div>
+</div>
+
+<!-- MODALE CONFIRM SINGOLO DRIVE -->
+<div id="modalConfirmDrive" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:9000;">
+  <div style="max-width:420px;margin:180px auto;background:#1e293b;border:1px solid #334155;border-radius:16px;padding:2rem;">
+    <p style="font-size:1rem;font-weight:700;margin-bottom:0.75rem;">☁️ Salva su Drive — Conferma</p>
+    <p id="confirmDriveNome" style="color:#fbbf24;font-weight:600;margin-bottom:1rem;"></p>
+    <div style="background:#7c3aed22;border:1px solid #7c3aed55;border-radius:8px;padding:0.85rem;margin-bottom:1.25rem;font-size:0.875rem;color:#cbd5e1;line-height:1.6;">
+      Il file su Drive verrà <strong>rigenerato, cancellato e sovrascritto</strong>.<br>
+      La mail <strong>NON verrà reinviata</strong> automaticamente alla docente.<br>
+      Dovrai inviare <strong>tu manualmente</strong> la mail con il nuovo attestato alla docente interessata.
+    </div>
+    <div style="display:flex;gap:0.75rem;justify-content:flex-end;">
+      <button onclick="document.getElementById('modalConfirmDrive').style.display='none'"
+              style="background:transparent;border:1px solid #334155;color:#94a3b8;padding:0.5rem 1.1rem;border-radius:8px;cursor:pointer;">
+        Annulla
+      </button>
+      <button id="btnConfirmDriveOk"
+              style="background:linear-gradient(135deg,#6366f1,#7c3aed);color:#fff;border:none;padding:0.5rem 1.25rem;border-radius:8px;cursor:pointer;font-weight:600;">
+        ✓ Procedi
+      </button>
+    </div>
   </div>
 </div>
 
@@ -471,6 +543,7 @@
               <span class="alunno-nome">${_esc(nome)}</span>
               <span class="alunno-tipo" style="color:${sq.tipo==='Merito'?'#fbbf24':'#a5b4fc'}">${sq.tipo}</span>
               <button class="btn btn-sm btn-outline" onclick="scaricaSingolo(${sqIdx},${aIdx},this)">📄 PDF</button>
+              <button class="btn btn-sm btn-outline" onclick="salvaAlunnoDrive(${sqIdx},${aIdx},this)" title="Salva/Sovrascivi su Drive (no email)">☁️</button>
             </div>`;
           }).join('')}
         </div>`;
@@ -858,6 +931,164 @@
 
     wrap.appendChild(lay);
     return wrap;
+  }
+
+  // ===================== INFO MODAL =====================
+
+  function mostraInfo() {
+    document.getElementById('modalInfo').style.display = 'block';
+  }
+
+  // ===================== POST BACKEND =====================
+
+  async function postBackend(params) {
+    const resp = await fetch(API, {
+      method: 'POST',
+      body: JSON.stringify(params),
+      redirect: 'follow'
+    });
+    const text = await resp.text();
+    try { return JSON.parse(text); }
+    catch(e) { throw new Error('Risposta non valida dal backend'); }
+  }
+
+  // ===================== GENERA + DRIVE + EMAIL (FLUSSO COMPLETO) =====================
+
+  async function generaTuttiDriveEmail() {
+    const lista = [];
+    _datiAttest.forEach(function(sq) {
+      sq.alunni.forEach(function(nome) { lista.push({ sq: sq, nome: nome }); });
+    });
+    if (lista.length === 0) { toast('Nessun alunno trovato.'); return; }
+
+    const campi = getCampi();
+    const btn = document.getElementById('btnDriveEmail');
+    btn.disabled = true;
+    document.getElementById('btnTutti').disabled = true;
+
+    document.getElementById('progressWrap').style.display = 'block';
+    document.getElementById('progressBar').style.width = '0%';
+
+    // byDocente: email → { nomeDocente, fileIds:[] }
+    const byDocente = {};
+    let errori = 0;
+
+    // FASE 1: genera PDF + salva Drive
+    for (let i = 0; i < lista.length; i++) {
+      const sq = lista[i].sq, nome = lista[i].nome;
+      const pct = Math.round((i / lista.length) * 80);
+      document.getElementById('progressBar').style.width = pct + '%';
+      document.getElementById('progressLabel').textContent =
+        '☁️ Drive ' + (i + 1) + '/' + lista.length + ' \u2014 ' + nome + '...';
+
+      try {
+        const doc = await generaPDF(sq, nome);
+        const pdfBase64 = doc.output('datauristring').split(',')[1];
+        const r = await postBackend({
+          action: 'salvaAttestatoDrive',
+          pwd: adminPwd,
+          nomeAlunno: nome,
+          ordine:   sq.ordine,
+          classe:   sq.classe,
+          sezione:  sq.sezione,
+          istituto: sq.istituto,
+          plesso:   sq.plesso,
+          pdfBase64: pdfBase64
+        });
+        if (r.error) throw new Error(r.error);
+
+        const key = sq.email || sq.docente || '_';
+        if (!byDocente[key]) byDocente[key] = { nomeDocente: sq.docente, fileIds: [] };
+        byDocente[key].fileIds.push(r.fileId);
+      } catch(e) {
+        console.error('Errore Drive per', nome, e);
+        errori++;
+      }
+      await new Promise(function(r){ setTimeout(r, 150); });
+    }
+
+    // FASE 2: invia email per docente
+    const docenti = Object.entries(byDocente).filter(function(d){ return d[0] !== '_'; });
+    let emailOk = 0;
+
+    for (let d = 0; d < docenti.length; d++) {
+      const email = docenti[d][0], info = docenti[d][1];
+      const pct = 80 + Math.round(((d + 1) / Math.max(docenti.length, 1)) * 20);
+      document.getElementById('progressBar').style.width = pct + '%';
+      document.getElementById('progressLabel').textContent =
+        '\uD83D\uDCE7 Email ' + (d + 1) + '/' + docenti.length + ' \u2192 ' + email + '...';
+
+      try {
+        const r = await postBackend({
+          action: 'inviaEmailDocente',
+          pwd: adminPwd,
+          emailDocente: email,
+          nomeDocente:  info.nomeDocente,
+          garaNome:     _garaNome,
+          fileIds:      info.fileIds
+        });
+        if (r.ok) emailOk++;
+      } catch(e) {
+        console.error('Errore email per', email, e);
+      }
+      await new Promise(function(r){ setTimeout(r, 400); });
+    }
+
+    document.getElementById('progressBar').style.width = '100%';
+    document.getElementById('progressLabel').textContent =
+      '\u2705 ' + lista.length + ' attestati su Drive' + (errori ? ' (' + errori + ' errori)' : '') +
+      ' \u00b7 ' + emailOk + '/' + docenti.length + ' email inviate';
+
+    btn.disabled = false;
+    document.getElementById('btnTutti').disabled = false;
+    setTimeout(function(){ document.getElementById('progressWrap').style.display = 'none'; }, 6000);
+    toast('\u2705 ' + lista.length + ' PDF su Drive \u00b7 ' + emailOk + ' email inviate');
+  }
+
+  // ===================== SALVA SINGOLO SU DRIVE (con confirm) =====================
+
+  function salvaAlunnoDrive(sqIdx, aIdx, btn) {
+    const sq   = _datiAttest[sqIdx];
+    const nome = sq.alunni[aIdx];
+
+    document.getElementById('confirmDriveNome').textContent = nome + ' (' + sq.squadra + ')';
+
+    const modal = document.getElementById('modalConfirmDrive');
+    modal.style.display = 'block';
+
+    const okBtn = document.getElementById('btnConfirmDriveOk');
+    // Rimuove listener precedenti
+    const newOk = okBtn.cloneNode(true);
+    okBtn.parentNode.replaceChild(newOk, okBtn);
+
+    newOk.addEventListener('click', async function() {
+      modal.style.display = 'none';
+      const orig = btn.textContent;
+      btn.disabled = true; btn.textContent = '⏳';
+
+      try {
+        const doc = await generaPDF(sq, nome);
+        const pdfBase64 = doc.output('datauristring').split(',')[1];
+        const r = await postBackend({
+          action: 'salvaAttestatoDrive',
+          pwd: adminPwd,
+          nomeAlunno: nome,
+          ordine:   sq.ordine,
+          classe:   sq.classe,
+          sezione:  sq.sezione,
+          istituto: sq.istituto,
+          plesso:   sq.plesso,
+          pdfBase64: pdfBase64
+        });
+        if (r.error) throw new Error(r.error);
+        btn.textContent = '\u2705'; btn.disabled = false;
+        toast('\u2705 ' + nome + ' salvato su Drive (mail NON reinviata)');
+        setTimeout(function(){ btn.textContent = orig; }, 3000);
+      } catch(e) {
+        btn.disabled = false; btn.textContent = orig;
+        toast('\u274C Errore: ' + e.message);
+      }
+    });
   }
 
   // ===================== UTILS =====================
