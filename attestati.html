@@ -570,140 +570,194 @@
       });
   }
 
+  // ===================== BADGE CANVAS =====================
+
+  function creaImgBadge(edizioni) {
+    const canvas = document.createElement('canvas');
+    const SIZE = 220;
+    canvas.width = SIZE; canvas.height = SIZE;
+    const ctx = canvas.getContext('2d');
+    const cx = SIZE/2, cy = SIZE/2, R = SIZE/2 - 4;
+
+    // Ombra esterna
+    ctx.shadowColor = 'rgba(0,0,0,0.45)';
+    ctx.shadowBlur = 10; ctx.shadowOffsetX = 2; ctx.shadowOffsetY = 3;
+
+    // Anello esterno oro
+    const gOut = ctx.createRadialGradient(cx - R*0.25, cy - R*0.25, R*0.1, cx, cy, R);
+    gOut.addColorStop(0, '#ffe070'); gOut.addColorStop(0.45, '#c8900a'); gOut.addColorStop(1, '#6b4800');
+    ctx.fillStyle = gOut;
+    ctx.beginPath(); ctx.arc(cx, cy, R, 0, Math.PI*2); ctx.fill();
+    ctx.shadowColor = 'transparent';
+
+    // 10 stelline sull'anello
+    for (let i = 0; i < 10; i++) {
+      const a = (i/10) * Math.PI*2 - Math.PI/2;
+      const sx = cx + (R - 12) * Math.cos(a), sy = cy + (R - 12) * Math.sin(a);
+      _drawStar(ctx, sx, sy, 5.5, 2.2, 5, '#fff5aa');
+    }
+
+    // Cerchio interno scuro
+    ctx.fillStyle = '#7a5500';
+    ctx.beginPath(); ctx.arc(cx, cy, R*0.73, 0, Math.PI*2); ctx.fill();
+
+    // Cerchio interno illuminato
+    const gIn = ctx.createRadialGradient(cx-6, cy-8, 4, cx, cy, R*0.68);
+    gIn.addColorStop(0, '#f8d860'); gIn.addColorStop(0.55, '#c08a08'); gIn.addColorStop(1, '#7a5500');
+    ctx.fillStyle = gIn;
+    ctx.beginPath(); ctx.arc(cx, cy, R*0.68, 0, Math.PI*2); ctx.fill();
+
+    // Filetto interno
+    ctx.strokeStyle = '#ffe880'; ctx.lineWidth = 1.5;
+    ctx.beginPath(); ctx.arc(cx, cy, R*0.68, 0, Math.PI*2); ctx.stroke();
+
+    // Numero edizione
+    const nStr = ordinale(edizioni);
+    ctx.shadowColor = 'rgba(0,0,0,0.5)'; ctx.shadowBlur = 3;
+    ctx.fillStyle = '#fff8d0'; ctx.textAlign = 'center'; ctx.textBaseline = 'alphabetic';
+    ctx.font = 'bold 60px Georgia, serif';
+    ctx.fillText(nStr, cx, cy + 10);
+    ctx.shadowColor = 'transparent';
+
+    // Lineette decorative
+    ctx.strokeStyle = '#fff5aa'; ctx.lineWidth = 1.5;
+    const lw = R * 0.33;
+    ctx.beginPath(); ctx.moveTo(cx - lw, cy + 22); ctx.lineTo(cx - 9, cy + 22); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(cx + 9, cy + 22); ctx.lineTo(cx + lw, cy + 22); ctx.stroke();
+
+    // "EDIZIONE"
+    ctx.fillStyle = '#fff5aa'; ctx.font = 'bold 19px Georgia, serif';
+    ctx.fillText('EDIZIONE', cx, cy + 44);
+
+    return canvas.toDataURL('image/png');
+  }
+
+  function _drawStar(ctx, cx, cy, rOut, rIn, nPts, color) {
+    ctx.fillStyle = color; ctx.beginPath();
+    for (let i = 0; i < nPts*2; i++) {
+      const r = i%2===0 ? rOut : rIn;
+      const a = (i/(nPts*2)) * Math.PI*2 - Math.PI/2;
+      i===0 ? ctx.moveTo(cx+r*Math.cos(a), cy+r*Math.sin(a)) : ctx.lineTo(cx+r*Math.cos(a), cy+r*Math.sin(a));
+    }
+    ctx.closePath(); ctx.fill();
+  }
+
   // ===================== GENERA SINGOLO PDF =====================
 
   async function generaPDF(sq, nomeAlunno) {
     const { jsPDF } = window.jspdf;
-    const doc = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4' });
-    // A4 landscape: 297 × 210 mm
-
-    const W = 297, H = 210;
+    const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+    // A4 portrait: 210 × 297 mm
+    const W = 210, H = 297;
     const campi = getCampi();
 
-    // --- SFONDO ---
+    // ── SFONDO ──────────────────────────────────────────────────────
     if (_imgCache['sfondo']) {
       doc.addImage(_imgCache['sfondo'], 'PNG', 0, 0, W, H);
     } else {
-      // Fallback: bordo semplice
-      doc.setDrawColor(150, 120, 40);
-      doc.setLineWidth(2);
-      doc.rect(8, 8, W-16, H-16);
-      doc.setLineWidth(0.5);
-      doc.rect(11, 11, W-22, H-22);
+      doc.setDrawColor(150, 150, 150); doc.setLineWidth(2);
+      doc.rect(7, 7, W-14, H-14);
+      doc.setLineWidth(0.4); doc.rect(10, 10, W-20, H-20);
     }
 
-    // --- LOGO STATO ITALIANO ---
+    // ── HEADER: Logo Stato + testi istituzionali ─────────────────────
+
     if (_imgCache['logo-stato']) {
-      doc.addImage(_imgCache['logo-stato'], 'PNG', 18, 14, 18, 22);
+      doc.addImage(_imgCache['logo-stato'], 'PNG', 14, 11, 21, 21);
     }
 
-    // --- LOGO LOGIKRON ---
+    doc.setFont('courier', 'normal'); doc.setFontSize(7); doc.setTextColor(25, 25, 25);
+    doc.text('Ministero',           38, 16);
+    doc.text("dell'Istruzione",     38, 21);
+    doc.text('e del Merito',        38, 26);
+
+    doc.setFont('courier', 'bold'); doc.setFontSize(8);
+    doc.text('ISTITUTO COMPRENSIVO di GOTTOLENGO', 196, 16, { align: 'right' });
+    doc.setFont('courier', 'normal'); doc.setFontSize(6.5);
+    doc.text('Scuole: Primaria Fiesse, Gambara, Gottolengo', 196, 22, { align: 'right' });
+
+    // Separatore
+    doc.setDrawColor(140, 140, 140); doc.setLineWidth(0.4);
+    doc.line(14, 36, 196, 36);
+
+    // ── LOGO LOGIKRON (grande, centrato) ────────────────────────────
+
     if (_imgCache['logo-logikron']) {
-      doc.addImage(_imgCache['logo-logikron'], 'PNG', 214, 13, 64, 18);
+      const lw = 136, lh = 40;
+      doc.addImage(_imgCache['logo-logikron'], 'PNG', (W - lw)/2, 42, lw, lh);
     }
 
-    // --- BADGE EDIZIONE (testo curvo simulato con box) ---
-    const edStr = ordinale(campi.edizioni) + ' Edizione';
-    doc.setFontSize(7.5);
-    doc.setTextColor(100, 80, 20);
-    doc.setFont('helvetica', 'bold');
-    doc.text(edStr, W/2, 14, { align: 'center' });
+    // ── INTESTAZIONE GARA ────────────────────────────────────────────
 
-    // --- TITOLO PRINCIPALE ---
-    const titoloLinea1 = 'ATTESTATO DI';
-    const titoloLinea2 = sq.tipo.toUpperCase();
-    doc.setTextColor(40, 30, 10);
-    doc.setFont('helvetica', 'bold');
-    doc.setFontSize(22);
-    doc.text(titoloLinea1, W/2, 44, { align: 'center' });
-    doc.setFontSize(28);
-    doc.setTextColor(sq.tipo === 'Merito' ? '#7c3a00' : '#1e3a8a');
-    if (sq.tipo === 'Merito') {
-      doc.setTextColor(124, 58, 0);
-    } else {
-      doc.setTextColor(30, 58, 138);
-    }
-    doc.text(titoloLinea2, W/2, 58, { align: 'center' });
+    doc.setFont('courier', 'bold'); doc.setFontSize(16); doc.setTextColor(20, 20, 20);
+    doc.text('Giochi Matematici a Squadre', W/2, 92, { align: 'center' });
 
-    // Linea decorativa sotto il titolo
-    doc.setDrawColor(180, 150, 50);
-    doc.setLineWidth(0.6);
-    doc.line(80, 62, W-80, 62);
-
-    // --- CORPO ---
-    doc.setFont('helvetica', 'normal');
-    doc.setFontSize(11);
-    doc.setTextColor(50, 40, 20);
-    doc.text('Si certifica che', W/2, 72, { align: 'center' });
-
-    // Nome alunno - grande
-    doc.setFont('helvetica', 'bold');
-    doc.setFontSize(20);
-    doc.setTextColor(20, 20, 20);
-    doc.text(nomeAlunno, W/2, 84, { align: 'center' });
-
-    // Linea sotto il nome
-    doc.setDrawColor(180, 150, 50);
-    doc.setLineWidth(0.4);
-    const nomeW = doc.getTextWidth(nomeAlunno);
-    doc.line(W/2 - nomeW/2 - 5, 87, W/2 + nomeW/2 + 5, 87);
-
-    // Testo partecipazione
-    doc.setFont('helvetica', 'normal');
-    doc.setFontSize(11);
-    doc.setTextColor(50, 40, 20);
+    doc.setFont('courier', 'normal'); doc.setFontSize(12);
+    doc.text(campi.dataCerimonia, W/2, 102, { align: 'center' });
 
     const ordineLabel = sq.ordine === 'primaria' ? 'Scuola Primaria' : 'Scuola Secondaria di I grado';
-    const classeLabel = 'Classe ' + sq.classe + (sq.sezione ? ' sez. ' + sq.sezione : '');
-    const istitutoLabel = sq.istituto + (sq.plesso && sq.plesso !== sq.istituto ? ' – ' + sq.plesso : '');
-
-    doc.text('ha partecipato come membro della squadra', W/2, 96, { align: 'center' });
-
-    doc.setFont('helvetica', 'bolditalic');
-    doc.setFontSize(12.5);
-    doc.text('"' + sq.squadra + '"', W/2, 105, { align: 'center' });
-
-    doc.setFont('helvetica', 'normal');
+    const classeStr = 'Classe ' + sq.classe + (sq.sezione ? ' sez. ' + sq.sezione : '')
+                    + ' - Plesso di ' + (sq.plesso || sq.istituto);
     doc.setFontSize(11);
-    doc.text(istitutoLabel + ' – ' + ordineLabel + ' – ' + classeLabel, W/2, 113, { align: 'center' });
+    doc.text(classeStr, W/2, 112, { align: 'center' });
 
-    doc.setFont('helvetica', 'bold');
-    doc.text('ai Giochi Matematici LogiKron – Anno Scolastico ' + campi.annoScolastico, W/2, 122, { align: 'center' });
+    doc.setDrawColor(140, 140, 140); doc.setLineWidth(0.3);
+    doc.line(40, 119, 170, 119);
 
-    // --- ZONA BASSA ---
+    // ── CORPO ATTESTATO ──────────────────────────────────────────────
 
-    // Timbro scuola
+    doc.setFont('courier', 'bold'); doc.setFontSize(20); doc.setTextColor(20, 20, 20);
+    doc.text('Attestato di', W/2, 133, { align: 'center' });
+
+    doc.setFontSize(28);
+    doc.setTextColor.apply(doc, sq.tipo === 'Merito' ? [120, 55, 0] : [20, 50, 130]);
+    doc.text(sq.tipo, W/2, 153, { align: 'center' });
+
+    doc.setFont('courier', 'normal'); doc.setFontSize(12); doc.setTextColor(30, 30, 30);
+    doc.text('Conferito a', W/2, 165, { align: 'center' });
+
+    // Nome alunno — scala il font se il nome è lungo
+    doc.setFont('courier', 'bold');
+    let fs = 24; doc.setFontSize(fs);
+    while (doc.getTextWidth(nomeAlunno) > 168 && fs > 14) { fs--; doc.setFontSize(fs); }
+    doc.setTextColor(10, 10, 10);
+    doc.text(nomeAlunno, W/2, 183, { align: 'center' });
+
+    doc.setDrawColor(180, 140, 30); doc.setLineWidth(0.5);
+    const nw = doc.getTextWidth(nomeAlunno);
+    doc.line(W/2 - nw/2 - 3, 187, W/2 + nw/2 + 3, 187);
+
+    // ── ZONA BASSA ───────────────────────────────────────────────────
+
+    // Badge 11ª Edizione (in alto a destra rispetto al timbro)
+    const badgeImg = creaImgBadge(campi.edizioni);
+    doc.addImage(badgeImg, 'PNG', 152, 207, 42, 42);
+
+    // Timbro scuola (centrato)
     if (_imgCache['timbro']) {
-      doc.addImage(_imgCache['timbro'], 'PNG', 20, 148, 42, 42);
+      doc.addImage(_imgCache['timbro'], 'PNG', (W - 46)/2, 210, 46, 46);
     }
 
-    // Luogo e data
-    doc.setFont('helvetica', 'normal');
-    doc.setFontSize(9.5);
-    doc.setTextColor(50, 40, 20);
-    doc.text('Gottolengo, ' + campi.dataCerimonia, 155, 155);
+    // Linea firme
+    doc.setDrawColor(110, 110, 110); doc.setLineWidth(0.3);
+    doc.line(14, 262, 196, 262);
 
-    // Firma DS
-    doc.setFont('helvetica', 'normal');
-    doc.setFontSize(9);
-    doc.text('Il Dirigente Scolastico', 165, 162, { align: 'center' });
-    doc.setFont('helvetica', 'bold');
-    doc.setFontSize(10);
-    doc.text(campi.nomeDS, 165, 175, { align: 'center' });
-    doc.setLineWidth(0.3);
-    doc.setDrawColor(100, 80, 40);
-    doc.line(138, 168, 192, 168);
+    // Referente (sinistra)
+    doc.setFont('courier', 'normal'); doc.setFontSize(9); doc.setTextColor(20, 20, 20);
+    doc.text('Il Referente del Progetto', 50, 269, { align: 'center' });
+    doc.setFont('courier', 'bold');
+    doc.text('Ins. ' + campi.nomeRef, 50, 277, { align: 'center' });
 
-    // Firma Referente
-    doc.setFont('helvetica', 'normal');
-    doc.setFontSize(9);
-    doc.setTextColor(50, 40, 20);
-    doc.text('Il Referente per la Matematica', 244, 162, { align: 'center' });
-    doc.setFont('helvetica', 'bold');
-    doc.setFontSize(10);
-    doc.text(campi.nomeRef, 244, 175, { align: 'center' });
-    doc.setLineWidth(0.3);
-    doc.line(216, 168, 272, 168);
+    // Dirigente Scolastica (destra)
+    doc.setFont('courier', 'normal'); doc.setFontSize(9);
+    doc.text('La Dirigente Scolastica', 162, 269, { align: 'center' });
+    doc.setFont('courier', 'bold');
+    doc.text(campi.nomeDS, 162, 277, { align: 'center' });
+
+    // Nota legale firma DS
+    doc.setFont('courier', 'normal'); doc.setFontSize(5.5); doc.setTextColor(80, 80, 80);
+    doc.text('Firma autografa sostituita a mezzo stampa ai sensi e per gli', 162, 283, { align: 'center' });
+    doc.text("effetti dell'art. 3, C. 2, D.Lgs n. 39/1993", 162, 288, { align: 'center' });
 
     return doc;
   }
