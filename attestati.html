@@ -6,6 +6,9 @@
   <title>Attestati – LogiKron</title>
   <script src="js/config.js"></script>
   <script src="js/api.js"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Special+Elite&family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=EB+Garamond:ital,wght@0,400;0,600;1,400&family=Great+Vibes&display=swap">
   <style>
     :root {
       --lk-bg: #0f172a;
@@ -236,6 +239,7 @@
 </div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 <script>
   const ADMIN_PASSWORD = 'logikron2025';
   const API = LOGIKRON_CONFIG.webAppUrls.admin;
@@ -243,7 +247,8 @@
   let adminPwd = '';
   let _datiAttest = []; // [{squadra, posizione, tipo, istituto, plesso, ordine, classe, sezione, docente, email, alunni:[]}]
   let _garaNome = '';
-  let _imgCache = {}; // { url: base64 }
+  let _imgCache = {}; // { name: base64 }
+  let _imgDim   = {}; // { name: {w, h} }
 
   // ===================== LOGIN =====================
 
@@ -260,7 +265,7 @@
     }
   }
 
-  if (sessionStorage.getItem('lkAttestati') === 'true') {
+  if (sessionStorage.getItem('lkAttestati') === 'true' || sessionStorage.getItem('logikronAdmin') === 'true') {
     adminPwd = ADMIN_PASSWORD;
     document.getElementById('loginPanel').style.display = 'none';
     document.getElementById('mainPanel').style.display = 'block';
@@ -299,7 +304,13 @@
         const url = './assets/attestati/' + name + '.png';
         const resp = await fetch(url);
         const blob = await resp.blob();
-        _imgCache[name] = await blobToBase64(blob);
+        const b64 = await blobToBase64(blob);
+        _imgCache[name] = b64;
+        await new Promise(function(resolve) {
+          const img = new Image();
+          img.onload = function() { _imgDim[name] = { w: img.width, h: img.height }; resolve(); };
+          img.src = b64;
+        });
       } catch(e) {
         console.warn('Immagine non caricata:', name, e);
       }
@@ -487,7 +498,7 @@
         ? formatData(document.getElementById('dataCerimonia').value)
         : formatData(new Date().toISOString().split('T')[0]),
       annoScolastico: LOGIKRON_CONFIG.annoScolastico,
-      edizioni:       LOGIKRON_CONFIG.totaleStorico.edizioni
+      edizioni: LOGIKRON_CONFIG.edizioneCorrente || (LOGIKRON_CONFIG.totaleStorico.edizioni + 1)
     };
   }
 
@@ -646,120 +657,227 @@
 
   async function generaPDF(sq, nomeAlunno) {
     const { jsPDF } = window.jspdf;
-    const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
-    // A4 portrait: 210 × 297 mm
-    const W = 210, H = 297;
     const campi = getCampi();
 
-    // ── SFONDO ──────────────────────────────────────────────────────
+    // Forza il caricamento di tutti i font Google prima di renderizzare
+    await Promise.all([
+      document.fonts.load('400 16px "Special Elite"'),
+      document.fonts.load('400 16px "Playfair Display"'),
+      document.fonts.load('700 16px "Playfair Display"'),
+      document.fonts.load('italic 700 16px "Playfair Display"'),
+      document.fonts.load('400 16px "EB Garamond"'),
+      document.fonts.load('600 16px "EB Garamond"'),
+      document.fonts.load('400 16px "Great Vibes"'),
+    ]).catch(function(){});
+
+    const div = buildAttestato(sq, nomeAlunno, campi);
+    div.style.position = 'fixed';
+    div.style.left = '-9999px';
+    div.style.top = '0px';
+    document.body.appendChild(div);
+
+    try {
+      const canvas = await html2canvas(div, {
+        scale: 2,
+        useCORS: true,
+        allowTaint: true,
+        logging: false,
+        width: 1122,
+        height: 794,
+        backgroundColor: '#ffffff'
+      });
+      const imgData = canvas.toDataURL('image/jpeg', 0.97);
+      const doc = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4' });
+      doc.addImage(imgData, 'JPEG', 0, 0, 297, 210);
+      return doc;
+    } finally {
+      document.body.removeChild(div);
+    }
+  }
+
+  // ── Costruisce il div HTML dell'attestato (1122×794 px = A4 landscape) ──
+
+  function buildAttestato(sq, nomeAlunno, campi) {
+    const W = 1122, H = 794;
+    const isMerito = sq.tipo === 'Merito';
+    const esc = function(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); };
+
+    const classeStr = 'Classe ' + sq.classe
+      + (sq.sezione ? ' sez. ' + sq.sezione : '')
+      + ' \u2014 ' + (sq.plesso || sq.istituto);
+
+    const wrap = document.createElement('div');
+    wrap.style.cssText = 'width:' + W + 'px;height:' + H + 'px;position:relative;overflow:hidden;background:#fff;';
+
+    // Sfondo
     if (_imgCache['sfondo']) {
-      doc.addImage(_imgCache['sfondo'], 'PNG', 0, 0, W, H);
-    } else {
-      doc.setDrawColor(150, 150, 150); doc.setLineWidth(2);
-      doc.rect(7, 7, W-14, H-14);
-      doc.setLineWidth(0.4); doc.rect(10, 10, W-20, H-20);
+      const bg = document.createElement('img');
+      bg.src = _imgCache['sfondo'];
+      bg.style.cssText = 'position:absolute;top:0;left:0;width:' + W + 'px;height:' + H + 'px;object-fit:cover;z-index:0;';
+      wrap.appendChild(bg);
     }
 
-    // ── HEADER: Logo Stato + testi istituzionali ─────────────────────
+    // Layer contenuto
+    const lay = document.createElement('div');
+    lay.style.cssText = 'position:absolute;top:0;left:0;width:' + W + 'px;height:' + H + 'px;z-index:1;';
 
+    function mk(tag, css, html) {
+      const e = document.createElement(tag);
+      e.style.cssText = css;
+      if (html !== undefined) e.innerHTML = html;
+      return e;
+    }
+
+    // ── Header sinistra: logo stato + Ministero ──
     if (_imgCache['logo-stato']) {
-      doc.addImage(_imgCache['logo-stato'], 'PNG', 14, 11, 21, 21);
+      const imgEl = mk('img', 'position:absolute;top:32px;left:53px;width:76px;height:76px;object-fit:contain;');
+      imgEl.src = _imgCache['logo-stato'];
+      lay.appendChild(imgEl);
     }
+    lay.appendChild(mk('div',
+      'position:absolute;top:34px;left:139px;'
+      + 'font-family:\'Special Elite\',monospace;font-size:24px;color:#1a1a1a;'
+      + 'line-height:1.55;letter-spacing:0.2px;',
+      "Ministero<br>dell'Istruzione<br>e del Merito"
+    ));
 
-    doc.setFont('courier', 'normal'); doc.setFontSize(7); doc.setTextColor(25, 25, 25);
-    doc.text('Ministero',           38, 16);
-    doc.text("dell'Istruzione",     38, 21);
-    doc.text('e del Merito',        38, 26);
+    // ── Header destra: IC Gottolengo ──
+    lay.appendChild(mk('div',
+      'position:absolute;top:34px;right:53px;'
+      + 'font-family:\'Special Elite\',monospace;font-size:28px;color:#1a1a1a;'
+      + 'text-align:right;line-height:1.45;',
+      'ISTITUTO COMPRENSIVO di GOTTOLENGO<br>'
+      + '<span style="font-size:21px;">Scuole: Primaria Fiesse, Gambara, Gottolengo</span>'
+    ));
 
-    doc.setFont('courier', 'bold'); doc.setFontSize(8);
-    doc.text('ISTITUTO COMPRENSIVO di GOTTOLENGO', 196, 16, { align: 'right' });
-    doc.setFont('courier', 'normal'); doc.setFontSize(6.5);
-    doc.text('Scuole: Primaria Fiesse, Gambara, Gottolengo', 196, 22, { align: 'right' });
+    // ── Riga separatrice 1 ──
+    lay.appendChild(mk('div',
+      'position:absolute;top:122px;left:53px;right:53px;height:1px;background:rgba(130,130,130,0.75);'
+    ));
 
-    // Separatore
-    doc.setDrawColor(140, 140, 140); doc.setLineWidth(0.4);
-    doc.line(14, 36, 196, 36);
-
-    // ── LOGO LOGIKRON (grande, centrato) ────────────────────────────
-
+    // ── Logo LogiKron centrato ──
     if (_imgCache['logo-logikron']) {
-      const lw = 136, lh = 40;
-      doc.addImage(_imgCache['logo-logikron'], 'PNG', (W - lw)/2, 42, lw, lh);
+      const dim = _imgDim['logo-logikron'] || { w: 600, h: 163 };
+      const lw = 548, lh = Math.round(lw * dim.h / dim.w);
+      const imgEl = mk('img',
+        'position:absolute;top:130px;left:' + Math.round((W - lw) / 2) + 'px;'
+        + 'width:' + lw + 'px;height:' + lh + 'px;object-fit:contain;'
+      );
+      imgEl.src = _imgCache['logo-logikron'];
+      lay.appendChild(imgEl);
     }
 
-    // ── INTESTAZIONE GARA ────────────────────────────────────────────
+    // ── "Giochi Matematici a Squadre" ──
+    lay.appendChild(mk('div',
+      'position:absolute;top:296px;left:0;right:0;text-align:center;'
+      + 'font-family:\'Playfair Display\',serif;font-size:46px;font-weight:700;'
+      + 'color:#141414;letter-spacing:0.5px;',
+      'Giochi Matematici a Squadre'
+    ));
 
-    doc.setFont('courier', 'bold'); doc.setFontSize(16); doc.setTextColor(20, 20, 20);
-    doc.text('Giochi Matematici a Squadre', W/2, 92, { align: 'center' });
+    // ── Data ──
+    lay.appendChild(mk('div',
+      'position:absolute;top:350px;left:0;right:0;text-align:center;'
+      + 'font-family:\'EB Garamond\',serif;font-size:34px;font-style:italic;color:#222;',
+      esc(campi.dataCerimonia)
+    ));
 
-    doc.setFont('courier', 'normal'); doc.setFontSize(12);
-    doc.text(campi.dataCerimonia, W/2, 102, { align: 'center' });
+    // ── Classe / plesso ──
+    lay.appendChild(mk('div',
+      'position:absolute;top:390px;left:0;right:0;text-align:center;'
+      + 'font-family:\'EB Garamond\',serif;font-size:32px;color:#2a2a2a;',
+      esc(classeStr)
+    ));
 
-    const ordineLabel = sq.ordine === 'primaria' ? 'Scuola Primaria' : 'Scuola Secondaria di I grado';
-    const classeStr = 'Classe ' + sq.classe + (sq.sezione ? ' sez. ' + sq.sezione : '')
-                    + ' - Plesso di ' + (sq.plesso || sq.istituto);
-    doc.setFontSize(11);
-    doc.text(classeStr, W/2, 112, { align: 'center' });
+    // ── Riga separatrice 2 ──
+    lay.appendChild(mk('div',
+      'position:absolute;top:430px;left:180px;right:180px;height:1px;background:rgba(140,140,140,0.65);'
+    ));
 
-    doc.setDrawColor(140, 140, 140); doc.setLineWidth(0.3);
-    doc.line(40, 119, 170, 119);
+    // ── "Attestato di" ──
+    lay.appendChild(mk('div',
+      'position:absolute;top:438px;left:0;right:0;text-align:center;'
+      + 'font-family:\'Playfair Display\',serif;font-size:54px;font-weight:400;color:#141414;',
+      'Attestato di'
+    ));
 
-    // ── CORPO ATTESTATO ──────────────────────────────────────────────
+    // ── "Merito" / "Partecipazione" (spostato sinistra per dare spazio al badge) ──
+    const tipoColor = isMerito ? '#6b2400' : '#0f2d7a';
+    lay.appendChild(mk('div',
+      'position:absolute;top:492px;left:0;right:170px;text-align:center;'
+      + 'font-family:\'Playfair Display\',serif;font-size:84px;font-weight:700;'
+      + 'font-style:italic;color:' + tipoColor + ';line-height:1;',
+      esc(sq.tipo)
+    ));
 
-    doc.setFont('courier', 'bold'); doc.setFontSize(20); doc.setTextColor(20, 20, 20);
-    doc.text('Attestato di', W/2, 133, { align: 'center' });
-
-    doc.setFontSize(28);
-    doc.setTextColor.apply(doc, sq.tipo === 'Merito' ? [120, 55, 0] : [20, 50, 130]);
-    doc.text(sq.tipo, W/2, 153, { align: 'center' });
-
-    doc.setFont('courier', 'normal'); doc.setFontSize(12); doc.setTextColor(30, 30, 30);
-    doc.text('Conferito a', W/2, 165, { align: 'center' });
-
-    // Nome alunno — scala il font se il nome è lungo
-    doc.setFont('courier', 'bold');
-    let fs = 24; doc.setFontSize(fs);
-    while (doc.getTextWidth(nomeAlunno) > 168 && fs > 14) { fs--; doc.setFontSize(fs); }
-    doc.setTextColor(10, 10, 10);
-    doc.text(nomeAlunno, W/2, 183, { align: 'center' });
-
-    doc.setDrawColor(180, 140, 30); doc.setLineWidth(0.5);
-    const nw = doc.getTextWidth(nomeAlunno);
-    doc.line(W/2 - nw/2 - 3, 187, W/2 + nw/2 + 3, 187);
-
-    // ── ZONA BASSA ───────────────────────────────────────────────────
-
-    // Badge 11ª Edizione (in alto a destra rispetto al timbro)
+    // ── Badge edizione (destra) ──
     const badgeImg = creaImgBadge(campi.edizioni);
-    doc.addImage(badgeImg, 'PNG', 152, 207, 42, 42);
+    const badgeEl = mk('img',
+      'position:absolute;top:420px;right:48px;width:158px;height:158px;object-fit:contain;'
+    );
+    badgeEl.src = badgeImg;
+    lay.appendChild(badgeEl);
 
-    // Timbro scuola (centrato)
+    // ── "Conferito a" ──
+    lay.appendChild(mk('div',
+      'position:absolute;top:582px;left:0;right:0;text-align:center;'
+      + 'font-family:\'EB Garamond\',serif;font-size:36px;color:#1e1e1e;',
+      'Conferito a'
+    ));
+
+    // ── Nome alunno (Great Vibes calligrafico) ──
+    const nlen = nomeAlunno.length;
+    const nfs = nlen > 24 ? 62 : nlen > 18 ? 72 : nlen > 14 ? 82 : 90;
+    lay.appendChild(mk('div',
+      'position:absolute;top:618px;left:60px;right:60px;text-align:center;'
+      + 'font-family:\'Great Vibes\',cursive;font-size:' + nfs + 'px;'
+      + 'color:#080808;line-height:1;white-space:nowrap;overflow:hidden;',
+      esc(nomeAlunno)
+    ));
+
+    // ── Sottolineatura oro sotto il nome ──
+    lay.appendChild(mk('div',
+      'position:absolute;top:686px;left:260px;right:260px;height:2px;'
+      + 'background:linear-gradient(90deg,transparent 0%,#b08820 25%,#b08820 75%,transparent 100%);'
+    ));
+
+    // ── Riga separatrice footer ──
+    lay.appendChild(mk('div',
+      'position:absolute;top:696px;left:53px;right:53px;height:1px;background:rgba(130,130,130,0.7);'
+    ));
+
+    // ── Timbro scuola (centrato) ──
     if (_imgCache['timbro']) {
-      doc.addImage(_imgCache['timbro'], 'PNG', (W - 46)/2, 210, 46, 46);
+      const timbEl = mk('img',
+        'position:absolute;top:694px;left:' + Math.round((W - 108) / 2) + 'px;'
+        + 'width:108px;height:108px;object-fit:contain;'
+      );
+      timbEl.src = _imgCache['timbro'];
+      lay.appendChild(timbEl);
     }
 
-    // Linea firme
-    doc.setDrawColor(110, 110, 110); doc.setLineWidth(0.3);
-    doc.line(14, 262, 196, 262);
+    // ── Referente del Progetto (sinistra) ──
+    lay.appendChild(mk('div',
+      'position:absolute;top:702px;left:53px;width:248px;text-align:center;'
+      + 'font-family:\'EB Garamond\',serif;font-size:25px;color:#141414;line-height:1.55;',
+      'Il Referente del Progetto<br>'
+      + '<strong style="font-size:27px;">' + esc(campi.nomeRef) + '</strong>'
+    ));
 
-    // Referente (sinistra)
-    doc.setFont('courier', 'normal'); doc.setFontSize(9); doc.setTextColor(20, 20, 20);
-    doc.text('Il Referente del Progetto', 50, 269, { align: 'center' });
-    doc.setFont('courier', 'bold');
-    doc.text('Ins. ' + campi.nomeRef, 50, 277, { align: 'center' });
+    // ── Dirigente Scolastica + nota legale (destra) ──
+    lay.appendChild(mk('div',
+      'position:absolute;top:702px;right:53px;width:278px;text-align:center;'
+      + 'font-family:\'EB Garamond\',serif;font-size:25px;color:#141414;line-height:1.55;',
+      'La Dirigente Scolastica<br>'
+      + '<strong style="font-size:27px;">' + esc(campi.nomeDS) + '</strong><br>'
+      + '<span style="font-size:15px;color:#555;line-height:1.35;display:block;margin-top:3px;">'
+      + 'Firma autografa sostituita a mezzo stampa<br>'
+      + 'ai sensi e per gli effetti dell\u2019art.\u00a03,\u00a0C.\u00a02,\u00a0D.Lgs\u00a0n.\u00a039/1993'
+      + '</span>'
+    ));
 
-    // Dirigente Scolastica (destra)
-    doc.setFont('courier', 'normal'); doc.setFontSize(9);
-    doc.text('La Dirigente Scolastica', 162, 269, { align: 'center' });
-    doc.setFont('courier', 'bold');
-    doc.text(campi.nomeDS, 162, 277, { align: 'center' });
-
-    // Nota legale firma DS
-    doc.setFont('courier', 'normal'); doc.setFontSize(5.5); doc.setTextColor(80, 80, 80);
-    doc.text('Firma autografa sostituita a mezzo stampa ai sensi e per gli', 162, 283, { align: 'center' });
-    doc.text("effetti dell'art. 3, C. 2, D.Lgs n. 39/1993", 162, 288, { align: 'center' });
-
-    return doc;
+    wrap.appendChild(lay);
+    return wrap;
   }
 
   // ===================== UTILS =====================
@@ -776,8 +894,8 @@
     setTimeout(function(){ t.remove(); }, 5000);
   }
 
-  // Avvia se già loggato
-  if (sessionStorage.getItem('lkAttestati') === 'true') { init(); }
+  // Avvia se già loggato (accetta sia token attestati che token admin)
+  if (sessionStorage.getItem('lkAttestati') === 'true' || sessionStorage.getItem('logikronAdmin') === 'true') { init(); }
 </script>
 </body>
 </html>

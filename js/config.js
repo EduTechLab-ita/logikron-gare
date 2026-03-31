@@ -30,6 +30,9 @@ const LOGIKRON_CONFIG = {
     alunni: 239
   },
 
+  // Edizione corrente (da aggiornare ogni anno PRIMA dell'evento)
+  edizioneCorrente: 11,
+
   // Totali cumulativi di tutte le edizioni (aggiornare ogni anno sommando i nuovi dati)
   totaleStorico: {
     edizioni: 10,
