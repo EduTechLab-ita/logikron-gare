@@ -941,7 +941,7 @@
 
   // ===================== UPLOAD PDF CHUNKED (JSONP — evita il redirect POST→GET) =====================
 
-  const _CHUNK_SZ = 8000; // caratteri base64 per chunk (URL ~8700 chars, sicuro per Apps Script)
+  const _CHUNK_SZ = 1500; // caratteri base64 per chunk (URL ~1850 chars, sicuro per Apps Script)
 
   function _genSid() {
     return 'att' + Date.now() + Math.floor(Math.random() * 9999);
