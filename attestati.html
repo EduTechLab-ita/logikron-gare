@@ -6,6 +6,7 @@
   <title>Attestati – LogiKron</title>
   <script src="js/config.js"></script>
   <script src="js/api.js"></script>
+  <script src="https://accounts.google.com/gsi/client" async defer></script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Special+Elite&family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=EB+Garamond:ital,wght@0,400;0,600;1,400&family=Great+Vibes&display=swap">
@@ -350,6 +351,9 @@
     loadConfig();
     caricaGare();
     preloadImmagini();
+    // Inizializza auth Drive (GIS potrebbe non essere ancora caricato — riprova dopo 1s se serve)
+    if (typeof google !== 'undefined' && google.accounts) { initDriveAuth(); }
+    else { setTimeout(initDriveAuth, 1000); }
   }
 
   function loadConfig() {
@@ -939,53 +943,103 @@
     document.getElementById('modalInfo').style.display = 'block';
   }
 
-  // ===================== UPLOAD PDF CHUNKED (JSONP — evita il redirect POST→GET) =====================
+  // ===================== UPLOAD PDF — Drive API OAuth (diretto, nessun JSONP per i dati) =====================
 
-  const _CHUNK_SZ = 1500; // caratteri base64 per chunk (URL ~1850 chars, sicuro per Apps Script)
+  const GOOGLE_CLIENT_ID = '212298845224-oqtoa9no5j82rfhm1sjiffjbf14afs7c.apps.googleusercontent.com';
+  let _driveToken = null;
+  let _driveTokenExpiry = 0;
+  let _driveTokenClient = null;
+  let _attestatiFolderId = null;
 
-  function _genSid() {
-    return 'att' + Date.now() + Math.floor(Math.random() * 9999);
+  function initDriveAuth() {
+    // Inizializzato quando GIS è pronto (callback onload dello script GIS)
+    if (typeof google === 'undefined' || !google.accounts) return;
+    _driveTokenClient = google.accounts.oauth2.initTokenClient({
+      client_id: GOOGLE_CLIENT_ID,
+      scope: 'https://www.googleapis.com/auth/drive.file',
+      callback: '' // impostato dinamicamente in getDriveToken()
+    });
   }
 
-  // Carica un PDF base64 su Drive via più richieste JSONP GET
+  function getDriveToken() {
+    return new Promise(function(resolve, reject) {
+      if (_driveToken && Date.now() < _driveTokenExpiry - 60000) {
+        resolve(_driveToken);
+        return;
+      }
+      if (!_driveTokenClient) {
+        initDriveAuth();
+        if (!_driveTokenClient) { reject(new Error('Google Identity Services non ancora caricato. Riprova tra un secondo.')); return; }
+      }
+      _driveTokenClient.callback = function(response) {
+        if (response.error) { reject(new Error('Autorizzazione Google negata: ' + response.error)); return; }
+        _driveToken = response.access_token;
+        _driveTokenExpiry = Date.now() + (response.expires_in || 3600) * 1000;
+        resolve(_driveToken);
+      };
+      // prompt vuoto = silenzioso se già autorizzato, schermata consenso solo la prima volta
+      _driveTokenClient.requestAccessToken({ prompt: '' });
+    });
+  }
+
+  async function _getAttestatiFolderIdCached() {
+    if (_attestatiFolderId) return _attestatiFolderId;
+    const r = await lkApi(API, { action: 'getAttestatiFolderInfo', pwd: adminPwd });
+    if (r.error) throw new Error(r.error);
+    _attestatiFolderId = r.folderId;
+    return _attestatiFolderId;
+  }
+
+  async function _uploadToDriveApi(pdfBlob, fileName, folderId, token) {
+    const metadata = { name: fileName, parents: [folderId], mimeType: 'application/pdf' };
+    const body = new FormData();
+    body.append('metadata', new Blob([JSON.stringify(metadata)], { type: 'application/json' }));
+    body.append('file', pdfBlob);
+    const resp = await fetch(
+      'https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart',
+      { method: 'POST', headers: { Authorization: 'Bearer ' + token }, body: body }
+    );
+    if (!resp.ok) {
+      const err = await resp.json().catch(function(){ return {}; });
+      throw new Error('Drive API errore ' + resp.status + ': ' + ((err.error && err.error.message) || resp.statusText));
+    }
+    return resp.json(); // { id, name }
+  }
+
+  // Punto di ingresso unico — firma identica a prima, nessuna modifica nel resto del codice
   // Ritorna Promise<{ ok, fileId, fileName }>
   async function uploadPdfToBackend(pdfBase64, meta) {
-    const sid = _genSid();
-    const chunks = [];
-    for (let i = 0; i < pdfBase64.length; i += _CHUNK_SZ) {
-      chunks.push(pdfBase64.slice(i, i + _CHUNK_SZ));
-    }
-    const tot = chunks.length;
+    // 1. Token OAuth
+    const token = await getDriveToken();
 
-    // Invia i chunk in lotti da 5 in parallelo
-    const BATCH = 5;
-    for (let b = 0; b < tot; b += BATCH) {
-      const slice = chunks.slice(b, b + BATCH);
-      const promises = slice.map(function(d, j) {
-        return lkApi(API, { action: 'uploadPdfChunk', sid: sid, idx: b + j, tot: tot, d: d }, 25000);
-      });
-      const results = await Promise.all(promises);
-      for (let k = 0; k < results.length; k++) {
-        if (results[k].error) throw new Error('Chunk ' + (b + k) + ': ' + results[k].error);
-      }
-    }
+    // 2. Folder ID cartella Attestati (da Config via JSONP — chiamata piccola, nessun problema)
+    const folderId = await _getAttestatiFolderIdCached();
 
-    // Finalizza: assembla in cache e salva su Drive
-    const r = await lkApi(API, {
-      action:     'finalizeAttestatoDrive',
+    // 3. Converti base64 → Blob
+    const binary = atob(pdfBase64);
+    const bytes = new Uint8Array(binary.length);
+    for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+    const pdfBlob = new Blob([bytes], { type: 'application/pdf' });
+    const fileName = (meta.nomeAlunno || 'attestato').replace(/[\/\\?%*:|"<>]/g, '_') + '.pdf';
+
+    // 4. Upload diretto su Drive (veloce, nessun limite di URL)
+    const uploaded = await _uploadToDriveApi(pdfBlob, fileName, folderId, token);
+
+    // 5. Sposta nel subfolder corretto via AS (chiamata piccola — solo metadati)
+    const moved = await lkApi(API, {
+      action:     'spostaAttestatoDrive',
       pwd:        adminPwd,
-      sid:        sid,
-      tot:        tot,
+      fileId:     uploaded.id,
       nomeAlunno: meta.nomeAlunno,
       ordine:     meta.ordine,
       classe:     meta.classe,
       sezione:    meta.sezione,
       istituto:   meta.istituto,
       plesso:     meta.plesso
-    }, 35000);
+    }, 30000);
+    if (moved.error) console.warn('Sposta subfolder:', moved.error, '— file resta nella cartella Attestati');
 
-    if (r.error) throw new Error(r.error);
-    return r; // { ok, fileId, fileName }
+    return { ok: true, fileId: uploaded.id, fileName: uploaded.name };
   }
 
   // ===================== GENERA + DRIVE + EMAIL (FLUSSO COMPLETO) =====================

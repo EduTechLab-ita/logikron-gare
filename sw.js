@@ -3,7 +3,7 @@
 //  ⚙️  Aggiorna CACHE_NAME ad ogni deploy per forzare il refresh
 // ══════════════════════════════════════════════════════════════════
 
-const CACHE_NAME = 'logikron-v4.34';
+const CACHE_NAME = 'logikron-v4.35';
 
 const STATIC_ASSETS = [
   './',
