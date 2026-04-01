@@ -240,6 +240,35 @@
       <div id="squadreList"></div>
     </div>
 
+    <!-- PANNELLO SCHEDULER EMAIL -->
+    <div class="card" style="margin-top:1.5rem;">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1.25rem;">
+        <div class="card-title" style="margin-bottom:0;">⏰ Pianifica invio email automatico</div>
+        <button class="btn btn-outline" onclick="caricaTrigger()" style="font-size:0.8rem;">🔄 Aggiorna</button>
+      </div>
+
+      <div style="background:rgba(99,102,241,0.08);border:1px solid rgba(99,102,241,0.2);border-radius:10px;padding:0.9rem 1rem;margin-bottom:1.25rem;font-size:0.85rem;color:#94a3b8;line-height:1.6;">
+        ℹ️ Prima genera i PDF su Drive con <strong style="color:#e2e8f0;">🚀 Genera + Drive + Email</strong> (anche se vuoi solo caricare su Drive, le email vengono salvate ma non inviate — l'invio lo fa il trigger automatico). Poi setta qui data/ora per l'invio automatico.
+      </div>
+
+      <div style="display:flex;gap:1rem;align-items:flex-end;flex-wrap:wrap;margin-bottom:1.25rem;">
+        <div class="form-group" style="flex:1;min-width:180px;">
+          <label>Gara selezionata</label>
+          <div id="schedGaraNome" style="background:rgba(15,23,42,0.7);border:1px solid #334155;border-radius:8px;padding:0.65rem 0.85rem;color:#64748b;font-size:0.875rem;">— Nessuna gara caricata —</div>
+        </div>
+        <div class="form-group" style="flex:1;min-width:180px;">
+          <label>Data e ora invio email</label>
+          <input id="schedDataOra" type="datetime-local" class="form-input">
+        </div>
+        <button class="btn btn-primary" onclick="pianificaInvio()" id="btnPianifica" style="white-space:nowrap;align-self:flex-end;">
+          ⏰ Pianifica
+        </button>
+      </div>
+
+      <div style="font-size:0.78rem;font-weight:700;color:#cbd5e1;text-transform:uppercase;letter-spacing:0.06em;margin-bottom:0.6rem;">📋 Trigger attivi</div>
+      <div id="triggerList" style="color:#64748b;font-size:0.875rem;font-style:italic;">Premi 🔄 Aggiorna per caricare.</div>
+    </div>
+
   </div>
 </div>
 
@@ -320,6 +349,7 @@
   let adminPwd = '';
   let _datiAttest = []; // [{squadra, posizione, tipo, istituto, plesso, ordine, classe, sezione, docente, email, alunni:[]}]
   let _garaNome = '';
+  let _garaId   = '';
   let _imgCache = {}; // { name: base64 }
   let _imgDim   = {}; // { name: {w, h} }
 
@@ -440,6 +470,7 @@
   function caricaDati() {
     const garaId = document.getElementById('selGara').value;
     if (!garaId) return;
+    _garaId = garaId;
 
     const selEl = document.getElementById('selGara');
     _garaNome = selEl.options[selEl.selectedIndex].textContent.replace(/^[✅🔴⚪]\s*/,'').split(' (')[0];
@@ -493,6 +524,7 @@
       });
 
       renderSquadre();
+      aggiornSchedGara();
 
     }).catch(function(e) {
       document.getElementById('loadingMsg').style.display = 'none';
@@ -1091,6 +1123,17 @@
       await new Promise(function(r){ setTimeout(r, 200); });
     }
 
+    // Fire-and-forget: registra mapping su AttestatiDrive per uso futuro dallo scheduler
+    if (_garaId) {
+      lkApi(API, {
+        action:   'registraAttestatiPerInvio',
+        pwd:      adminPwd,
+        garaId:   _garaId,
+        garaNome: _garaNome,
+        mapping:  JSON.stringify(byDocente)
+      }, 20000).catch(function(e){ console.warn('registraAttestatiPerInvio:', e); });
+    }
+
     // FASE 2: invia email per docente
     const docenti = Object.entries(byDocente).filter(function(d){ return d[0] !== '_'; });
     let emailOk = 0;
@@ -1185,6 +1228,81 @@
     t.textContent = msg;
     document.body.appendChild(t);
     setTimeout(function(){ t.remove(); }, 5000);
+  }
+
+  // ===================== SCHEDULER EMAIL =====================
+
+  function aggiornSchedGara() {
+    if (!_garaId) return;
+    const el = document.getElementById('schedGaraNome');
+    el.textContent = _garaNome || _garaId;
+    el.style.color = '#e2e8f0';
+  }
+
+  function pianificaInvio() {
+    if (!_garaId) { toast('⚠️ Prima carica i dati di una gara.'); return; }
+    const raw = document.getElementById('schedDataOra').value;
+    if (!raw) { toast('⚠️ Inserisci data e ora.'); return; }
+    const dt = new Date(raw);
+    if (dt <= new Date()) { toast('⚠️ La data deve essere nel futuro.'); return; }
+    const btn = document.getElementById('btnPianifica');
+    btn.disabled = true; btn.textContent = '⏳...';
+    lkApi(API, {
+      action:   'pianificaInvioEmail',
+      pwd:      adminPwd,
+      garaId:   _garaId,
+      garaNome: _garaNome,
+      dataOra:  dt.toISOString()
+    }, 20000).then(function(r) {
+      btn.disabled = false; btn.textContent = '⏰ Pianifica';
+      if (r.ok) {
+        toast('✅ Trigger pianificato per ' + dt.toLocaleString('it-IT', {day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'}));
+        caricaTrigger();
+      } else {
+        toast('❌ ' + (r.error || 'Errore sconosciuto'));
+      }
+    }).catch(function(e) {
+      btn.disabled = false; btn.textContent = '⏰ Pianifica';
+      toast('❌ ' + e.message);
+    });
+  }
+
+  function caricaTrigger() {
+    const el = document.getElementById('triggerList');
+    el.style.fontStyle = 'normal';
+    el.innerHTML = '<span style="color:#94a3b8;">⏳ Caricamento...</span>';
+    lkApi(API, { action: 'getTriggerAttestati', pwd: adminPwd }, 15000).then(function(r) {
+      if (r.error) { el.innerHTML = '<span style="color:#f87171;">❌ ' + r.error + '</span>'; return; }
+      const list = r.triggers || [];
+      if (list.length === 0) {
+        el.innerHTML = '<span style="color:#64748b;font-style:italic;">Nessun trigger pianificato.</span>';
+        return;
+      }
+      el.innerHTML = list.map(function(t) {
+        const dt = new Date(t.dataOra);
+        const dtStr = dt.toLocaleString('it-IT', {day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'});
+        return '<div style="display:flex;align-items:center;gap:0.75rem;padding:0.65rem 0.85rem;background:rgba(15,23,42,0.6);border:1px solid #334155;border-radius:8px;margin-bottom:0.5rem;">'
+          + '<span style="font-size:1.1rem;">⏰</span>'
+          + '<div style="flex:1;">'
+          + '<div style="font-weight:600;color:#e2e8f0;">' + _esc(t.garaNome || t.garaId) + '</div>'
+          + '<div style="font-size:0.8rem;color:#64748b;">Invio email: <strong style="color:#fbbf24;">' + dtStr + '</strong></div>'
+          + '</div>'
+          + '<button onclick="cancelTrigger(\'' + t.triggerId + '\')" '
+          + 'style="background:rgba(127,29,29,0.3);border:1px solid rgba(248,113,113,0.3);color:#f87171;padding:0.35rem 0.75rem;border-radius:6px;cursor:pointer;font-size:0.8rem;">🗑 Cancella</button>'
+          + '</div>';
+      }).join('');
+    }).catch(function(e) {
+      el.innerHTML = '<span style="color:#f87171;">❌ ' + e.message + '</span>';
+    });
+  }
+
+  function cancelTrigger(triggerId) {
+    if (!confirm('Cancellare questo trigger pianificato?')) return;
+    lkApi(API, { action: 'cancelTriggerAttestato', pwd: adminPwd, triggerId: triggerId }, 15000)
+      .then(function(r) {
+        if (r.ok) { toast('✅ Trigger cancellato.'); caricaTrigger(); }
+        else toast('❌ ' + (r.error || 'Errore'));
+      }).catch(function(e){ toast('❌ ' + e.message); });
   }
 
   // Avvia se già loggato (accetta sia token attestati che token admin)
