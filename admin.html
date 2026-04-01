@@ -313,6 +313,218 @@
     .modal-empty { text-align:center; padding:2.5rem; color:#94a3b8; font-size:0.9rem; }
     .modal-count { font-size:0.78rem; color:#94a3b8; padding:0.4rem 1.25rem; border-bottom:1px solid #f1f5f9; flex-shrink:0; }
   </style>
+
+  <!-- =============================================
+       ADMIN DARK THEME — Game Arena Mission Control
+       Override in cascade: wins over style.css + inline admin styles
+       ============================================= -->
+  <style id="admin-dark">
+    /* ── HEADER ── */
+    .admin-header {
+      background: linear-gradient(135deg, rgba(99,102,241,0.2) 0%, rgba(139,92,246,0.15) 100%);
+      border: 1px solid rgba(99,102,241,0.35);
+      backdrop-filter: blur(20px);
+      color: white;
+      padding: 2rem 2rem 1.5rem;
+      border-radius: 24px;
+      margin-bottom: 1.5rem;
+      text-align: center;
+      position: relative;
+      overflow: hidden;
+      box-shadow: 0 0 50px rgba(99,102,241,0.2), inset 0 1px 0 rgba(255,255,255,0.07);
+    }
+    .admin-header::before {
+      content: '';
+      position: absolute; top: 0; left: 0; right: 0; height: 3px;
+      background: linear-gradient(90deg, #ec4899, #6366f1, #22d3ee, #34d399, #fbbf24);
+    }
+    .admin-header h1 { color: white; text-shadow: 0 2px 10px rgba(99,102,241,0.4); }
+    .anno-scolastico {
+      background: rgba(255,255,255,0.12);
+      padding: 4px 14px;
+      border-radius: 9999px;
+      font-size: 0.9rem;
+      color: rgba(255,255,255,0.85);
+      border: 1px solid rgba(255,255,255,0.2);
+      display: inline-block;
+    }
+
+    /* ── QUICK STATS ── */
+    .quick-stats {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+      gap: 1rem;
+      margin-bottom: 1.5rem;
+    }
+    .quick-stat {
+      background: rgba(15,23,42,0.7);
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(51,65,85,0.9);
+      border-radius: 16px;
+      padding: 1.25rem 1rem;
+      text-align: center;
+      transition: transform 0.2s, box-shadow 0.2s, border-color 0.2s;
+      position: relative;
+    }
+    .quick-stat:hover { transform: translateY(-4px); box-shadow: 0 8px 25px rgba(99,102,241,0.3); border-color: rgba(99,102,241,0.5); }
+    .quick-stat:nth-child(1) { border-top: 2px solid rgba(251,191,36,0.6); }
+    .quick-stat:nth-child(2) { border-top: 2px solid rgba(34,211,238,0.6); }
+    .quick-stat:nth-child(3) { border-top: 2px solid rgba(52,211,153,0.6); }
+    .quick-stat:nth-child(4) { border-top: 2px solid rgba(236,72,153,0.6); }
+    .quick-stat:nth-child(5) { border-top: 2px solid rgba(251,146,60,0.6); }
+    .quick-stat-value { font-size: 2.2rem; font-weight: 800; line-height: 1; margin-bottom: 0.25rem; }
+    .quick-stat:nth-child(1) .quick-stat-value { color: #fbbf24; text-shadow: 0 0 15px rgba(251,191,36,0.7); }
+    .quick-stat:nth-child(2) .quick-stat-value { color: #22d3ee; text-shadow: 0 0 15px rgba(34,211,238,0.7); }
+    .quick-stat:nth-child(3) .quick-stat-value { color: #34d399; text-shadow: 0 0 15px rgba(52,211,153,0.7); }
+    .quick-stat:nth-child(4) .quick-stat-value { color: #ec4899; text-shadow: 0 0 15px rgba(236,72,153,0.7); }
+    .quick-stat:nth-child(5) .quick-stat-value { color: #fb923c; text-shadow: 0 0 15px rgba(251,146,60,0.7); }
+    .quick-stat-label { font-size: 0.72rem; color: #64748b; text-transform: uppercase; letter-spacing: 0.07em; font-weight: 600; }
+
+    /* ── SECTIONS ── */
+    .admin-section {
+      margin-bottom: 1.25rem;
+      background: rgba(15,23,42,0.65);
+      backdrop-filter: blur(12px);
+      border: 1px solid rgba(51,65,85,0.85);
+      border-radius: 20px;
+      padding: 1.5rem;
+      transition: border-color 0.25s;
+    }
+    .admin-section:hover { border-color: rgba(99,102,241,0.3); }
+    .admin-section-title {
+      font-size: 0.83rem;
+      font-weight: 700;
+      color: #cbd5e1;
+      margin-bottom: 1.1rem;
+      padding-bottom: 0.75rem;
+      border-bottom: 1px solid rgba(99,102,241,0.25);
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+      text-transform: uppercase;
+      letter-spacing: 0.07em;
+    }
+
+    /* ── PHASE BADGES (dark glass glow) ── */
+    .phase-badge {
+      display: inline-flex;
+      align-items: center;
+      padding: 3px 10px;
+      border-radius: 9999px;
+      font-size: 0.67rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      border: 1px solid transparent;
+    }
+    .phase-0   { background: rgba(71,85,105,0.4);   color: #94a3b8;  border-color: rgba(100,116,139,0.5); }
+    .phase-1   { background: rgba(59,130,246,0.2);  color: #93c5fd;  border-color: rgba(59,130,246,0.4); }
+    .phase-2   { background: rgba(251,191,36,0.2);  color: #fcd34d;  border-color: rgba(251,191,36,0.45); }
+    .phase-3   { background: rgba(52,211,153,0.2);  color: #6ee7b7;  border-color: rgba(52,211,153,0.45); }
+    .phase-4   { background: rgba(244,114,182,0.2); color: #f9a8d4;  border-color: rgba(244,114,182,0.4); }
+    .phase-5   { background: rgba(165,180,252,0.2); color: #c4b5fd;  border-color: rgba(165,180,252,0.4); }
+    .phase-comm { background: rgba(52,211,153,0.2); color: #6ee7b7;  border-color: rgba(52,211,153,0.45); }
+    .phase-gara { background: rgba(248,113,113,0.2); color: #fca5a5; border-color: rgba(248,113,113,0.4); }
+
+    /* ── INFO TOGGLE BUTTON ── */
+    .btn-info-toggle {
+      background: rgba(99,102,241,0.12);
+      border: 1.5px solid rgba(99,102,241,0.4);
+      color: #a5b4fc;
+      border-radius: 50%;
+      width: 22px; height: 22px;
+      font-size: 0.7rem; font-weight: 700;
+      cursor: pointer; line-height: 1; padding: 0;
+      display: inline-flex; align-items: center; justify-content: center;
+      flex-shrink: 0;
+      transition: all 0.15s;
+      opacity: 1;
+    }
+    .btn-info-toggle:hover {
+      background: rgba(99,102,241,0.3);
+      border-color: #c4b5fd;
+      color: white;
+      box-shadow: 0 0 8px rgba(99,102,241,0.5);
+    }
+
+    /* ── INFO PANELS ── */
+    .info-panel {
+      display: none;
+      background: rgba(23,37,84,0.55);
+      border: 1px solid rgba(59,130,246,0.3);
+      border-radius: 12px;
+      padding: 12px 16px;
+      margin-bottom: 1rem;
+      font-size: 0.87rem;
+      color: #bfdbfe;
+      line-height: 1.65;
+      backdrop-filter: blur(8px);
+    }
+    .info-panel.visible { display: block; }
+    .info-panel strong { color: #93c5fd; }
+    .info-panel code {
+      background: rgba(99,102,241,0.2);
+      border: 1px solid rgba(99,102,241,0.3);
+      border-radius: 4px;
+      padding: 1px 5px;
+      font-size: 0.82em;
+      color: #c4b5fd;
+    }
+    .info-panel ul { margin: 6px 0 0 0; padding-left: 1.2rem; }
+    .info-panel li { margin-bottom: 4px; }
+    .info-panel em { color: #a5b4fc; }
+
+    /* ── BADGE ON/OFF ── */
+    .badge-on  { background: rgba(52,211,153,0.2);  color: #6ee7b7; padding: 2px 10px; border-radius: 9999px; font-weight: 700; font-size: 0.75rem; border: 1px solid rgba(52,211,153,0.4); }
+    .badge-off { background: rgba(71,85,105,0.3);   color: #94a3b8;  padding: 2px 10px; border-radius: 9999px; font-size: 0.75rem; border: 1px solid rgba(71,85,105,0.5); }
+
+    /* ── ADMIN CARDS (dark glass — override style.css white) ── */
+    .admin-card {
+      background: rgba(30,41,59,0.85) !important;
+      border: 1px solid rgba(51,65,85,0.9) !important;
+      backdrop-filter: blur(10px) !important;
+    }
+    .admin-card:hover {
+      transform: translateY(-6px) scale(1.01) !important;
+      border-color: rgba(99,102,241,0.55) !important;
+      box-shadow: 0 12px 35px rgba(99,102,241,0.3) !important;
+    }
+    .admin-card-title { color: #e2e8f0 !important; }
+    .admin-card-desc  { color: #64748b !important; }
+    .admin-card-icon  { filter: drop-shadow(0 4px 14px rgba(99,102,241,0.5)) !important; }
+
+    /* ── DANGER ZONE ── */
+    .danger-zone {
+      background: rgba(127,29,29,0.3);
+      border: 1px solid rgba(248,113,113,0.3);
+      border-radius: 16px;
+      padding: 1rem;
+      margin-top: 0.5rem;
+      backdrop-filter: blur(8px);
+    }
+    .danger-zone h4 { color: #fca5a5; margin: 0 0 0.75rem 0; font-size: 0.9rem; font-weight: 700; }
+
+    /* ── LOG TABLE ── */
+    .log-table { width: 100%; border-collapse: collapse; font-size: 0.82rem; }
+    .log-table th { background: #1e293b; color: #e2e8f0; padding: 7px 10px; text-align: left; font-weight: 600; position: sticky; top: 0; z-index: 1; border-bottom: 1px solid #334155; }
+    .log-table td { padding: 6px 10px; border-bottom: 1px solid #1e293b; vertical-align: middle; color: #cbd5e1; background: #0f172a; }
+    .log-table tr:hover td { background: #1e293b; }
+
+    /* ── LOG BADGES ── */
+    .badge-corretta  { background: rgba(52,211,153,0.15);  color: #6ee7b7; padding: 2px 8px; border-radius: 9999px; font-size: 0.75rem; font-weight: 600; white-space: nowrap; border: 1px solid rgba(52,211,153,0.3); }
+    .badge-sbagliata { background: rgba(248,113,113,0.15); color: #fca5a5; padding: 2px 8px; border-radius: 9999px; font-size: 0.75rem; font-weight: 600; white-space: nowrap; border: 1px solid rgba(248,113,113,0.3); }
+    .badge-jolly-live { background: rgba(251,191,36,0.2); color: #fcd34d; padding: 2px 6px; border-radius: 9999px; font-size: 0.7rem; font-weight: 700; }
+    .btn-action-sm   { background: rgba(15,23,42,0.9); border: 1px solid #334155; border-radius: 4px; padding: 3px 7px; cursor: pointer; font-size: 0.8rem; line-height: 1; color: #94a3b8; transition: all 0.15s; }
+    .btn-action-edit { border-color: rgba(59,130,246,0.5) !important; color: #93c5fd !important; }
+    .btn-action-edit:hover { background: rgba(59,130,246,0.15) !important; }
+    .btn-action-del  { border-color: rgba(248,113,113,0.5) !important; color: #fca5a5 !important; }
+    .btn-action-del:hover  { background: rgba(248,113,113,0.15) !important; }
+
+    /* ── GARA STATUS BAR + TIMER ── */
+    .gara-status-bar { display:flex; gap:1rem; align-items:center; flex-wrap:wrap; background:rgba(30,41,59,0.85); border:1px solid #334155; border-radius:16px; padding:0.75rem 1rem; margin-bottom:1rem; color:#e2e8f0; }
+    .timer-live { font-size:1.5rem; font-weight:800; color:#fbbf24; font-variant-numeric:tabular-nums; letter-spacing:0.05em; text-shadow: 0 0 15px rgba(251,191,36,0.6); }
+    .log-container { max-height:420px; overflow-y:auto; border-radius:16px; border:1px solid #334155; background:#0f172a; }
+  </style>
 </head>
 <body>
   <div class="container">
