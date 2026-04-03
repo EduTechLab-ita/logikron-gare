@@ -811,6 +811,10 @@
   // ===================== GENERA SINGOLO PDF =====================
 
   async function generaPDF(sq, nomeAlunno) {
+    // Normalizza in Title Case se il nome è tutto maiuscolo (es. inserito da docente in caps lock)
+    if (nomeAlunno && nomeAlunno === nomeAlunno.toUpperCase()) {
+      nomeAlunno = nomeAlunno.toLowerCase().replace(/\b\w/g, function(c) { return c.toUpperCase(); });
+    }
     const { jsPDF } = window.jspdf;
     const campi = getCampi();
 
