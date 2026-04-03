@@ -169,9 +169,11 @@
 
         <div class="form-group">
           <label class="form-label">Plesso *</label>
-          <select id="plesso" class="form-control" required disabled onchange="aggiornaNoiSquadre()">
+          <select id="plesso" class="form-control" required disabled onchange="onPlessoChange()">
             <option value="">Prima seleziona l'Istituto</option>
           </select>
+          <input type="text" id="plessoCustom" class="form-control" placeholder="Scrivi il nome del plesso"
+                 style="display:none;margin-top:0.5rem;" oninput="aggiornaNoiSquadre()">
         </div>
 
         <div class="form-group">
@@ -275,7 +277,7 @@
 
     function generaPrefisso() {
       const icVal     = document.getElementById('istituto').value;
-      const plessoVal = document.getElementById('plesso').value;
+      const plessoVal = getPlessoValue();
       const ordine    = document.getElementById('ordine').value;
       const classe    = document.getElementById('classe').value;
       const sezione   = document.getElementById('sezione').value;
@@ -420,27 +422,52 @@
       lkApi(LOGIKRON_CONFIG.webAppUrls.iscrizioni, { action: 'getPlessi', ic: icNome })
         .then(r => {
           const plessi = (r && r.plessi) ? r.plessi.filter(p => p.ic === icNome) : [];
-          plessi.forEach(p => { _plessiSigleMap[p.nome] = p.sigla; });
+          plessi.forEach(p => { if (p.sigla) _plessiSigleMap[p.nome] = p.sigla; });
           sel.innerHTML = '<option value="">Seleziona il plesso</option>';
-          if (plessi.length > 0) {
-            plessi.forEach(p => {
-              const opt = document.createElement('option');
-              opt.value = p.nome;
-              opt.textContent = p.nome;
-              sel.appendChild(opt);
-            });
-            sel.disabled = false;
-          } else {
-            sel.innerHTML = '<option value="" disabled>Nessun plesso ancora registrato — contatta l\'organizzazione</option>';
-            sel.disabled = true;
-          }
+          plessi.forEach(p => {
+            const opt = document.createElement('option');
+            opt.value = p.nome;
+            opt.textContent = p.nome;
+            sel.appendChild(opt);
+          });
+          // Opzione per inserire un plesso non in lista
+          const altroOpt = document.createElement('option');
+          altroOpt.value = '__altro__';
+          altroOpt.textContent = '✏️ Altro (inserisci manualmente)...';
+          sel.appendChild(altroOpt);
+          sel.disabled = false;
           aggiornaNoiSquadre();
         })
         .catch(() => {
-          sel.innerHTML = '<option value="">Errore caricamento plessi</option>';
+          sel.innerHTML = '<option value="">Errore caricamento — inserisci manualmente</option>';
+          const altroOpt = document.createElement('option');
+          altroOpt.value = '__altro__';
+          altroOpt.textContent = '✏️ Inserisci manualmente...';
+          sel.appendChild(altroOpt);
           sel.disabled = false;
           aggiornaNoiSquadre();
         });
+    }
+
+    function onPlessoChange() {
+      const sel = document.getElementById('plesso');
+      const custom = document.getElementById('plessoCustom');
+      if (sel.value === '__altro__') {
+        custom.style.display = 'block';
+        custom.required = true;
+        custom.focus();
+      } else {
+        custom.style.display = 'none';
+        custom.required = false;
+        custom.value = '';
+      }
+      aggiornaNoiSquadre();
+    }
+
+    function getPlessoValue() {
+      const sel = document.getElementById('plesso');
+      if (sel.value === '__altro__') return document.getElementById('plessoCustom').value.trim();
+      return sel.value;
     }
 
     function updateClassi() {
@@ -577,7 +604,7 @@
       const email = document.getElementById('emailDocente').value.trim();
       const nome = document.getElementById('nomeDocente').value.trim();
       const istituto = document.getElementById('istituto').value;
-      const plesso = document.getElementById('plesso').value;
+      const plesso = getPlessoValue();
       const ordine = document.getElementById('ordine').value;
       const classe = document.getElementById('classe').value;
       const sezione = document.getElementById('sezione').value;
@@ -631,6 +658,9 @@
       // Resetta il form e torna alla schermata di inserimento
       document.getElementById('formIscrizioni').reset();
       document.getElementById('plesso').disabled = true;
+      const plessoCustom = document.getElementById('plessoCustom');
+      plessoCustom.style.display = 'none';
+      plessoCustom.value = '';
       document.getElementById('classe').disabled = true;
       document.getElementById('squadreContainer').innerHTML = '';
       squadraCount = 0;
