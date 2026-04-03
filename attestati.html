@@ -1069,14 +1069,35 @@
   }
 
   async function _uploadToDriveApi(pdfBlob, fileName, folderId, token) {
-    const metadata = { name: fileName, parents: [folderId], mimeType: 'application/pdf' };
-    const body = new FormData();
-    body.append('metadata', new Blob([JSON.stringify(metadata)], { type: 'application/json' }));
-    body.append('file', pdfBlob);
-    const resp = await fetch(
-      'https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart',
-      { method: 'POST', headers: { Authorization: 'Bearer ' + token }, body: body }
+    // Cerca se esiste già un file con lo stesso nome nella cartella → sovrascrive invece di duplicare
+    const q = encodeURIComponent("name='" + fileName.replace(/'/g, "\\'") + "' and '" + folderId + "' in parents and trashed=false");
+    const searchResp = await fetch(
+      'https://www.googleapis.com/drive/v3/files?q=' + q + '&fields=files(id,name)',
+      { headers: { Authorization: 'Bearer ' + token } }
     );
+    const searchData = await searchResp.json();
+    const existing = searchData.files && searchData.files[0];
+
+    const body = new FormData();
+    let resp;
+    if (existing) {
+      // PATCH: aggiorna contenuto del file esistente (nessun doppione)
+      body.append('metadata', new Blob(['{}'], { type: 'application/json' }));
+      body.append('file', pdfBlob);
+      resp = await fetch(
+        'https://www.googleapis.com/upload/drive/v3/files/' + existing.id + '?uploadType=multipart',
+        { method: 'PATCH', headers: { Authorization: 'Bearer ' + token }, body: body }
+      );
+    } else {
+      // POST: crea nuovo file
+      const metadata = { name: fileName, parents: [folderId], mimeType: 'application/pdf' };
+      body.append('metadata', new Blob([JSON.stringify(metadata)], { type: 'application/json' }));
+      body.append('file', pdfBlob);
+      resp = await fetch(
+        'https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart',
+        { method: 'POST', headers: { Authorization: 'Bearer ' + token }, body: body }
+      );
+    }
     if (!resp.ok) {
       const err = await resp.json().catch(function(){ return {}; });
       throw new Error('Drive API errore ' + resp.status + ': ' + ((err.error && err.error.message) || resp.statusText));
