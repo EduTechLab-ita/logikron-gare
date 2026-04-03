@@ -1916,7 +1916,9 @@
       _renderIcLista(); // Aggiorna highlight
       annullaModificaPlesso();
       document.getElementById('plessiTitolo').textContent = 'Plessi di ' + ic;
-      document.getElementById('sezioneIcPlessi').style.display = 'block';
+      const sez = document.getElementById('sezioneIcPlessi');
+      sez.style.display = 'block';
+      setTimeout(() => sez.scrollIntoView({ behavior: 'smooth', block: 'nearest' }), 50);
       document.getElementById('plessiLista').innerHTML = '<span style="font-size:0.82rem;color:#94a3b8;">Caricamento...</span>';
       lkApi(API, { action: 'getPlessi', ic })
         .then(r => {
@@ -1933,10 +1935,19 @@
         el.innerHTML = '<p style="color:#94a3b8;font-size:0.82rem;margin:0 0 6px 0;">Nessun plesso registrato per questo IC.</p>';
         return;
       }
-      el.innerHTML = _icPlessiCache.map(p => `
-        <div style="display:flex;align-items:center;justify-content:space-between;padding:5px 8px;border:1px solid #dbeafe;border-radius:5px;margin-bottom:3px;background:white;">
+      // Avvisa se ci sono plessi senza sigla (rilevati dalle intenzioni ma non ancora configurati)
+      const senzaSigla = _icPlessiCache.filter(p => !p.sigla);
+      const avviso = senzaSigla.length > 0
+        ? `<div style="background:#fef3c7;border:1px solid #fbbf24;border-radius:6px;padding:7px 10px;margin-bottom:8px;font-size:0.78rem;color:#92400e;">
+            ⚠️ <strong>${senzaSigla.length} plesso/i rilevato/i dalle intenzioni senza sigla.</strong> Configurare la sigla per generare correttamente i codici squadra.
+           </div>` : '';
+      el.innerHTML = avviso + _icPlessiCache.map(p => `
+        <div style="display:flex;align-items:center;justify-content:space-between;padding:5px 8px;border:1px solid ${p.sigla ? '#dbeafe' : '#fed7aa'};border-radius:5px;margin-bottom:3px;background:${p.sigla ? 'white' : '#fff7ed'};">
           <span style="font-size:0.85rem;font-weight:600;color:#1e293b;flex:1;">${_escHtml(p.nome)}</span>
-          <span style="font-size:0.75rem;font-weight:700;color:white;background:#3b82f6;border-radius:4px;padding:1px 6px;margin-right:6px;">${_escHtml(p.sigla)}</span>
+          ${p.sigla
+            ? `<span style="font-size:0.75rem;font-weight:700;color:white;background:#3b82f6;border-radius:4px;padding:1px 6px;margin-right:6px;">${_escHtml(p.sigla)}</span>`
+            : `<span style="font-size:0.72rem;font-weight:700;color:#c2410c;background:#fed7aa;border-radius:4px;padding:1px 6px;margin-right:6px;">⚠️ sigla</span>`
+          }
           <div style="display:flex;gap:3px;">
             <button onclick="modificaPlessoForm('${_escAttr(p.nome)}','${_escAttr(p.sigla)}')"
               style="padding:2px 7px;font-size:0.72rem;background:#f8fafc;border:1px solid #e2e8f0;border-radius:4px;cursor:pointer;color:#475569;">✏️</button>
