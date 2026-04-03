@@ -1151,7 +1151,7 @@
     const moved = await lkApi(API, spostaParams, 30000);
     if (moved.error) console.warn('Sposta subfolder:', moved.error, '— file resta nella cartella Attestati');
 
-    return { ok: true, fileId: uploaded.id, fileName: uploaded.name };
+    return { ok: true, fileId: uploaded.id, fileName: uploaded.name, fileIdCancellati: moved.fileIdCancellati || [] };
   }
 
   // ===================== CONFIRM MODAL EMAIL =====================
@@ -1370,6 +1370,19 @@
           plesso:   sq.plesso
         });
         if (r.error) throw new Error(r.error);
+        // Aggiorna il mapping AttestatiDrive se c'erano file vecchi (es. correzione nome)
+        if (_garaId && sq.email && r.fileIdCancellati && r.fileIdCancellati.length > 0) {
+          r.fileIdCancellati.forEach(function(vecchioFid) {
+            lkApi(API, {
+              action: 'aggiornaFileIdMapping',
+              pwd: adminPwd,
+              garaId: _garaId,
+              emailDocente: sq.email,
+              vecchioFileId: vecchioFid,
+              nuovoFileId: r.fileId
+            }, 15000).catch(function(e){ console.warn('aggiornaFileIdMapping:', e); });
+          });
+        }
         btn.textContent = '\u2705'; btn.disabled = false;
         toast('\u2705 ' + nome + ' salvato su Drive (mail NON reinviata)');
         setTimeout(function(){ btn.textContent = orig; }, 3000);
