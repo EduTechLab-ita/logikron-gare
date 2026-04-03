@@ -345,10 +345,17 @@
   <div style="max-width:420px;margin:180px auto;background:#1e293b;border:1px solid #334155;border-radius:16px;padding:2rem;">
     <p style="font-size:1rem;font-weight:700;margin-bottom:0.75rem;">☁️ Salva su Drive — Conferma</p>
     <p id="confirmDriveNome" style="color:#fbbf24;font-weight:600;margin-bottom:1rem;"></p>
-    <div style="background:#7c3aed22;border:1px solid #7c3aed55;border-radius:8px;padding:0.85rem;margin-bottom:1.25rem;font-size:0.875rem;color:#cbd5e1;line-height:1.6;">
+    <div style="background:#7c3aed22;border:1px solid #7c3aed55;border-radius:8px;padding:0.85rem;margin-bottom:1rem;font-size:0.875rem;color:#cbd5e1;line-height:1.6;">
       Il file su Drive verrà <strong>rigenerato, cancellato e sovrascritto</strong>.<br>
       La mail <strong>NON verrà reinviata</strong> automaticamente alla docente.<br>
       Dovrai inviare <strong>tu manualmente</strong> la mail con il nuovo attestato alla docente interessata.
+    </div>
+    <div style="margin-bottom:1.25rem;">
+      <label style="font-size:0.78rem;color:#94a3b8;display:block;margin-bottom:4px;">
+        Stai correggendo un nome errato? Scrivi il <strong style="color:#fbbf24;">vecchio nome</strong> da eliminare su Drive (lascia vuoto se il nome non è cambiato):
+      </label>
+      <input id="confirmDriveVecchioNome" type="text" placeholder="es. Mario Rossi"
+        style="width:100%;padding:6px 10px;border:1px solid #475569;border-radius:7px;background:#0f172a;color:#e2e8f0;font-size:0.875rem;box-sizing:border-box;">
     </div>
     <div style="display:flex;gap:0.75rem;justify-content:flex-end;">
       <button onclick="document.getElementById('modalConfirmDrive').style.display='none'"
@@ -1129,7 +1136,7 @@
     const uploaded = await _uploadToDriveApi(pdfBlob, fileName, folderId, token);
 
     // 5. Sposta nel subfolder corretto via AS (chiamata piccola — solo metadati)
-    const moved = await lkApi(API, {
+    const spostaParams = {
       action:     'spostaAttestatoDrive',
       pwd:        adminPwd,
       fileId:     uploaded.id,
@@ -1139,7 +1146,9 @@
       sezione:    meta.sezione,
       istituto:   meta.istituto,
       plesso:     meta.plesso
-    }, 30000);
+    };
+    if (meta.vecchioNome) spostaParams.vecchioNome = meta.vecchioNome;
+    const moved = await lkApi(API, spostaParams, 30000);
     if (moved.error) console.warn('Sposta subfolder:', moved.error, '— file resta nella cartella Attestati');
 
     return { ok: true, fileId: uploaded.id, fileName: uploaded.name };
@@ -1342,6 +1351,8 @@
     okBtn.parentNode.replaceChild(newOk, okBtn);
 
     newOk.addEventListener('click', async function() {
+      const vecchioNome = document.getElementById('confirmDriveVecchioNome').value.trim();
+      document.getElementById('confirmDriveVecchioNome').value = '';
       modal.style.display = 'none';
       const orig = btn.textContent;
       btn.disabled = true; btn.textContent = '\u23F3';
@@ -1351,6 +1362,7 @@
         const pdfBase64 = doc.output('datauristring').split(',')[1];
         const r = await uploadPdfToBackend(pdfBase64, {
           nomeAlunno: nome,
+          vecchioNome: vecchioNome || null,
           ordine:   sq.ordine,
           classe:   sq.classe,
           sezione:  sq.sezione,
