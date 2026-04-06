@@ -1107,6 +1107,20 @@
       }
     }
 
+    function showToast(msg, tipo) {
+      const colori = {
+        ok:    { bg: '#10b981', text: '#fff' },
+        errore:{ bg: '#dc2626', text: '#fff' },
+        info:  { bg: '#4f46e5', text: '#fff' }
+      };
+      const c = colori[tipo] || colori.ok;
+      const t = document.createElement('div');
+      t.style.cssText = 'position:fixed;top:1.5rem;left:50%;transform:translateX(-50%);background:' + c.bg + ';color:' + c.text + ';padding:1rem 2rem;border-radius:12px;z-index:99999;font-weight:700;font-size:1.05rem;box-shadow:0 6px 30px rgba(0,0,0,0.35);text-align:center;min-width:280px;max-width:480px;';
+      t.innerHTML = msg;
+      document.body.appendChild(t);
+      setTimeout(function() { t.remove(); }, 4000);
+    }
+
     function logout() {
       sessionStorage.removeItem('logikronAdmin');
       document.getElementById('adminPanel').style.display = 'none';
@@ -1751,11 +1765,11 @@
       if (!confirm('Ultima conferma: cancellare "' + foglio + '"?')) return;
       lkApi(API, { action: 'resetFoglio', foglio: foglio, pwd: adminPwd })
         .then(r => {
-          if (r.error) { alert('Errore: ' + r.error); return; }
-          alert('✅ Foglio "' + foglio + '" svuotato. ' + r.cancellate + ' righe rimosse.');
+          if (r.error) { showToast('❌ Errore: ' + r.error, 'errore'); return; }
+          showToast('✅ Foglio "' + foglio + '" svuotato<br><small style="font-weight:400;">' + r.cancellate + ' righe rimosse</small>', 'ok');
           caricaStatIntenzioni();
         })
-        .catch(err => alert('Errore: ' + err.message));
+        .catch(err => showToast('❌ Errore: ' + err.message, 'errore'));
     }
 
     // ==================== UTILITÀ ====================
@@ -3341,10 +3355,10 @@
       if (!confirm('Ultima conferma — eliminare gli attestati di "' + nome + '"?')) return;
       lkApi(API, { action: 'eliminaAttestatiGara', garaId: sel.value, pwd: adminPwd }, 30000)
         .then(r => {
-          if (r.error) { alert('Errore: ' + r.error); return; }
-          alert('✅ ' + r.messaggio);
+          if (r.error) { showToast('❌ Errore: ' + r.error, 'errore'); return; }
+          showToast('✅ ' + r.messaggio, 'ok');
         })
-        .catch(err => alert('Errore: ' + err.message));
+        .catch(err => showToast('❌ Errore: ' + err.message, 'errore'));
     }
 
     function eliminaGaraTest() {
@@ -3358,13 +3372,13 @@
       if (!confirm('Ultima conferma — eliminare "' + nome + '"?')) return;
       lkApi(API, { action: 'eliminaGara', garaId: sel.value, pwd: adminPwd })
         .then(r => {
-          if (r.error) { alert('Errore: ' + r.error); return; }
-          alert('✅ ' + r.message);
+          if (r.error) { showToast('❌ Errore: ' + r.error, 'errore'); return; }
+          showToast('✅ ' + r.message, 'ok');
           stopPollingRisposte(); stopTimerGara();
           chiudiModalGaraLive();
           caricaListaGare();
         })
-        .catch(err => alert('Errore: ' + err.message));
+        .catch(err => showToast('❌ Errore: ' + err.message, 'errore'));
     }
 
     // ==================== MODAL GESTIONE ISCRITTI ====================
