@@ -392,7 +392,7 @@
   <script src="js/math-bg.js"></script>
   <script>
     const API        = LOGIKRON_CONFIG.webAppUrls.gare;
-    const NUM_DOM    = LOGIKRON_CONFIG.gare.numeroDomande  || 10;
+    let   numDom     = LOGIKRON_CONFIG.gare.numeroDomande  || 10; // aggiornato dal backend
     const DURATA_MIN = LOGIKRON_CONFIG.gare.durataMinuti   || 60;
     const JOLLY_MIN  = LOGIKRON_CONFIG.gare.tempoJollyMinuti || 10;
 
@@ -502,6 +502,7 @@
         stato.oraFine    = statoSq.oraFine || null;
         stato.durata     = parseInt(statoSq.durata) || DURATA_MIN;
         stato.tempoJolly = parseInt(statoSq.tempoJolly) || JOLLY_MIN;
+        if (statoSq.numDomande) numDom = parseInt(statoSq.numDomande);
         stato.jolly      = statoSq.jolly ? parseInt(statoSq.jolly) : null;
         stato.jollyFissato = !!stato.jolly;
         stato.puntiTotali  = statoSq.puntiTotali || 0;
@@ -523,7 +524,7 @@
 
         // Vai alla prima domanda non ancora corretta
         let prima = 1;
-        for (let i = 1; i <= NUM_DOM; i++) {
+        for (let i = 1; i <= numDom; i++) {
           const r = stato.risposte[i];
           if (!r || r.esito !== 'corretta') { prima = i; break; }
         }
@@ -540,7 +541,7 @@
     function renderGrigliaQuesiti() {
       const grid = document.getElementById('quesitiGrid');
       grid.innerHTML = '';
-      for (let i = 1; i <= NUM_DOM; i++) {
+      for (let i = 1; i <= numDom; i++) {
         const btn = document.createElement('button');
         btn.id = 'qBtn' + i;
         btn.textContent = i;
@@ -585,7 +586,7 @@
     }
 
     function aggiornaGriglia() {
-      for (let i = 1; i <= NUM_DOM; i++) aggiornaQBtn(i);
+      for (let i = 1; i <= numDom; i++) aggiornaQBtn(i);
     }
 
     function clickQBtn(num) {
@@ -653,9 +654,9 @@
       document.getElementById('jollyBadge').style.display = (stato.jolly === num) ? '' : 'none';
 
       // Counter navigazione
-      document.getElementById('domandaCounter').textContent = num + ' / ' + NUM_DOM;
+      document.getElementById('domandaCounter').textContent = num + ' / ' + numDom;
       document.getElementById('btnPrev').disabled = (num <= 1);
-      document.getElementById('btnNext').disabled = (num >= NUM_DOM);
+      document.getElementById('btnNext').disabled = (num >= numDom);
 
       // Campo risposta e feedback
       const input = document.getElementById('rispostaInput');
@@ -765,7 +766,7 @@
 
     function trovaProssimaDomanda() {
       // Prima cerca dopo quella attuale, poi ricomincia dall'inizio
-      for (let i = stato.domandaAttiva + 1; i <= NUM_DOM; i++) {
+      for (let i = stato.domandaAttiva + 1; i <= numDom; i++) {
         const r = stato.risposte[i];
         if (!r || r.esito !== 'corretta') return i;
       }
@@ -948,7 +949,7 @@
     // ======== NAVIGAZIONE ========
 
     function domandaPrecedente() { if (stato.domandaAttiva > 1) mostraDomanda(stato.domandaAttiva - 1); }
-    function domandaSuccessiva() { if (stato.domandaAttiva < NUM_DOM) mostraDomanda(stato.domandaAttiva + 1); }
+    function domandaSuccessiva() { if (stato.domandaAttiva < numDom) mostraDomanda(stato.domandaAttiva + 1); }
 
     // ======== AUTO-LOGIN (sessione) ========
 

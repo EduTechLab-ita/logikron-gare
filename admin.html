@@ -786,7 +786,7 @@
           <ul>
             <li><strong>Seleziona la gara</strong> dal menu a tendina — la gara attiva compare con <strong>🔴 LIVE</strong>.</li>
             <li>Clicca <strong>🎮 Apri Controllo</strong> per aprire il pannello a schermo intero.</li>
-            <li>Clicca <strong>⚙️ Parametri</strong> (fuori o dentro il pannello) per modificare nome, durata, domande, punti, jolly, tabellone nascosto e data della gara selezionata — i dati vengono salvati direttamente nello Sheet. Funziona anche a gara avviata: utile per correggere al volo durata o minuti di oscuramento del tabellone. Nota: durata e punti non hanno effetto retroattivo sul timer già in corso.</li>
+            <li>Clicca <strong>⚙️ Parametri</strong> (fuori o dentro il pannello) per modificare nome, durata, num. domande, punti, tempo jolly, tempo lettura domande, tabellone nascosto e data della gara selezionata — tutti valori per-gara, non toccano i default globali. Funziona anche a gara avviata: utile per correggere al volo durata o minuti oscuramento. Nota: durata e punti non hanno effetto retroattivo sul timer in corso.</li>
             <li>Nel pannello: usa <strong>👥 Importa Squadre</strong> prima di iniziare, poi <strong>▶ GO</strong> per avviare il timer.</li>
             <li>Il log risposte si aggiorna ogni 3 secondi. Usa <strong>✏️</strong> per correggere un esito e <strong>🗑️</strong> per eliminare una risposta.</li>
             <li><strong>■ TERMINA</strong> chiude la gara anticipatamente (altrimenti scade al timeout automatico).</li>
@@ -3416,6 +3416,10 @@
               <input class="form-control" id="_pgJolly" type="number" min="1" value="${g.tempoJolly || ''}">
             </div>
             <div class="form-group">
+              <label style="color:#94a3b8;font-size:0.82rem;font-weight:600;display:block;margin-bottom:4px;">Tempo lettura domande (min.)</label>
+              <input class="form-control" id="_pgTempoDomande" type="number" min="1" value="${g.tempoDomande || ''}">
+            </div>
+            <div class="form-group">
               <label style="color:#94a3b8;font-size:0.82rem;font-weight:600;display:block;margin-bottom:4px;">Tabellone nascosto (ultimi min.)</label>
               <input class="form-control" id="_pgNascondimento" type="number" min="0" value="${minutiNascondimento || 5}">
             </div>
@@ -3465,8 +3469,9 @@
         durata:        document.getElementById('_pgDurata').value,
         numDomande:    document.getElementById('_pgDomande').value,
         puntiIniziali: document.getElementById('_pgPunti').value,
-        tempoJolly:    document.getElementById('_pgJolly').value,
-        dataGara:      document.getElementById('_pgDataGara').value.replace('T', ' '),
+        tempoJolly:          document.getElementById('_pgJolly').value,
+        tempoDomande:        document.getElementById('_pgTempoDomande').value,
+        dataGara:            document.getElementById('_pgDataGara').value.replace('T', ' '),
         minutiNascondimento: document.getElementById('_pgNascondimento').value
       };
       if (!params.nome) { showToast('❌ Il nome non può essere vuoto.', 'errore'); return; }
