@@ -662,7 +662,7 @@
     const DOMANDE_MIN  = CFG.tempoDomandeMinuti || 20;
     const INCREMENTO   = CFG.incrementoPuntiOgniMinuti || 2;
     const PUNTI_BASE   = CFG.puntiIniziali  || 20;
-    const MIN_NASC     = CFG.minutiNascondimento || 5;
+    let minNasc        = CFG.minutiNascondimento || 5; // aggiornato dal backend al primo poll
 
     let garaId         = null;
     let lastData       = null;
@@ -707,6 +707,9 @@
         .then(data => {
           if (!data || data.error) return;
           lastData = data;
+
+          // Aggiorna minuti nascondimento dal backend (sovrascrive il default config.js)
+          if (data.minutiNascondimento) minNasc = parseInt(data.minutiNascondimento) || minNasc;
 
           // Sincronizza il timer locale col backend e aggiorna subito il display
           secondiLocali = data.secondiRimanenti || 0;
@@ -1033,7 +1036,7 @@
       }
 
       // Nascondimento locale (tra un polling e l'altro)
-      if (secondiLocali > 0 && secondiLocali <= MIN_NASC * 60) {
+      if (secondiLocali > 0 && secondiLocali <= minNasc * 60) {
         document.getElementById('tabelloneVisibile').style.display = 'none';
         document.getElementById('tabelloneNascosto').style.display = 'flex';
       }

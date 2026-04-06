@@ -2926,22 +2926,18 @@
       stopPollingRisposte();
       pollingInterval = setInterval(function() {
         aggiornaLogRisposte();
-        // Controlla se la gara è terminata automaticamente (scaduto timer)
+        // Auto-termina se il timer locale è scaduto
         if (garaLiveCorrente && garaLiveCorrente.stato === 'attiva' && garaLiveCorrente.oraFine) {
           const rimasti = Math.floor((new Date(garaLiveCorrente.oraFine) - new Date()) / 1000);
           if (rimasti <= 0) {
-            // Timer scaduto: aggiorna stato da backend
-            lkApi(API, { action: 'getListaGare' }).then(function(gare) {
-              if (!Array.isArray(gare)) return;
-              gare.forEach(function(g) { _gareMap[g.id] = g; });
-              const garaId = document.getElementById('selGaraLive').value;
-              const garaAggiornata = _gareMap[garaId];
-              if (garaAggiornata && garaAggiornata.stato !== garaLiveCorrente.stato) {
-                garaLiveCorrente = garaAggiornata;
-                stopTimerGara();
+            stopPollingRisposte();
+            stopTimerGara();
+            lkApi(API, { action: 'terminaGara', garaId: garaLiveCorrente.id, pwd: adminPwd })
+              .then(function() {
+                garaLiveCorrente = Object.assign({}, garaLiveCorrente, { stato: 'conclusa' });
                 aggiornaUIGaraLive(garaLiveCorrente);
-              }
-            }).catch(function() {});
+                showToast('✅ Tempo scaduto — gara terminata automaticamente.', 'ok');
+              }).catch(function() {});
           }
         }
       }, 3000);
