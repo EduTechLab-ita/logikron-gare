@@ -914,13 +914,15 @@
           <ul>
             <li><strong>Filtra per ordine:</strong> scrivi solo ai docenti della primaria o solo alla secondaria.</li>
             <li><strong>Filtra per classe:</strong> es. solo ai docenti delle classi quarte, o solo delle quinte.</li>
-            <li><strong>Filtra per istituto:</strong> scrivi solo ai docenti di un IC specifico. Il menu mostra tutti gli IC registrati in <em>Configura → Istituti</em> — lascia "Tutti" per scrivere a tutti.</li>
+            <li><strong>Filtra per istituto:</strong> scrivi solo ai docenti di un IC specifico — lascia "Tutti" per scrivere a tutti.</li>
+            <li><strong>Filtra per plesso:</strong> si attiva solo dopo aver selezionato un istituto. Mostra i plessi realmente presenti nelle intenzioni di quell'IC. Utile per scrivere solo ai docenti di una sede specifica.</li>
+            <li><strong>Singola docente:</strong> sovrascrive tutti i filtri sopra — la mail va solo a quella persona. Il menu si carica automaticamente con le docenti che hanno compilato le intenzioni.</li>
           </ul>
-          Puoi combinare i filtri. Usa <em>Vedi destinatari</em> per verificare prima di inviare.
+          Puoi combinare ordine + classe + istituto + plesso. Usa <em>Vedi destinatari</em> per verificare prima di inviare.
           <br><strong>Nota:</strong> la mail arriverà sempre con il logo LogiKron e firmata da EduTechLab.
         </div>
         <div class="card mt-1">
-          <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:0.75rem; margin-bottom:0.75rem;">
+          <div style="display:grid; grid-template-columns:1fr 1fr 1fr 1fr; gap:0.75rem; margin-bottom:0.75rem;">
             <div class="form-group" style="margin:0;">
               <label class="form-label">Ordine</label>
               <select id="filtroOrdine" class="form-control" onchange="aggiornaFiltroClassi()">
@@ -937,7 +939,13 @@
             </div>
             <div class="form-group" style="margin:0;">
               <label class="form-label">Istituto</label>
-              <select id="filtroIstituto" class="form-control">
+              <select id="filtroIstituto" class="form-control" onchange="aggiornaFiltroPlessi()">
+                <option value="">Tutti</option>
+              </select>
+            </div>
+            <div class="form-group" style="margin:0;">
+              <label class="form-label">Plesso</label>
+              <select id="filtroPlesso" class="form-control" disabled>
                 <option value="">Tutti</option>
               </select>
             </div>
@@ -1401,6 +1409,7 @@
     // ==================== ALLEGATI ====================
 
     let allegatiCount = 0;
+    let _intenzioniMail = [];
 
     function aggiungiAllegato() {
       allegatiCount++;
@@ -1464,7 +1473,7 @@
     }
 
     function caricaFiltroDocenti() {
-      lkApi(API, { action: 'getIntenzioni' }).then(lista => {
+      _caricaIntenzioniMail().then(lista => {
         if (!Array.isArray(lista)) return;
         const sel = document.getElementById('filtroDocente');
         const valore = sel.value;
@@ -1482,6 +1491,14 @@
       }).catch(() => {});
     }
 
+    function _caricaIntenzioniMail() {
+      if (_intenzioniMail.length > 0) return Promise.resolve(_intenzioniMail);
+      return lkApi(API, { action: 'getIntenzioni' }).then(lista => {
+        _intenzioniMail = Array.isArray(lista) ? lista : [];
+        return _intenzioniMail;
+      });
+    }
+
     function caricaFiltroIstituti() {
       lkApi(API, { action: 'getIstituti' }).then(r => {
         const lista = (r && r.istituti) ? r.istituti : [];
@@ -1494,18 +1511,34 @@
           sel.appendChild(opt);
         });
       }).catch(() => {
-        // Fallback: popola dagli IC nelle intenzioni
-        lkApi(API, { action: 'getIntenzioni' }).then(lista => {
-          if (!Array.isArray(lista)) return;
+        _caricaIntenzioniMail().then(lista => {
           const sel = document.getElementById('filtroIstituto');
           sel.innerHTML = '<option value="">Tutti</option>';
-          const istituti = [...new Set(lista.map(i => i.istituto))].sort();
-          istituti.forEach(ic => {
+          [...new Set(lista.map(i => i.istituto).filter(Boolean))].sort().forEach(ic => {
             const opt = document.createElement('option');
             opt.value = ic; opt.textContent = ic;
             sel.appendChild(opt);
           });
         }).catch(() => {});
+      });
+    }
+
+    function aggiornaFiltroPlessi() {
+      const istituto = document.getElementById('filtroIstituto').value;
+      const sel = document.getElementById('filtroPlesso');
+      sel.innerHTML = '<option value="">Tutti</option>';
+      sel.disabled = !istituto;
+      if (!istituto) return;
+      _caricaIntenzioniMail().then(lista => {
+        const plessi = [...new Set(
+          lista.filter(i => i.istituto === istituto && i.plesso)
+               .map(i => i.plesso)
+        )].sort();
+        plessi.forEach(p => {
+          const opt = document.createElement('option');
+          opt.value = p; opt.textContent = p;
+          sel.appendChild(opt);
+        });
       });
     }
 
@@ -1515,6 +1548,7 @@
         if (filtri.ordine   && i.ordine   !== filtri.ordine)   return false;
         if (filtri.classe   && i.classe   !== filtri.classe)   return false;
         if (filtri.istituto && i.istituto !== filtri.istituto) return false;
+        if (filtri.plesso   && i.plesso   !== filtri.plesso)   return false;
         return true;
       });
     }
@@ -1524,6 +1558,7 @@
         ordine:   document.getElementById('filtroOrdine').value,
         classe:   document.getElementById('filtroClasse').value,
         istituto: document.getElementById('filtroIstituto').value,
+        plesso:   document.getElementById('filtroPlesso').value,
         email:    document.getElementById('filtroDocente').value
       };
       const div = document.getElementById('destinatariPreview');
@@ -1569,11 +1604,12 @@
         ordine:   filtroEmail ? '' : document.getElementById('filtroOrdine').value,
         classe:   filtroEmail ? '' : document.getElementById('filtroClasse').value,
         istituto: filtroEmail ? '' : document.getElementById('filtroIstituto').value,
+        plesso:   filtroEmail ? '' : document.getElementById('filtroPlesso').value,
         email:    filtroEmail
       };
       const desc = filtroEmail
         ? document.getElementById('filtroDocente').selectedOptions[0].text
-        : ([filtri.ordine, filtri.classe ? 'classe ' + filtri.classe : '', filtri.istituto].filter(Boolean).join(', ') || 'TUTTI i docenti');
+        : ([filtri.ordine, filtri.classe ? 'classe ' + filtri.classe : '', filtri.istituto, filtri.plesso ? 'plesso ' + filtri.plesso : ''].filter(Boolean).join(', ') || 'TUTTI i docenti');
 
       const allegatiInfo = allegatiIds.length > 0
         ? '\nAllegati: ' + allegatiIds.length + ' file da Drive'
@@ -1591,6 +1627,7 @@
         filtroOrdine:   filtri.ordine,
         filtroClasse:   filtri.classe,
         filtroIstituto: filtri.istituto,
+        filtroPlesso:   filtri.plesso,
         oggetto: oggetto,
         corpo: corpo,
         allegati: allegatiIds.length > 0 ? JSON.stringify(allegatiIds) : ''
