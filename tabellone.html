@@ -659,7 +659,7 @@
     const CFG          = LOGIKRON_CONFIG.gare;
     const DURATA_MIN   = CFG.durataMinuti   || 60;
     const JOLLY_MIN    = CFG.tempoJollyMinuti || 10;
-    const DOMANDE_MIN  = CFG.tempoDomandeMinuti || 20;
+    let domaneMin      = CFG.tempoDomandeMinuti || 20; // aggiornato dal backend al primo poll
     const INCREMENTO   = CFG.incrementoPuntiOgniMinuti || 2;
     const PUNTI_BASE   = CFG.puntiIniziali  || 20;
     let minNasc        = CFG.minutiNascondimento || 5; // aggiornato dal backend al primo poll
@@ -708,8 +708,9 @@
           if (!data || data.error) return;
           lastData = data;
 
-          // Aggiorna minuti nascondimento dal backend (sovrascrive il default config.js)
+          // Aggiorna valori dinamici dal backend (sovrascrivono i default config.js)
           if (data.minutiNascondimento) minNasc = parseInt(data.minutiNascondimento) || minNasc;
+          if (data.tempoDomande) domaneMin = parseInt(data.tempoDomande) || domaneMin;
 
           // Sincronizza il timer locale col backend e aggiorna subito il display
           secondiLocali = data.secondiRimanenti || 0;
@@ -725,7 +726,7 @@
             const dur = parseInt(data.gara.durata) || DURATA_MIN;
             const jolM = parseInt(data.gara.tempoJolly) || JOLLY_MIN;
             jollyDeadline    = tf - (dur - jolM)       * 60000;
-            domandeDeadline  = tf - (dur - DOMANDE_MIN) * 60000;
+            domandeDeadline  = tf - (dur - domaneMin)   * 60000;
           }
 
           // Aggiorna intestazione colonne e valori

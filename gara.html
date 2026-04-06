@@ -499,8 +499,10 @@
         lkApi(API, { action: 'getStatoSquadra', garaId: stato.garaId, squadraId: stato.squadraId })
       ]).then(([domande, statoSq]) => {
         stato.domande = (Array.isArray(domande) ? domande : []).sort((a,b) => a.num - b.num);
-        stato.oraFine = statoSq.oraFine || null;
-        stato.jolly   = statoSq.jolly ? parseInt(statoSq.jolly) : null;
+        stato.oraFine    = statoSq.oraFine || null;
+        stato.durata     = parseInt(statoSq.durata) || DURATA_MIN;
+        stato.tempoJolly = parseInt(statoSq.tempoJolly) || JOLLY_MIN;
+        stato.jolly      = statoSq.jolly ? parseInt(statoSq.jolly) : null;
         stato.jollyFissato = !!stato.jolly;
         stato.puntiTotali  = statoSq.puntiTotali || 0;
 
@@ -803,8 +805,8 @@
       if (stato.jollyFissato) { aggiornaUIJolly(); return; }
       if (!stato.oraFine) return;
 
-      // jollyDeadline = oraFine - (durata - tempoJolly) minuti
-      const jollyDeadline = new Date(stato.oraFine).getTime() - (DURATA_MIN - JOLLY_MIN) * 60000;
+      // jollyDeadline = oraFine - (durata - tempoJolly) minuti — usa valori per-gara dal backend
+      const jollyDeadline = new Date(stato.oraFine).getTime() - (stato.durata - stato.tempoJolly) * 60000;
 
       if (Date.now() >= jollyDeadline) {
         stato.jollyScaduto = true;
