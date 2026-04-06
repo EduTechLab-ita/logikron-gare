@@ -738,11 +738,14 @@
     btn.disabled = true;
     document.getElementById('progressWrap').style.display = 'block';
     document.getElementById('progressBar').style.width = '0%';
+    showBigProgress('Generazione PDF in corso...');
 
     for (let i = 0; i < lista.length; i++) {
-      document.getElementById('progressLabel').textContent =
-        'Generazione ' + (i+1) + '/' + lista.length + ' — ' + lista[i].nome;
-      document.getElementById('progressBar').style.width = Math.round((i/lista.length)*100) + '%';
+      const label = 'Generazione ' + (i+1) + '/' + lista.length + ' — ' + lista[i].nome;
+      const pct = Math.round((i/lista.length)*100);
+      document.getElementById('progressLabel').textContent = label;
+      document.getElementById('progressBar').style.width = pct + '%';
+      updateBigProgress(label, pct);
 
       try {
         const doc = await generaPDF(lista[i].sq, lista[i].nome);
@@ -757,8 +760,9 @@
 
     document.getElementById('progressBar').style.width = '100%';
     document.getElementById('progressLabel').textContent = '✅ ' + lista.length + ' PDF generati!';
+    updateBigProgress('✅ ' + lista.length + ' PDF generati!', 100);
     btn.disabled = false;
-    setTimeout(function(){ document.getElementById('progressWrap').style.display = 'none'; }, 4000);
+    setTimeout(function(){ document.getElementById('progressWrap').style.display = 'none'; hideBigProgress(); }, 4000);
     toast('✅ Tutti i ' + lista.length + ' attestati scaricati!');
   }
 
@@ -1204,15 +1208,18 @@
     document.getElementById('btnDriveEmail').disabled = true;
     document.getElementById('progressWrap').style.display = 'block';
     document.getElementById('progressBar').style.width = '0%';
+    showBigProgress('Caricamento attestati su Drive...');
 
     const byDocente = {};
     let salvati = 0, errori = 0;
 
     for (let i = 0; i < lista.length; i++) {
       const sq = lista[i].sq, nome = lista[i].nome;
-      document.getElementById('progressBar').style.width = Math.round(((i + 1) / lista.length) * 95) + '%';
-      document.getElementById('progressLabel').textContent =
-        '☁️ Drive ' + (i + 1) + '/' + lista.length + ' — ' + nome + '...';
+      const pct = Math.round(((i + 1) / lista.length) * 95);
+      const label = '☁️ Drive ' + (i + 1) + '/' + lista.length + ' — ' + nome + '...';
+      document.getElementById('progressBar').style.width = pct + '%';
+      document.getElementById('progressLabel').textContent = label;
+      updateBigProgress(label, pct);
 
       try {
         const doc = await generaPDF(sq, nome);
@@ -1248,16 +1255,15 @@
       }, 20000).catch(function(e){ console.warn('registraAttestatiPerInvio:', e); });
     }
 
+    const labelFine = '✅ ' + salvati + '/' + lista.length + ' su Drive' + (errori ? ' (' + errori + ' errori)' : '') + ' · Usa lo scheduler ⏰ per pianificare l\'invio email';
     document.getElementById('progressBar').style.width = '100%';
-    document.getElementById('progressLabel').textContent =
-      '✅ ' + salvati + '/' + lista.length + ' su Drive' +
-      (errori ? ' (' + errori + ' errori)' : '') +
-      ' · Usa lo scheduler ⏰ per pianificare l\'invio email';
+    document.getElementById('progressLabel').textContent = labelFine;
+    updateBigProgress(labelFine, 100);
 
     btn.disabled = false;
     document.getElementById('btnTutti').disabled = false;
     document.getElementById('btnDriveEmail').disabled = false;
-    setTimeout(function(){ document.getElementById('progressWrap').style.display = 'none'; }, 8000);
+    setTimeout(function(){ document.getElementById('progressWrap').style.display = 'none'; hideBigProgress(); }, 8000);
     toast('✅ ' + salvati + ' PDF su Drive · Ora pianifica l\'invio email con ⏰');
   }
 
@@ -1276,6 +1282,7 @@
     document.getElementById('btnDriveOnly').disabled = true;
     document.getElementById('progressWrap').style.display = 'block';
     document.getElementById('progressBar').style.width = '0%';
+    showBigProgress('Generazione PDF + caricamento Drive + invio email...');
 
     // byDocente: email → { nomeDocente, fileIds:[] }
     const byDocente = {};
@@ -1284,9 +1291,11 @@
     // FASE 1: genera PDF + upload Drive
     for (let i = 0; i < lista.length; i++) {
       const sq = lista[i].sq, nome = lista[i].nome;
-      document.getElementById('progressBar').style.width = Math.round((i / lista.length) * 80) + '%';
-      document.getElementById('progressLabel').textContent =
-        '\u2601\uFE0F Drive ' + (i + 1) + '/' + lista.length + ' \u2014 ' + nome + '...';
+      const pct1 = Math.round((i / lista.length) * 80);
+      const label1 = '☁️ Drive ' + (i + 1) + '/' + lista.length + ' — ' + nome + '...';
+      document.getElementById('progressBar').style.width = pct1 + '%';
+      document.getElementById('progressLabel').textContent = label1;
+      updateBigProgress(label1, pct1);
 
       try {
         const doc = await generaPDF(sq, nome);
@@ -1328,10 +1337,11 @@
 
     for (let d = 0; d < docenti.length; d++) {
       const email = docenti[d][0], info = docenti[d][1];
-      document.getElementById('progressBar').style.width =
-        (80 + Math.round(((d + 1) / Math.max(docenti.length, 1)) * 20)) + '%';
-      document.getElementById('progressLabel').textContent =
-        '\uD83D\uDCE7 Email ' + (d + 1) + '/' + docenti.length + ' \u2192 ' + email + '...';
+      const pct2 = 80 + Math.round(((d + 1) / Math.max(docenti.length, 1)) * 20);
+      const label2 = '📧 Email ' + (d + 1) + '/' + docenti.length + ' → ' + email + '...';
+      document.getElementById('progressBar').style.width = pct2 + '%';
+      document.getElementById('progressLabel').textContent = label2;
+      updateBigProgress(label2, pct2);
 
       try {
         const r = await lkApi(API, {
@@ -1349,17 +1359,16 @@
       await new Promise(function(r){ setTimeout(r, 400); });
     }
 
+    const labelFine2 = '✅ ' + salvati + '/' + lista.length + ' su Drive' + (errori ? ' (' + errori + ' errori)' : '') + ' · ' + emailOk + '/' + docenti.length + ' email inviate';
     document.getElementById('progressBar').style.width = '100%';
-    document.getElementById('progressLabel').textContent =
-      '\u2705 ' + salvati + '/' + lista.length + ' su Drive' +
-      (errori ? ' (' + errori + ' errori)' : '') +
-      ' \u00b7 ' + emailOk + '/' + docenti.length + ' email inviate';
+    document.getElementById('progressLabel').textContent = labelFine2;
+    updateBigProgress(labelFine2, 100);
 
     btn.disabled = false;
     document.getElementById('btnTutti').disabled = false;
     document.getElementById('btnDriveOnly').disabled = false;
-    setTimeout(function(){ document.getElementById('progressWrap').style.display = 'none'; }, 6000);
-    toast('\u2705 ' + salvati + ' PDF su Drive \u00b7 ' + emailOk + ' email inviate');
+    setTimeout(function(){ document.getElementById('progressWrap').style.display = 'none'; hideBigProgress(); }, 6000);
+    toast('✅ ' + salvati + ' PDF su Drive · ' + emailOk + ' email inviate');
   }
 
   // ===================== SALVA SINGOLO SU DRIVE (con confirm) =====================
@@ -1508,6 +1517,49 @@
 
   function _esc(s) {
     return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  }
+
+  // ===================== MODAL PROGRESSO A TUTTO SCHERMO =====================
+  let _bigTimer = null;
+
+  function showBigProgress(titolo) {
+    hideBigProgress();
+    const el = document.createElement('div');
+    el.id = '_bigProgress';
+    el.style.cssText = 'position:fixed;inset:0;background:rgba(15,23,42,0.93);z-index:99999;display:flex;align-items:center;justify-content:center;';
+    el.innerHTML = `
+      <div style="background:#1e293b;border:1px solid #334155;border-radius:20px;padding:2.5rem 3rem;max-width:460px;width:92%;text-align:center;color:#e2e8f0;">
+        <div style="font-size:2.2rem;margin-bottom:0.75rem;">⚙️</div>
+        <div style="font-size:1.1rem;font-weight:700;margin-bottom:0.3rem;">${titolo}</div>
+        <div id="_bigTimer" style="font-size:0.82rem;color:#94a3b8;margin-bottom:1.5rem;">in corso da 0 sec...</div>
+        <div id="_bigLabel" style="font-size:0.9rem;color:#60a5fa;min-height:1.4em;margin-bottom:0.75rem;">Avvio...</div>
+        <div style="background:#0f172a;border-radius:999px;height:12px;overflow:hidden;margin-bottom:0.6rem;">
+          <div id="_bigBar" style="height:100%;width:0%;background:linear-gradient(90deg,#4f46e5,#7c3aed,#06b6d4);border-radius:999px;transition:width 0.3s ease;"></div>
+        </div>
+        <div id="_bigPct" style="font-size:0.78rem;color:#64748b;">0%</div>
+      </div>`;
+    document.body.appendChild(el);
+    let sec = 0;
+    _bigTimer = setInterval(function() {
+      sec++;
+      const t = document.getElementById('_bigTimer');
+      if (t) t.textContent = 'in corso da ' + sec + ' sec...';
+    }, 1000);
+  }
+
+  function updateBigProgress(label, pct) {
+    const l = document.getElementById('_bigLabel');
+    const b = document.getElementById('_bigBar');
+    const p = document.getElementById('_bigPct');
+    if (l) l.textContent = label;
+    if (b) b.style.width = pct + '%';
+    if (p) p.textContent = Math.round(pct) + '%';
+  }
+
+  function hideBigProgress() {
+    if (_bigTimer) { clearInterval(_bigTimer); _bigTimer = null; }
+    const el = document.getElementById('_bigProgress');
+    if (el) el.remove();
   }
 
   function toast(msg) {
