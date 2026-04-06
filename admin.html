@@ -3488,7 +3488,7 @@
       delete params.minutiNascondimento;
       Promise.all([
         lkApi(API, { action: 'modificaParamGara', garaId: garaId, pwd: adminPwd, ...params }),
-        lkApi(API, { action: 'setConfigParams', pwd: adminPwd, params: JSON.stringify([{ key: 'minuti_nascondimento', value: nascondimento }]) })
+        lkApi(API, { action: 'setConfigParams', pwd: adminPwd, params: JSON.stringify({ minuti_nascondimento: nascondimento }) })
       ]).then(function(results) {
         hideWorking();
         const err = results.find(r => r && r.error);
