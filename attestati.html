@@ -304,17 +304,17 @@
         <li>Struttura Drive: <code style="background:#0f172a;padding:1px 5px;border-radius:4px;">ATTESTATI / [Primaria Nª] / [IC] / [Plesso] / [Nª Sez]</code></li>
       </ol>
 
-      <p style="font-weight:700;color:#6ee7b7;margin-bottom:0.5rem;">☁️ CORREGGERE UN ERRORE (singolo alunno)</p>
+      <p style="font-weight:700;color:#6ee7b7;margin-bottom:0.5rem;">✏️ CORREGGERE UN NOME ERRATO (singolo alunno)</p>
       <ol style="margin:0 0 1.25rem 1.2rem;color:#cbd5e1;">
-        <li>Correggi il nome nello <strong>Sheet Iscrizioni</strong> su Google Drive</li>
-        <li>Torna qui e clicca <strong>Carica dati gara</strong> (ricarica i dati aggiornati)</li>
-        <li>Trova l'alunno e clicca <strong>☁️</strong> (icona nuvola)</li>
-        <li>Conferma nel dialogo</li>
+        <li>Trova l'alunno nella lista e clicca <strong>✏️</strong> (icona matita) accanto al suo nome</li>
+        <li>Digita il nome corretto nel campo e clicca <strong>✅ Salva tutto</strong></li>
+        <li>Il sistema aggiorna automaticamente lo Sheet, rigenera il PDF e lo sostituisce su Drive</li>
       </ol>
 
       <div style="background:#7c3aed22;border:1px solid #7c3aed55;border-radius:8px;padding:0.85rem;margin-bottom:1rem;">
-        <p style="margin:0;font-weight:600;color:#c4b5fd;">⚠️ Quando usi ☁️ su un singolo alunno:</p>
+        <p style="margin:0;font-weight:600;color:#c4b5fd;">⚠️ Dopo la correzione con ✏️:</p>
         <ul style="margin:0.5rem 0 0 1.1rem;color:#cbd5e1;">
+          <li>Lo Sheet Iscrizioni viene <strong>aggiornato automaticamente</strong></li>
           <li>Il vecchio file su Drive viene <strong>cancellato e sostituito</strong> con quello nuovo</li>
           <li>La mail <strong>NON viene reinviata</strong> automaticamente alla docente</li>
           <li>Dovrai inviare <strong>tu manualmente</strong> la mail con il nuovo attestato alla docente interessata</li>
@@ -388,6 +388,33 @@
       <button onclick="document.getElementById('modalConfirmEmail').style.display='none';generaTuttiDriveEmail()"
               style="background:linear-gradient(135deg,#dc2626,#b91c1c);color:#fff;border:none;padding:0.5rem 1.25rem;border-radius:8px;cursor:pointer;font-weight:700;">
         🚀 Sì, invia le email
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- MODALE EDIT NOME ALUNNO -->
+<div id="modalEditNome" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:9200;">
+  <div style="max-width:400px;margin:160px auto;background:#1e293b;border:1px solid #334155;border-radius:16px;padding:2rem;">
+    <p style="font-size:1rem;font-weight:700;margin-bottom:0.25rem;">✏️ Modifica nome alunno</p>
+    <p id="editNomeSquadra" style="font-size:0.8rem;color:#64748b;margin-bottom:1.25rem;"></p>
+    <div style="margin-bottom:1rem;">
+      <label style="font-size:0.78rem;color:#94a3b8;display:block;margin-bottom:4px;">Nuovo nome</label>
+      <input id="editNomeInput" type="text"
+             onkeypress="if(event.key==='Enter') salvaEditNome()"
+             style="width:100%;padding:8px 12px;border:1px solid #475569;border-radius:7px;background:#0f172a;color:#e2e8f0;font-size:0.95rem;box-sizing:border-box;">
+    </div>
+    <div style="background:#1e40af22;border:1px solid #1e40af55;border-radius:8px;padding:0.75rem;margin-bottom:1.25rem;font-size:0.82rem;color:#93c5fd;line-height:1.5;">
+      Il nome verrà <strong>aggiornato nello Sheet</strong> e l'attestato verrà <strong>rigenerato e sostituito su Drive</strong> (se era già stato caricato). La mail <strong>non</strong> verrà reinviata automaticamente.
+    </div>
+    <div style="display:flex;gap:0.75rem;justify-content:flex-end;">
+      <button onclick="document.getElementById('modalEditNome').style.display='none'"
+              style="background:transparent;border:1px solid #334155;color:#94a3b8;padding:0.5rem 1.1rem;border-radius:8px;cursor:pointer;">
+        Annulla
+      </button>
+      <button id="btnSalvaEditNome" onclick="salvaEditNome()"
+              style="background:linear-gradient(135deg,#6366f1,#7c3aed);color:#fff;border:none;padding:0.5rem 1.25rem;border-radius:8px;cursor:pointer;font-weight:600;">
+        ✅ Salva tutto
       </button>
     </div>
   </div>
@@ -631,6 +658,7 @@
             return `<div class="alunno-row">
               <span class="alunno-nome">${_esc(nome)}</span>
               <span class="alunno-tipo" style="color:${sq.tipo==='Merito'?'#fbbf24':'#a5b4fc'}">${sq.tipo}</span>
+              <button class="btn btn-sm btn-outline" onclick="apriEditNome(${sqIdx},${aIdx})" title="Modifica nome alunno">✏️</button>
               <button class="btn btn-sm btn-outline" onclick="scaricaSingolo(${sqIdx},${aIdx},this)">📄 PDF</button>
               <button class="btn btn-sm btn-outline" onclick="salvaAlunnoDrive(${sqIdx},${aIdx},this)" title="Salva/Sovrascivi su Drive (no email)">☁️</button>
             </div>`;
@@ -1391,6 +1419,89 @@
         toast('\u274C Errore: ' + e.message);
       }
     });
+  }
+
+  // ===================== EDIT NOME ALUNNO =====================
+
+  let _editSqIdx = -1, _editAIdx = -1;
+
+  function apriEditNome(sqIdx, aIdx) {
+    _editSqIdx = sqIdx;
+    _editAIdx = aIdx;
+    const sq = _datiAttest[sqIdx];
+    document.getElementById('editNomeInput').value = sq.alunni[aIdx];
+    document.getElementById('editNomeSquadra').textContent = 'Squadra: ' + sq.squadra;
+    document.getElementById('btnSalvaEditNome').disabled = false;
+    document.getElementById('btnSalvaEditNome').textContent = '✅ Salva tutto';
+    document.getElementById('modalEditNome').style.display = 'block';
+    setTimeout(function(){ document.getElementById('editNomeInput').focus(); document.getElementById('editNomeInput').select(); }, 50);
+  }
+
+  async function salvaEditNome() {
+    const sqIdx = _editSqIdx, aIdx = _editAIdx;
+    if (sqIdx < 0) return;
+    const sq = _datiAttest[sqIdx];
+    const vecchioNome = sq.alunni[aIdx];
+    const nuovoNome = document.getElementById('editNomeInput').value.trim();
+    if (!nuovoNome) { toast('⚠️ Inserisci un nome.'); return; }
+    if (nuovoNome === vecchioNome) { document.getElementById('modalEditNome').style.display = 'none'; return; }
+
+    const btn = document.getElementById('btnSalvaEditNome');
+    btn.disabled = true; btn.textContent = '⏳ Aggiorno sheet...';
+
+    try {
+      // 1. Aggiorna nome nello Sheet Iscrizioni
+      const r = await lkApi(API, {
+        action: 'aggiornaNomeAlunno',
+        pwd: adminPwd,
+        nomeSquadra: sq.squadra,
+        vecchioNome: vecchioNome,
+        nuovoNome: nuovoNome
+      });
+      if (r.error) throw new Error(r.error);
+
+      // 2. Aggiorna memoria locale
+      _datiAttest[sqIdx].alunni[aIdx] = nuovoNome;
+      document.getElementById('modalEditNome').style.display = 'none';
+
+      // 3. Rigenera PDF + Drive (vecchioNome usato per cancellare il vecchio file)
+      btn.textContent = '⏳ PDF + Drive...';
+      const doc = await generaPDF(sq, nuovoNome);
+      const pdfBase64 = doc.output('datauristring').split(',')[1];
+      const uploaded = await uploadPdfToBackend(pdfBase64, {
+        nomeAlunno: nuovoNome,
+        vecchioNome: vecchioNome,
+        ordine: sq.ordine,
+        classe: sq.classe,
+        sezione: sq.sezione,
+        istituto: sq.istituto,
+        plesso: sq.plesso
+      });
+
+      // 4. Aggiorna mapping AttestatiDrive se ci sono file vecchi da aggiornare
+      if (_garaId && sq.email && uploaded.fileIdCancellati && uploaded.fileIdCancellati.length > 0) {
+        uploaded.fileIdCancellati.forEach(function(vecchioFid) {
+          lkApi(API, {
+            action: 'aggiornaFileIdMapping',
+            pwd: adminPwd,
+            garaId: _garaId,
+            emailDocente: sq.email,
+            vecchioFileId: vecchioFid,
+            nuovoFileId: uploaded.fileId
+          }, 15000).catch(function(e){ console.warn('aggiornaFileIdMapping:', e); });
+        });
+      }
+
+      // 5. Aggiorna la UI
+      renderSquadre();
+      const block = document.getElementById('sq-block-' + sqIdx);
+      if (block && !block.classList.contains('open')) block.classList.add('open');
+
+      toast('✅ ' + nuovoNome + ' — Sheet aggiornato e Drive sostituito!');
+    } catch(e) {
+      toast('❌ Errore: ' + e.message);
+      btn.disabled = false; btn.textContent = '✅ Salva tutto';
+    }
   }
 
   // ===================== UTILS =====================
