@@ -3438,18 +3438,14 @@
 
     function _apriModalParamGaraPerId(garaId, garaNome) {
       showWorking('Caricamento parametri gara...');
-      Promise.all([
-        lkApi(API, { action: 'getGaraById', garaId: garaId }),
-        lkApi(API, { action: 'getConfigParams' })
-      ]).then(function(results) {
-        hideWorking();
-        const g = results[0], cfg = results[1];
-        if (!g || g.error) { showToast('❌ Impossibile caricare i parametri.', 'errore'); return; }
-        const nascondimento = Array.isArray(cfg)
-          ? (cfg.find(function(p){ return p.key === 'minuti_nascondimento'; }) || {}).value || 5
-          : 5;
-        _buildModalParamGara(garaId, garaNome || g.nome, g, nascondimento);
-      }).catch(function() { hideWorking(); showToast('❌ Errore di rete.', 'errore'); });
+      lkApi(API, { action: 'getGaraById', garaId: garaId })
+        .then(function(g) {
+          hideWorking();
+          if (!g || g.error) { showToast('❌ Impossibile caricare i parametri.', 'errore'); return; }
+          // minutiNascondimento è ora per-gara (col 13 del foglio Gare)
+          const nascondimento = g.minutiNascondimento || 5;
+          _buildModalParamGara(garaId, garaNome || g.nome, g, nascondimento);
+        }).catch(function() { hideWorking(); showToast('❌ Errore di rete.', 'errore'); });
     }
 
     function apriModalParamGara() {
@@ -3479,19 +3475,14 @@
       if (modal) modal.remove();
       showWorking('Salvataggio parametri in corso...');
 
-      // Salva minuti_nascondimento in Config (parametro globale) + resto in foglio Gare
-      const nascondimento = params.minutiNascondimento;
-      delete params.minutiNascondimento;
-      Promise.all([
-        lkApi(API, { action: 'modificaParamGara', garaId: garaId, pwd: adminPwd, ...params }),
-        lkApi(API, { action: 'setConfigParams', pwd: adminPwd, params: JSON.stringify({ minuti_nascondimento: nascondimento }) })
-      ]).then(function(results) {
-        hideWorking();
-        const err = results.find(r => r && r.error);
-        if (err) { showToast('❌ ' + err.error, 'errore'); return; }
-        showToast('✅ Parametri salvati!', 'ok');
-        caricaListaGare();
-      }).catch(function() { hideWorking(); showToast('❌ Errore di rete.', 'errore'); });
+      // Tutti i parametri (compreso minutiNascondimento) salvati per-gara nel foglio Gare
+      lkApi(API, { action: 'modificaParamGara', garaId: garaId, pwd: adminPwd, ...params })
+        .then(function(r) {
+          hideWorking();
+          if (r && r.error) { showToast('❌ ' + r.error, 'errore'); return; }
+          showToast('✅ Parametri salvati!', 'ok');
+          caricaListaGare();
+        }).catch(function() { hideWorking(); showToast('❌ Errore di rete.', 'errore'); });
     }
 
     function eliminaGaraTest() {
