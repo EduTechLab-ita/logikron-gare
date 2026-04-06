@@ -3452,13 +3452,13 @@
     }
 
     function apriModalParamGaraLive() {
-      if (!garaLiveId) { showToast('Nessuna gara selezionata.', 'info'); return; }
+      if (!garaLiveCorrente) { showToast('Nessuna gara selezionata.', 'info'); return; }
       showWorking('Caricamento parametri gara...');
-      lkApi(API, { action: 'getGaraById', garaId: garaLiveId })
+      lkApi(API, { action: 'getGaraById', garaId: garaLiveCorrente })
         .then(function(g) {
           hideWorking();
           if (!g || g.error) { showToast('❌ Impossibile caricare i parametri.', 'errore'); return; }
-          _buildModalParamGara(garaLiveId, g.nome || garaLiveId, g);
+          _buildModalParamGara(garaLiveCorrente, g.nome || garaLiveCorrente, g);
         })
         .catch(function() { hideWorking(); showToast('❌ Errore di rete.', 'errore'); });
     }
