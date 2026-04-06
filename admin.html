@@ -785,12 +785,13 @@
           <strong>Come usare:</strong>
           <ul>
             <li><strong>Seleziona la gara</strong> dal menu a tendina — la gara attiva compare con <strong>🔴 LIVE</strong>.</li>
-            <li>Clicca <strong>🎮 Apri Controllo</strong> per aprire il pannello a schermo intero (oppure seleziona direttamente dal menu).</li>
-            <li>Nel pannello: usa <strong>Importa Squadre</strong> prima di iniziare, poi <strong>▶ GO</strong> per avviare il timer.</li>
+            <li>Clicca <strong>🎮 Apri Controllo</strong> per aprire il pannello a schermo intero.</li>
+            <li>Clicca <strong>⚙️ Parametri</strong> (fuori o dentro il pannello) per modificare nome, durata, domande, punti, jolly e data della gara selezionata — i dati vengono salvati direttamente nello Sheet. Funziona anche a gara avviata, ma durata e punti non hanno effetto retroattivo sul timer in corso.</li>
+            <li>Nel pannello: usa <strong>👥 Importa Squadre</strong> prima di iniziare, poi <strong>▶ GO</strong> per avviare il timer.</li>
             <li>Il log risposte si aggiorna ogni 3 secondi. Usa <strong>✏️</strong> per correggere un esito e <strong>🗑️</strong> per eliminare una risposta.</li>
-            <li><strong>TERMINA</strong> chiude la gara anticipatamente (altrimenti scade al timeout).</li>
+            <li><strong>■ TERMINA</strong> chiude la gara anticipatamente (altrimenti scade al timeout automatico).</li>
             <li>Chiudi il pannello con <strong>✕ Chiudi</strong> o premendo <strong>Esc</strong>.</li>
-            <li><strong>Nuova Gara:</strong> inserisci nome, data (opzionale) e i 10 quesiti con le risposte corrette.</li>
+            <li><strong>+ Nuova Gara:</strong> inserisci nome, data (opzionale) e i 10 quesiti con le risposte corrette.</li>
           </ul>
         </div>
 
@@ -3385,62 +3386,79 @@
 
     // ==================== PARAMETRI GARA ====================
 
+    function _buildModalParamGara(garaId, garaNome, g) {
+      const existing = document.getElementById('_modalParamGara');
+      if (existing) existing.remove();
+      const avviata = g.stato && g.stato !== 'preparazione';
+      const modal = document.createElement('div');
+      modal.id = '_modalParamGara';
+      modal.style.cssText = 'position:fixed;inset:0;background:rgba(15,23,42,0.88);z-index:99980;display:flex;align-items:center;justify-content:center;padding:1rem;';
+      modal.innerHTML = `
+        <div style="background:#1e293b;border:1px solid #334155;border-radius:16px;padding:2rem;max-width:460px;width:100%;color:#e2e8f0;">
+          <div style="font-size:1.2rem;font-weight:700;margin-bottom:0.25rem;">⚙️ Parametri Gara</div>
+          <div style="color:#60a5fa;font-size:0.9rem;margin-bottom:1.5rem;">${_escHtml(garaNome)}</div>
+
+          <div class="form-group">
+            <label style="color:#94a3b8;font-size:0.82rem;font-weight:600;display:block;margin-bottom:4px;">Nome gara</label>
+            <input class="form-control" id="_pgNome" value="${_escHtml(g.nome || '')}">
+          </div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.75rem;">
+            <div class="form-group">
+              <label style="color:#94a3b8;font-size:0.82rem;font-weight:600;display:block;margin-bottom:4px;">Durata (minuti)</label>
+              <input class="form-control" id="_pgDurata" type="number" min="1" value="${g.durata || ''}">
+            </div>
+            <div class="form-group">
+              <label style="color:#94a3b8;font-size:0.82rem;font-weight:600;display:block;margin-bottom:4px;">Num. domande</label>
+              <input class="form-control" id="_pgDomande" type="number" min="1" value="${g.numDomande || ''}">
+            </div>
+            <div class="form-group">
+              <label style="color:#94a3b8;font-size:0.82rem;font-weight:600;display:block;margin-bottom:4px;">Punti iniziali</label>
+              <input class="form-control" id="_pgPunti" type="number" min="1" value="${g.puntiIniziali || ''}">
+            </div>
+            <div class="form-group">
+              <label style="color:#94a3b8;font-size:0.82rem;font-weight:600;display:block;margin-bottom:4px;">Tempo jolly (minuti)</label>
+              <input class="form-control" id="_pgJolly" type="number" min="1" value="${g.tempoJolly || ''}">
+            </div>
+          </div>
+          <div class="form-group">
+            <label style="color:#94a3b8;font-size:0.82rem;font-weight:600;display:block;margin-bottom:4px;">Data/ora programmata</label>
+            <input class="form-control" id="_pgDataGara" type="datetime-local" value="${g.dataGara ? g.dataGara.replace(' ','T').substring(0,16) : ''}">
+          </div>
+
+          <div style="background:#0f172a;border-radius:8px;padding:0.6rem 0.9rem;margin:0.5rem 0 1.25rem;font-size:0.8rem;color:#94a3b8;">
+            ${avviata ? '⚠️ Gara già avviata — le modifiche a durata e punti non hanno effetto retroattivo sul timer in corso.' : '⚠️ Modifiche applicabili prima dell\'avvio della gara.'}
+          </div>
+          <div style="display:flex;gap:0.75rem;justify-content:flex-end;">
+            <button onclick="document.getElementById('_modalParamGara').remove()" style="background:transparent;border:1px solid #475569;color:#94a3b8;padding:0.6rem 1.2rem;border-radius:8px;cursor:pointer;">Annulla</button>
+            <button onclick="salvaParamGara('${garaId}')" style="background:linear-gradient(135deg,#4f46e5,#7c3aed);border:none;color:#fff;padding:0.6rem 1.4rem;border-radius:8px;cursor:pointer;font-weight:600;">💾 Salva</button>
+          </div>
+        </div>`;
+      document.body.appendChild(modal);
+    }
+
     function apriModalParamGara() {
       const sel = document.getElementById('selGaraLive');
       if (!sel.value) { alert('Prima seleziona una gara dalla lista.'); return; }
       const garaId = sel.value;
       const garaNome = sel.options[sel.selectedIndex].text;
-
       showWorking('Caricamento parametri gara...');
       lkApi(API, { action: 'getGaraById', garaId: garaId })
         .then(function(g) {
           hideWorking();
           if (!g || g.error) { showToast('❌ Impossibile caricare i parametri.', 'errore'); return; }
+          _buildModalParamGara(garaId, garaNome, g);
+        })
+        .catch(function() { hideWorking(); showToast('❌ Errore di rete.', 'errore'); });
+    }
 
-          const modal = document.createElement('div');
-          modal.id = '_modalParamGara';
-          modal.style.cssText = 'position:fixed;inset:0;background:rgba(15,23,42,0.88);z-index:9990;display:flex;align-items:center;justify-content:center;padding:1rem;';
-          modal.innerHTML = `
-            <div style="background:#1e293b;border:1px solid #334155;border-radius:16px;padding:2rem;max-width:460px;width:100%;color:#e2e8f0;">
-              <div style="font-size:1.2rem;font-weight:700;margin-bottom:0.25rem;">⚙️ Parametri Gara</div>
-              <div style="color:#60a5fa;font-size:0.9rem;margin-bottom:1.5rem;">${_escHtml(garaNome)}</div>
-
-              <div class="form-group">
-                <label class="form-label">Nome gara</label>
-                <input class="form-control" id="_pgNome" value="${_escHtml(g.nome || '')}">
-              </div>
-              <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.75rem;">
-                <div class="form-group">
-                  <label class="form-label">Durata (minuti)</label>
-                  <input class="form-control" id="_pgDurata" type="number" min="1" value="${g.durata || ''}">
-                </div>
-                <div class="form-group">
-                  <label class="form-label">Num. domande</label>
-                  <input class="form-control" id="_pgDomande" type="number" min="1" value="${g.numDomande || ''}">
-                </div>
-                <div class="form-group">
-                  <label class="form-label">Punti iniziali</label>
-                  <input class="form-control" id="_pgPunti" type="number" min="1" value="${g.puntiIniziali || ''}">
-                </div>
-                <div class="form-group">
-                  <label class="form-label">Tempo jolly (minuti)</label>
-                  <input class="form-control" id="_pgJolly" type="number" min="1" value="${g.tempoJolly || ''}">
-                </div>
-              </div>
-              <div class="form-group">
-                <label class="form-label">Data/ora programmata</label>
-                <input class="form-control" id="_pgDataGara" type="datetime-local" value="${g.dataGara ? g.dataGara.replace(' ','T').substring(0,16) : ''}">
-              </div>
-
-              <div style="background:#0f172a;border-radius:8px;padding:0.6rem 0.9rem;margin:0.5rem 0 1.25rem;font-size:0.8rem;color:#94a3b8;">
-                ⚠️ Modifiche applicabili solo a gare non ancora avviate.
-              </div>
-              <div style="display:flex;gap:0.75rem;justify-content:flex-end;">
-                <button onclick="document.getElementById('_modalParamGara').remove()" style="background:transparent;border:1px solid #475569;color:#94a3b8;padding:0.6rem 1.2rem;border-radius:8px;cursor:pointer;">Annulla</button>
-                <button onclick="salvaParamGara('${garaId}')" style="background:linear-gradient(135deg,#4f46e5,#7c3aed);border:none;color:#fff;padding:0.6rem 1.4rem;border-radius:8px;cursor:pointer;font-weight:600;">💾 Salva</button>
-              </div>
-            </div>`;
-          document.body.appendChild(modal);
+    function apriModalParamGaraLive() {
+      if (!garaLiveId) { showToast('Nessuna gara selezionata.', 'info'); return; }
+      showWorking('Caricamento parametri gara...');
+      lkApi(API, { action: 'getGaraById', garaId: garaLiveId })
+        .then(function(g) {
+          hideWorking();
+          if (!g || g.error) { showToast('❌ Impossibile caricare i parametri.', 'errore'); return; }
+          _buildModalParamGara(garaLiveId, g.nome || garaLiveId, g);
         })
         .catch(function() { hideWorking(); showToast('❌ Errore di rete.', 'errore'); });
     }
@@ -3937,6 +3955,9 @@
         <button id="btnTerminaGara" class="btn btn-outline" onclick="terminaGaraLive()"
                 style="border-color:#dc2626;color:#dc2626;display:none;">
           ■ TERMINA GARA
+        </button>
+        <button id="btnParamGaraLive" class="btn btn-outline" onclick="apriModalParamGaraLive()" style="border-color:#7c3aed;color:#a78bfa;" title="Modifica parametri di questa gara">
+          ⚙️ Parametri
         </button>
         <button id="btnCerimonia" class="btn btn-primary" onclick="avanzaCerimonia()" style="display:none;">
           🎉 Avvia Cerimonia
