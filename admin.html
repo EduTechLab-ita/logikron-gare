@@ -942,6 +942,12 @@
               </select>
             </div>
           </div>
+          <div class="form-group" style="margin-bottom:0.5rem;">
+            <label class="form-label">Singola docente <span style="color:#94a3b8;font-weight:400;">(sovrascrive i filtri sopra)</span></label>
+            <select id="filtroDocente" class="form-control">
+              <option value="">— Tutte le docenti (usa i filtri sopra) —</option>
+            </select>
+          </div>
           <div class="form-group">
             <label class="form-label">Oggetto email *</label>
             <input type="text" id="mailOggetto" class="form-control"
@@ -983,12 +989,22 @@
           <button class="btn-info-toggle" onclick="toggleInfo('info-tools')" title="Informazioni">i</button>
         </h3>
         <div class="info-panel" id="info-tools">
-          <strong>Solo per prove e test — usare con cautela.</strong>
+          <strong>Solo per prove e test — usare con cautela. Tutte le azioni sono irreversibili.</strong>
           <ul>
-            <li><strong>Reset Iscrizioni:</strong> svuota il foglio Iscrizioni nello Sheet. Utile dopo aver fatto prove per ricominciare da capo. Non cancella le intenzioni.</li>
-            <li><strong>Reset Intenzioni:</strong> svuota il foglio Intenzioni. Rimuove anche la base per i dropdown del form Iscrizioni. Usare solo se vuoi ripartire completamente da zero.</li>
-            <li>Dopo il reset, ricorda di rimpostare la fase corretta con i pulsanti nella sezione Fase 1.</li>
+            <li><strong>Reset Iscrizioni:</strong> svuota il foglio Iscrizioni nello Sheet. Utile dopo aver fatto prove di iscrizione. Non tocca le intenzioni né le gare.</li>
+            <li><strong>Reset Intenzioni:</strong> svuota il foglio Intenzioni. I dropdown del form Iscrizioni si basano su questi dati: resettandoli, anche il form Iscrizioni tornerà vuoto. Usare solo se vuoi ripartire da zero assoluto.</li>
+            <li><strong>Elimina Gara:</strong> elimina dai fogli Sheet tutti i dati della gara selezionata (squadre, domande, risposte). Richiede di selezionare prima la gara nel pannello <em>Controllo Gara Live</em>. ⚠️ Gli attestati PDF su Drive <strong>non</strong> vengono eliminati — usa il bottone apposito sotto.</li>
+            <li><strong>Elimina Attestati Drive:</strong> sposta nel cestino Drive tutti i PDF degli attestati della gara selezionata e pulisce il registro interno. Richiede di selezionare la gara nel pannello <em>Controllo Gara Live</em>.</li>
           </ul>
+          <strong>Sequenza completa per reset a zero prima della raccolta vera:</strong>
+          <ol style="margin:0.4rem 0 0 1.2rem; padding:0;">
+            <li>Seleziona la gara di prova in <em>Controllo Gara Live</em></li>
+            <li>Clicca <strong>Elimina Attestati Drive</strong></li>
+            <li>Clicca <strong>Elimina Gara</strong></li>
+            <li>Clicca <strong>Reset Iscrizioni</strong></li>
+            <li>Clicca <strong>Reset Intenzioni</strong></li>
+            <li>Rimetti la fase corretta dalla sezione <em>Fase 1</em> (Fase 0)</li>
+          </ol>
         </div>
         <div class="danger-zone">
           <h4>⚠️ Zone di pericolo — azioni irreversibili</h4>
@@ -1004,6 +1020,10 @@
             <button class="btn btn-outline" style="border-color:#fca5a5;color:#dc2626;"
                     onclick="eliminaGaraTest()">
               🗑 Elimina Gara (selezionata sopra)
+            </button>
+            <button class="btn btn-outline" style="border-color:#fca5a5;color:#dc2626;"
+                    onclick="eliminaAttestatiGaraTest()">
+              🗑 Elimina Attestati Drive (gara selezionata)
             </button>
           </div>
         </div>
@@ -1093,6 +1113,7 @@
     function loadDashboard() {
       document.getElementById('annoNuovoAnno').textContent = LOGIKRON_CONFIG.annoScolastico;
       caricaFiltroIstituti();
+      caricaFiltroDocenti();
       aggiornaFiltroClassi();
       // Prima chiamata sveglia AS; le successive partono con ritardo scalare per evitare cold-start multiplo
       caricaFase();
@@ -1442,6 +1463,25 @@
       });
     }
 
+    function caricaFiltroDocenti() {
+      lkApi(API, { action: 'getIntenzioni' }).then(lista => {
+        if (!Array.isArray(lista)) return;
+        const sel = document.getElementById('filtroDocente');
+        const valore = sel.value;
+        sel.innerHTML = '<option value="">— Tutte le docenti (usa i filtri sopra) —</option>';
+        const visti = new Set();
+        lista.forEach(i => {
+          if (!i.email || visti.has(i.email)) return;
+          visti.add(i.email);
+          const opt = document.createElement('option');
+          opt.value = i.email;
+          opt.textContent = (i.nome || i.email) + ' — ' + (i.istituto || '') + (i.plesso ? ' / ' + i.plesso : '');
+          sel.appendChild(opt);
+        });
+        if (valore) sel.value = valore;
+      }).catch(() => {});
+    }
+
     function caricaFiltroIstituti() {
       lkApi(API, { action: 'getIstituti' }).then(r => {
         const lista = (r && r.istituti) ? r.istituti : [];
@@ -1471,8 +1511,9 @@
 
     function filtraDocenti(lista, filtri) {
       return lista.filter(i => {
-        if (filtri.ordine && i.ordine !== filtri.ordine) return false;
-        if (filtri.classe && i.classe !== filtri.classe) return false;
+        if (filtri.email    && i.email    !== filtri.email)    return false;
+        if (filtri.ordine   && i.ordine   !== filtri.ordine)   return false;
+        if (filtri.classe   && i.classe   !== filtri.classe)   return false;
         if (filtri.istituto && i.istituto !== filtri.istituto) return false;
         return true;
       });
@@ -1480,9 +1521,10 @@
 
     function vediDestinatari() {
       const filtri = {
-        ordine: document.getElementById('filtroOrdine').value,
-        classe: document.getElementById('filtroClasse').value,
-        istituto: document.getElementById('filtroIstituto').value
+        ordine:   document.getElementById('filtroOrdine').value,
+        classe:   document.getElementById('filtroClasse').value,
+        istituto: document.getElementById('filtroIstituto').value,
+        email:    document.getElementById('filtroDocente').value
       };
       const div = document.getElementById('destinatariPreview');
       div.innerHTML = '<p style="color:var(--lk-text-muted);font-size:0.85rem;">Calcolo destinatari...</p>';
@@ -1522,16 +1564,16 @@
         return;
       }
 
+      const filtroEmail = document.getElementById('filtroDocente').value;
       const filtri = {
-        ordine: document.getElementById('filtroOrdine').value,
-        classe: document.getElementById('filtroClasse').value,
-        istituto: document.getElementById('filtroIstituto').value
+        ordine:   filtroEmail ? '' : document.getElementById('filtroOrdine').value,
+        classe:   filtroEmail ? '' : document.getElementById('filtroClasse').value,
+        istituto: filtroEmail ? '' : document.getElementById('filtroIstituto').value,
+        email:    filtroEmail
       };
-      const desc = [
-        filtri.ordine ? filtri.ordine : '',
-        filtri.classe ? 'classe ' + filtri.classe : '',
-        filtri.istituto ? filtri.istituto : ''
-      ].filter(Boolean).join(', ') || 'TUTTI i docenti';
+      const desc = filtroEmail
+        ? document.getElementById('filtroDocente').selectedOptions[0].text
+        : ([filtri.ordine, filtri.classe ? 'classe ' + filtri.classe : '', filtri.istituto].filter(Boolean).join(', ') || 'TUTTI i docenti');
 
       const allegatiInfo = allegatiIds.length > 0
         ? '\nAllegati: ' + allegatiIds.length + ' file da Drive'
@@ -1545,8 +1587,9 @@
       lkApi(API, {
         action: 'inviaMailFiltrata',
         pwd: adminPwd,
-        filtroOrdine: filtri.ordine,
-        filtroClasse: filtri.classe,
+        filtroEmail:    filtri.email,
+        filtroOrdine:   filtri.ordine,
+        filtroClasse:   filtri.classe,
         filtroIstituto: filtri.istituto,
         oggetto: oggetto,
         corpo: corpo,
@@ -3154,6 +3197,23 @@
     }
 
     // ---- Elimina gara (test) ----
+
+    function eliminaAttestatiGaraTest() {
+      const sel = document.getElementById('selGaraLive');
+      if (!sel.value) {
+        alert('Prima seleziona una gara dalla sezione "Controllo Gara Live".');
+        return;
+      }
+      const nome = sel.options[sel.selectedIndex].text;
+      if (!confirm('⚠️ Eliminare tutti gli attestati PDF su Drive per la gara:\n"' + nome + '"?\n\nI file verranno spostati nel cestino Drive. Azione non automaticamente reversibile.')) return;
+      if (!confirm('Ultima conferma — eliminare gli attestati di "' + nome + '"?')) return;
+      lkApi(API, { action: 'eliminaAttestatiGara', garaId: sel.value, pwd: adminPwd }, 30000)
+        .then(r => {
+          if (r.error) { alert('Errore: ' + r.error); return; }
+          alert('✅ ' + r.messaggio);
+        })
+        .catch(err => alert('Errore: ' + err.message));
+    }
 
     function eliminaGaraTest() {
       const sel = document.getElementById('selGaraLive');
