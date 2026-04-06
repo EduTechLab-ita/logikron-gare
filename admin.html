@@ -525,6 +525,7 @@
     .timer-live { font-size:1.5rem; font-weight:800; color:#fbbf24; font-variant-numeric:tabular-nums; letter-spacing:0.05em; text-shadow: 0 0 15px rgba(251,191,36,0.6); }
     .log-container { max-height:420px; overflow-y:auto; border-radius:16px; border:1px solid #334155; background:#0f172a; }
   </style>
+  <script src="https://accounts.google.com/gsi/client" async defer></script>
 </head>
 <body>
   <div class="container">
@@ -917,6 +918,8 @@
             <li><strong>Filtra per istituto:</strong> scrivi solo ai docenti di un IC specifico — lascia "Tutti" per scrivere a tutti.</li>
             <li><strong>Filtra per plesso:</strong> si attiva solo dopo aver selezionato un istituto. Mostra i plessi realmente presenti nelle intenzioni di quell'IC. Utile per scrivere solo ai docenti di una sede specifica.</li>
             <li><strong>Singola docente:</strong> sovrascrive tutti i filtri sopra — la mail va solo a quella persona. Il menu si carica automaticamente con le docenti che hanno compilato le intenzioni.</li>
+            <li><strong>📎 Allega file:</strong> seleziona un file dal computer (PDF, immagini, Office). Al momento dell'invio il file viene caricato temporaneamente su Drive (<em>edutechlab.ita</em>), allegato alla mail, poi eliminato automaticamente. Nessun link pubblico, nessun file che rimane su Drive. Prima volta: richiede autorizzazione Google (popup).</li>
+            <li><strong>🔗 Link Drive:</strong> per file già presenti su Drive. Il file deve essere condiviso con <em>edutechlab.ita@gmail.com</em> o reso pubblico.</li>
           </ul>
           Puoi combinare ordine + classe + istituto + plesso. Usa <em>Vedi destinatari</em> per verificare prima di inviare.
           <br><strong>Nota:</strong> la mail arriverà sempre con il logo LogiKron e firmata da EduTechLab.
@@ -973,12 +976,18 @@
           <div class="form-group">
             <label class="form-label">Allegati (opzionale)</label>
             <div id="allegatiList" style="display:flex; flex-direction:column; gap:0.4rem; margin-bottom:0.5rem;"></div>
-            <button type="button" class="btn btn-outline" style="font-size:0.82rem; padding:4px 12px;"
-                    onclick="aggiungiAllegato()">+ Aggiungi link Google Drive</button>
+            <div style="display:flex; gap:0.5rem; flex-wrap:wrap;">
+              <button type="button" class="btn btn-outline" style="font-size:0.82rem; padding:4px 12px;"
+                      onclick="document.getElementById('fileInputMail').click()">📎 Allega file</button>
+              <button type="button" class="btn btn-outline" style="font-size:0.82rem; padding:4px 12px;"
+                      onclick="aggiungiAllegato()">🔗 Aggiungi link Drive</button>
+            </div>
+            <input type="file" id="fileInputMail" multiple
+                   accept=".pdf,.jpg,.jpeg,.png,.doc,.docx,.xlsx,.xls"
+                   style="display:none" onchange="aggiungiFileMail(this)">
             <p class="form-hint" style="margin-top:0.4rem;">
-              Carica i file su Google Drive, condividili con
-              <strong>edutechlab.ita@gmail.com</strong> (o rendili pubblici),
-              poi incolla qui il link. Formati supportati: PDF, DOCX, XLSX, immagini, ecc.
+              <strong>📎 Allega file</strong>: seleziona dal computer (PDF, immagini, Office). Il file viene caricato temporaneamente su Drive al momento dell'invio e cancellato automaticamente. Nessun link pubblico.<br>
+              <strong>🔗 Link Drive</strong>: per file già su Drive — deve essere condiviso con <strong>edutechlab.ita@gmail.com</strong>.
             </p>
           </div>
           <div style="display:flex; gap:0.75rem; flex-wrap:wrap; margin-top:0.5rem; align-items:center;">
@@ -1077,8 +1086,11 @@
   <script>
     const ADMIN_PASSWORD = 'logikron2025';
     const API = LOGIKRON_CONFIG.webAppUrls.admin;
+    const GOOGLE_CLIENT_ID = '212298845224-oqtoa9no5j82rfhm1sjiffjbf14afs7c.apps.googleusercontent.com';
     let adminPwd = '';
     let _intenzioniMail = [];
+    let _mailTokenClient = null, _mailToken = null, _mailTokenExpiry = 0;
+    let _allegatiFile = [], _allegatiFileCount = 0;
 
     // ==================== LOGIN ====================
 
@@ -1455,6 +1467,68 @@
       return ids;
     }
 
+    // ==================== ALLEGATI FILE (Drive API) ====================
+
+    function initMailDriveAuth() {
+      if (typeof google === 'undefined' || !google.accounts) return;
+      _mailTokenClient = google.accounts.oauth2.initTokenClient({
+        client_id: GOOGLE_CLIENT_ID,
+        scope: 'https://www.googleapis.com/auth/drive.file',
+        callback: ''
+      });
+    }
+
+    function getMailDriveToken() {
+      return new Promise(function(resolve, reject) {
+        if (_mailToken && Date.now() < _mailTokenExpiry - 60000) { resolve(_mailToken); return; }
+        if (!_mailTokenClient) {
+          initMailDriveAuth();
+          if (!_mailTokenClient) { reject(new Error('Google Identity Services non ancora caricato.')); return; }
+        }
+        _mailTokenClient.callback = function(response) {
+          if (response.error) { reject(new Error('Autorizzazione negata: ' + response.error)); return; }
+          _mailToken = response.access_token;
+          _mailTokenExpiry = Date.now() + (response.expires_in || 3600) * 1000;
+          resolve(_mailToken);
+        };
+        _mailTokenClient.requestAccessToken({ prompt: '' });
+      });
+    }
+
+    async function _uploadAllegatoToDrive(fileObj, token) {
+      const metadata = { name: fileObj.name, mimeType: fileObj.mimeType };
+      const body = new FormData();
+      body.append('metadata', new Blob([JSON.stringify(metadata)], { type: 'application/json' }));
+      body.append('file', fileObj.file);
+      const resp = await fetch(
+        'https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart',
+        { method: 'POST', headers: { Authorization: 'Bearer ' + token }, body: body }
+      );
+      if (!resp.ok) throw new Error('Upload fallito (' + fileObj.name + '): ' + resp.status);
+      const data = await resp.json();
+      return data.id;
+    }
+
+    function aggiungiFileMail(input) {
+      Array.from(input.files).forEach(function(file) {
+        const id = 'fchip-' + (++_allegatiFileCount);
+        _allegatiFile.push({ id: id, file: file, name: file.name, mimeType: file.type || 'application/octet-stream' });
+        const chip = document.createElement('div');
+        chip.id = id;
+        chip.style.cssText = 'display:flex;gap:0.4rem;align-items:center;background:#eff6ff;border:1px solid #93c5fd;border-radius:6px;padding:4px 10px;font-size:0.82rem;';
+        chip.innerHTML = '📎 ' + _escHtml(file.name) + ' <span style="color:#64748b;font-size:0.75rem;">(' + (file.size > 1048576 ? (file.size/1048576).toFixed(1)+'MB' : Math.round(file.size/1024)+'KB') + ')</span>' +
+          '<button type="button" onclick="rimuoviFileMail(\'' + id + '\')" style="background:none;border:none;color:#dc2626;cursor:pointer;font-size:0.9rem;padding:0 2px;margin-left:4px;">✕</button>';
+        document.getElementById('allegatiList').appendChild(chip);
+      });
+      input.value = '';
+    }
+
+    function rimuoviFileMail(id) {
+      _allegatiFile = _allegatiFile.filter(function(f) { return f.id !== id; });
+      const el = document.getElementById(id);
+      if (el) el.remove();
+    }
+
     // ==================== COMUNICAZIONI ====================
 
     function aggiornaFiltroClassi() {
@@ -1582,7 +1656,7 @@
       });
     }
 
-    function inviaMailFiltrata() {
+    async function inviaMailFiltrata() {
       const oggetto = document.getElementById('mailOggetto').value.trim();
       const corpo = document.getElementById('mailCorpo').value.trim();
       if (!oggetto || !corpo) { alert('Compila oggetto e testo email.'); return; }
@@ -1611,14 +1685,34 @@
         ? document.getElementById('filtroDocente').selectedOptions[0].text
         : ([filtri.ordine, filtri.classe ? 'classe ' + filtri.classe : '', filtri.istituto, filtri.plesso ? 'plesso ' + filtri.plesso : ''].filter(Boolean).join(', ') || 'TUTTI i docenti');
 
-      const allegatiInfo = allegatiIds.length > 0
-        ? '\nAllegati: ' + allegatiIds.length + ' file da Drive'
+      const totAllegati = allegatiIds.length + _allegatiFile.length;
+      const allegatiInfo = totAllegati > 0
+        ? '\nAllegati: ' + totAllegati + ' file'
         : '';
       if (!confirm('Invierà la mail a: ' + desc + '\nOggetto: ' + oggetto + allegatiInfo + '\n\nConfermi?')) return;
 
       const btn = event.target;
       btn.disabled = true;
-      btn.textContent = 'Invio...';
+
+      // Upload file locali su Drive (temporanei) prima dell'invio
+      let tempAllegatiIds = [];
+      if (_allegatiFile.length > 0) {
+        btn.textContent = '📤 Caricamento allegati...';
+        try {
+          const token = await getMailDriveToken();
+          for (const f of _allegatiFile) {
+            const fileId = await _uploadAllegatoToDrive(f, token);
+            tempAllegatiIds.push(fileId);
+          }
+        } catch(err) {
+          btn.disabled = false;
+          btn.textContent = '📤 Invia comunicazione';
+          alert('Errore caricamento allegati: ' + err.message);
+          return;
+        }
+      }
+
+      btn.textContent = '📤 Invio...';
 
       lkApi(API, {
         action: 'inviaMailFiltrata',
@@ -1630,7 +1724,8 @@
         filtroPlesso:   filtri.plesso,
         oggetto: oggetto,
         corpo: corpo,
-        allegati: allegatiIds.length > 0 ? JSON.stringify(allegatiIds) : ''
+        allegati:      allegatiIds.length > 0 ? JSON.stringify(allegatiIds) : '',
+        tempAllegati:  tempAllegatiIds.length > 0 ? JSON.stringify(tempAllegatiIds) : ''
       }, 90000)
         .then(r => {
           btn.disabled = false;
