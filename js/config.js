@@ -80,7 +80,7 @@ const LOGIKRON_CONFIG = {
     puntiIniziali: 20,
     incrementoPuntiOgniMinuti: 2,
     penalitaRispostaSbagliata: -5,
-    bonusProblemaPenalita: 0,
+    bonusProblemaPenalita: 2,
     tempoJollyMinuti: 10,
     tempoDomandeMinuti: 20,
 

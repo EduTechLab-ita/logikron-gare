@@ -364,6 +364,7 @@
           <tr><td>Punteggio iniziale per quesito</td><td id="paramPuntiIniziali">20 punti</td></tr>
           <tr><td>Incremento valore quesiti</td><td id="paramIncremento">+2 punti ogni minuto</td></tr>
           <tr><td>Penalità risposta errata</td><td id="paramPenalita">-5 punti (per tentativo)</td></tr>
+          <tr><td>Bonus quesito per ogni errore ricevuto</td><td id="paramBonusErrore">+2 punti (per tutte le squadre)</td></tr>
           <tr><td>Tempo scelta Jolly</td><td id="paramJolly">10 minuti dall'inizio</td></tr>
           <tr><td>Tabellone nascosto</td><td id="paramNascondimento">Ultimi 5 minuti</td></tr>
         </tbody>
@@ -432,6 +433,17 @@
           penalità è <strong>-10 punti</strong> (doppia).
           Se una squadra consegna più risposte corrette allo stesso quesito, il punteggio viene
           assegnato solo la prima volta.
+        </p>
+      </div>
+
+      <div class="score-box">
+        <h4>Effetto degli errori sul valore del quesito</h4>
+        <p>
+          Ogni volta che una squadra risponde in modo errato a un quesito, il valore di quel quesito
+          aumenta di <strong>+2 punti</strong> per <em>tutte</em> le squadre. Questo meccanismo premia chi riesce
+          a risolvere un quesito su cui altri hanno già fallito: più errori ha ricevuto un quesito,
+          più vale per chi lo risolve. La penalità per chi sbaglia rimane comunque attiva (-5 punti),
+          indipendentemente dall'incremento del valore.
         </p>
       </div>
 
@@ -614,6 +626,7 @@
     document.getElementById('paramPuntiIniziali').textContent = g.puntiIniziali + ' punti';
     document.getElementById('paramIncremento').textContent = '+' + g.incrementoPuntiOgniMinuti + ' punti ogni minuto';
     document.getElementById('paramPenalita').textContent = g.penalitaRispostaSbagliata + ' punti (per tentativo)';
+    document.getElementById('paramBonusErrore').textContent = '+' + g.bonusProblemaPenalita + ' punti (per tutte le squadre)';
     document.getElementById('paramJolly').textContent = g.tempoJollyMinuti + ' minuti dall\'inizio';
     document.getElementById('paramNascondimento').textContent = 'Ultimi ' + g.minutiNascondimento + ' minuti';
   </script>
