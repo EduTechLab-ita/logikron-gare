@@ -284,6 +284,12 @@
     .stat-print-table th { padding:5px 8px; text-align:center; font-weight:600; }
     .stat-print-table td { padding:5px 8px; text-align:center; border:1px solid #e2e8f0; }
 
+    @keyframes lk-working-bar {
+      0%   { transform: translateX(-100%); }
+      50%  { transform: translateX(200%); }
+      100% { transform: translateX(200%); }
+    }
+
     /* ===== MODAL GESTIONE ISCRITTI ===== */
     .modal-overlay { position:fixed; inset:0; background:rgba(0,0,0,0.55); z-index:2000; overflow-y:auto; display:flex; align-items:flex-start; justify-content:center; padding:1.5rem 1rem; }
     .modal-box { background:white; color:#1e293b; border-radius:14px; width:100%; max-width:960px; box-shadow:0 8px 40px rgba(0,0,0,0.25); display:flex; flex-direction:column; max-height:90vh; }
@@ -1107,6 +1113,38 @@
       }
     }
 
+    // ==================== MODAL "IN LAVORAZIONE" ====================
+    let _workingTimer = null;
+
+    function showWorking(testo) {
+      hideWorking();
+      const overlay = document.createElement('div');
+      overlay.id = '_workingOverlay';
+      overlay.style.cssText = 'position:fixed;inset:0;background:rgba(15,23,42,0.88);z-index:99990;display:flex;align-items:center;justify-content:center;';
+      overlay.innerHTML = `
+        <div style="background:#1e293b;border:1px solid #334155;border-radius:16px;padding:2rem 2.5rem;max-width:380px;width:90%;text-align:center;color:#e2e8f0;">
+          <div style="font-size:2rem;margin-bottom:0.75rem;">⚙️</div>
+          <div style="font-size:1rem;font-weight:600;margin-bottom:0.4rem;">${testo}</div>
+          <div id="_workingTimer" style="font-size:0.82rem;color:#94a3b8;margin-bottom:1.25rem;">in corso da 0 sec...</div>
+          <div style="background:#0f172a;border-radius:999px;height:10px;overflow:hidden;">
+            <div id="_workingBar" style="height:100%;width:30%;background:linear-gradient(90deg,#4f46e5,#7c3aed,#06b6d4);border-radius:999px;animation:lk-working-bar 1.4s ease-in-out infinite;"></div>
+          </div>
+        </div>`;
+      document.body.appendChild(overlay);
+      let sec = 0;
+      _workingTimer = setInterval(function() {
+        sec++;
+        const el = document.getElementById('_workingTimer');
+        if (el) el.textContent = 'in corso da ' + sec + ' sec...';
+      }, 1000);
+    }
+
+    function hideWorking() {
+      if (_workingTimer) { clearInterval(_workingTimer); _workingTimer = null; }
+      const el = document.getElementById('_workingOverlay');
+      if (el) el.remove();
+    }
+
     function showToast(msg, tipo) {
       const colori = {
         ok:    { bg: '#10b981', text: '#fff' },
@@ -1763,13 +1801,15 @@
     function resetDati(foglio) {
       if (!confirm('⚠️ Stai per cancellare TUTTI i dati del foglio "' + foglio + '".\nQuesta operazione NON è reversibile.\n\nConfermi?')) return;
       if (!confirm('Ultima conferma: cancellare "' + foglio + '"?')) return;
+      showWorking('Svuotamento foglio "' + foglio + '" in corso...');
       lkApi(API, { action: 'resetFoglio', foglio: foglio, pwd: adminPwd })
         .then(r => {
+          hideWorking();
           if (r.error) { showToast('❌ Errore: ' + r.error, 'errore'); return; }
           showToast('✅ Foglio "' + foglio + '" svuotato<br><small style="font-weight:400;">' + r.cancellate + ' righe rimosse</small>', 'ok');
           caricaStatIntenzioni();
         })
-        .catch(err => showToast('❌ Errore: ' + err.message, 'errore'));
+        .catch(err => { hideWorking(); showToast('❌ Errore: ' + err.message, 'errore'); });
     }
 
     // ==================== UTILITÀ ====================
@@ -2245,40 +2285,19 @@
       }
 
       // Modal di conferma
-      const overlay = document.createElement('div');
-      overlay.style.cssText = 'position:fixed;inset:0;background:rgba(15,23,42,0.92);z-index:9990;display:flex;align-items:center;justify-content:center;';
-      overlay.innerHTML = `
-        <div style="background:#1e293b;border:1px solid #334155;border-radius:16px;padding:2rem;max-width:420px;width:90%;color:#e2e8f0;">
-          <div style="font-size:1.3rem;font-weight:700;margin-bottom:1rem;">📜 Genera Attestati</div>
-          <p style="color:#94a3b8;margin-bottom:1rem;">Verrà creato un <strong style="color:#e2e8f0;">Google Doc</strong> con un attestato per ogni squadra della gara:</p>
-          <div style="background:#0f172a;border-radius:8px;padding:0.75rem 1rem;margin-bottom:1.5rem;font-weight:600;color:#60a5fa;">${_escHtml(garaNome)}</div>
-          <p style="color:#64748b;font-size:0.85rem;margin-bottom:1.5rem;">Il documento verrà aperto automaticamente. Potrai stamparlo o convertirlo in PDF da Google Docs.</p>
-          <div style="display:flex;gap:0.75rem;justify-content:flex-end;">
-            <button id="_attModalCancel" style="background:transparent;border:1px solid #475569;color:#94a3b8;padding:0.6rem 1.2rem;border-radius:8px;cursor:pointer;font-size:0.9rem;">Annulla</button>
-            <button id="_attModalConfirm" style="background:linear-gradient(135deg,#7c3aed,#6d28d9);border:none;color:#fff;padding:0.6rem 1.4rem;border-radius:8px;cursor:pointer;font-size:0.9rem;font-weight:600;">📜 Genera</button>
-          </div>
-        </div>`;
-      document.body.appendChild(overlay);
-      document.getElementById('_attModalCancel').onclick = function() { overlay.remove(); };
-      document.getElementById('_attModalConfirm').onclick = function() {
-        const btn = document.getElementById('_attModalConfirm');
-        btn.disabled = true; btn.textContent = '⏳ Generazione...';
-        lkApi(API, { action: 'generaAttestati', pwd: adminPwd, garaId: garaId }, 120000)
-          .then(function(r) {
-            overlay.remove();
-            if (r.error) { alert('Errore: ' + r.error); return; }
-            const toast = document.createElement('div');
-            toast.style.cssText = 'position:fixed;bottom:1.5rem;right:1.5rem;background:#7c3aed;color:#fff;padding:1rem 1.5rem;border-radius:10px;z-index:9999;font-weight:600;box-shadow:0 4px 20px rgba(0,0,0,0.4);max-width:320px;';
-            toast.innerHTML = '✅ ' + r.count + ' attestati generati!<br><small style="font-weight:400;">Cartella: ' + _escHtml(r.folder) + '</small><br><a href="' + r.docUrl + '" target="_blank" style="color:#e9d5ff;font-size:0.85rem;">Apri documento ↗</a>';
-            document.body.appendChild(toast);
-            setTimeout(function() { toast.remove(); }, 8000);
-            window.open(r.docUrl, '_blank');
-          })
-          .catch(function(err) {
-            overlay.remove();
-            alert('Errore di rete: ' + (err.message || err));
-          });
-      };
+      if (!confirm('📜 Generare gli attestati per la gara:\n"' + garaNome + '"?\n\nVerrà creato un Google Doc con un attestato per ogni squadra.')) return;
+      showWorking('Generazione attestati in corso...');
+      lkApi(API, { action: 'generaAttestati', pwd: adminPwd, garaId: garaId }, 120000)
+        .then(function(r) {
+          hideWorking();
+          if (r.error) { showToast('❌ Errore: ' + r.error, 'errore'); return; }
+          showToast('✅ ' + r.count + ' attestati generati!<br><small style="font-weight:400;">Cartella: ' + _escHtml(r.folder) + '</small><br><a href="' + r.docUrl + '" target="_blank" style="color:#d1fae5;font-size:0.85rem;">Apri documento ↗</a>', 'ok');
+          window.open(r.docUrl, '_blank');
+        })
+        .catch(function(err) {
+          hideWorking();
+          showToast('❌ Errore di rete: ' + (err.message || err), 'errore');
+        });
     }
 
     // ==================== STATISTICHE ====================
@@ -3353,12 +3372,14 @@
       const nome = sel.options[sel.selectedIndex].text;
       if (!confirm('⚠️ Eliminare tutti gli attestati PDF su Drive per la gara:\n"' + nome + '"?\n\nI file verranno spostati nel cestino Drive. Azione non automaticamente reversibile.')) return;
       if (!confirm('Ultima conferma — eliminare gli attestati di "' + nome + '"?')) return;
+      showWorking('Eliminazione attestati da Drive in corso...');
       lkApi(API, { action: 'eliminaAttestatiGara', garaId: sel.value, pwd: adminPwd }, 30000)
         .then(r => {
+          hideWorking();
           if (r.error) { showToast('❌ Errore: ' + r.error, 'errore'); return; }
           showToast('✅ ' + r.messaggio, 'ok');
         })
-        .catch(err => showToast('❌ Errore: ' + err.message, 'errore'));
+        .catch(err => { hideWorking(); showToast('❌ Errore: ' + err.message, 'errore'); });
     }
 
     function eliminaGaraTest() {
