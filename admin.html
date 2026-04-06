@@ -3454,9 +3454,14 @@
     function apriModalParamGaraLive() {
       if (!garaLiveCorrente) { showToast('Nessuna gara selezionata.', 'info'); return; }
       const garaId = garaLiveCorrente.id;
-      const garaNome = garaLiveCorrente.nome || garaId;
-      // I dati sono già in garaLiveCorrente — nessuna chiamata al backend necessaria
-      _buildModalParamGara(garaId, garaNome, garaLiveCorrente);
+      showWorking('Caricamento parametri gara...');
+      lkApi(API, { action: 'getGaraById', garaId: garaId })
+        .then(function(g) {
+          hideWorking();
+          if (!g || g.error) { showToast('❌ Impossibile caricare i parametri.', 'errore'); return; }
+          _buildModalParamGara(garaId, g.nome || garaId, g);
+        })
+        .catch(function() { hideWorking(); showToast('❌ Errore di rete.', 'errore'); });
     }
 
     function salvaParamGara(garaId) {
