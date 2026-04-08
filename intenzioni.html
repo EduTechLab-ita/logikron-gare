@@ -59,9 +59,11 @@
 
         <div class="form-group">
           <label class="form-label">Istituto Comprensivo *</label>
-          <select id="istituto" class="form-control" required onchange="aggiornaPlessiSuggeriti()">
-            <option value="">— Seleziona il tuo Istituto Comprensivo —</option>
-          </select>
+          <input type="text" id="istituto" class="form-control" required
+                 placeholder="Cerca o scrivi il nome del tuo IC..."
+                 list="istitutiSuggeriti" autocomplete="off"
+                 oninput="aggiornaPlessiSuggeriti()">
+          <datalist id="istitutiSuggeriti"></datalist>
           <p class="form-hint" id="istitutoHint">Caricamento lista istituti...</p>
         </div>
 
@@ -160,24 +162,23 @@
     function caricaIstitutiForm() {
       lkApi(LOGIKRON_CONFIG.webAppUrls.intenzioni, { action: 'getIstituti' })
         .then(r => {
-          const sel = document.getElementById('istituto');
           const hint = document.getElementById('istitutoHint');
+          const dl   = document.getElementById('istitutiSuggeriti');
           if (!r || r.error || !r.istituti) {
-            hint.textContent = 'Impossibile caricare la lista. Scrivi il nome del tuo IC nel campo.';
-            sel.outerHTML = '<input type="text" id="istituto" class="form-control" required placeholder="Nome Istituto Comprensivo (es. IC Gottolengo)" onchange="aggiornaPlessiSuggeriti()">';
+            hint.textContent = 'Lista non disponibile. Scrivi il nome del tuo IC.';
             return;
           }
           _icList = r.istituti;
+          dl.innerHTML = '';
           _icList.forEach(ic => {
             const opt = document.createElement('option');
             opt.value = ic.nome;
-            opt.textContent = ic.nome;
-            sel.appendChild(opt);
+            dl.appendChild(opt);
           });
-          hint.textContent = 'Seleziona il tuo Istituto Comprensivo dall\'elenco.';
+          hint.textContent = 'Seleziona dall\'elenco o scrivi il nome del tuo IC se non è presente.';
         })
         .catch(() => {
-          document.getElementById('istitutoHint').textContent = 'Impossibile caricare la lista. Scrivi il nome del tuo IC.';
+          document.getElementById('istitutoHint').textContent = 'Lista non disponibile. Scrivi il nome del tuo IC.';
         });
       // Carica anche tutti i plessi per l'autocomplete
       lkApi(LOGIKRON_CONFIG.webAppUrls.intenzioni, { action: 'getPlessi', ic: '' })
