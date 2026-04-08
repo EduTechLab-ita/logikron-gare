@@ -878,6 +878,31 @@
     // ==================== RENDER ====================
 
     function aggiornaTestataDomande(domande) {
+      const n = domande.length;
+      if (n < 1) return;
+
+      // Ricostruisce thead dinamicamente in base al numero di domande
+      const thead = document.querySelector('#tabelloneTable thead');
+      let qTh = '';
+      let valTd = '';
+      for (let i = 1; i <= n; i++) {
+        qTh  += '<th>Q' + i + '</th>';
+        valTd += '<td id="val-' + i + '">20</td>';
+      }
+      thead.innerHTML =
+        '<tr>' +
+          '<th style="width:40px;">#</th>' +
+          '<th style="min-width:130px;">Squadra</th>' +
+          qTh +
+          '<th style="min-width:65px;">TOT</th>' +
+        '</tr>' +
+        '<tr class="valore-row">' +
+          '<td></td><td>Valore</td>' +
+          valTd +
+          '<td></td>' +
+        '</tr>';
+
+      // Aggiorna i valori correnti
       domande.forEach(d => {
         const el = document.getElementById('val-' + d.num);
         if (el) el.textContent = d.valoreAttuale || d.puntiBase || PUNTI_BASE;
