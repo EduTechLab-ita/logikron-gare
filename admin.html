@@ -823,6 +823,15 @@
               <p class="form-hint" style="margin:3px 0 0 0; font-size:0.78rem; color:var(--lk-text-muted);">Visibile nell'elenco gare. Il timer parte solo con GO.</p>
             </div>
 
+            <div class="form-group" style="margin-bottom:0.75rem;">
+              <label class="form-label">Numero domande</label>
+              <input type="number" id="ngNumDomande" class="form-control" min="1" max="30"
+                style="width:100px;"
+                onchange="initTabellaQuesiti()"
+                oninput="initTabellaQuesiti()">
+              <p class="form-hint" style="margin:3px 0 0 0; font-size:0.78rem; color:var(--lk-text-muted);">Modifica per aggiungere o togliere righe.</p>
+            </div>
+
             <div style="margin-bottom:0.5rem; font-size:0.87rem; font-weight:600; color:var(--lk-text);">
               Quesiti — risposta in formato 0–9999 (es. "42" o "0042")
             </div>
@@ -3283,6 +3292,8 @@
       if (form.style.display === 'none') {
         form.style.display = '';
         btn.textContent = '✕ Annulla';
+        const defaultN = (LOGIKRON_CONFIG.gare && LOGIKRON_CONFIG.gare.numeroDomande) || 10;
+        document.getElementById('ngNumDomande').value = defaultN;
         initTabellaQuesiti();
       } else {
         form.style.display = 'none';
@@ -3292,16 +3303,28 @@
 
     function initTabellaQuesiti() {
       const tbody = document.getElementById('tabellaQuesiti');
-      const n = (LOGIKRON_CONFIG.gare && LOGIKRON_CONFIG.gare.numeroDomande) || 10;
+      const inputN = parseInt(document.getElementById('ngNumDomande').value);
+      const n = (inputN > 0 && inputN <= 30) ? inputN : ((LOGIKRON_CONFIG.gare && LOGIKRON_CONFIG.gare.numeroDomande) || 10);
+      // Mantieni i valori già inseriti
+      const oldTesti    = {};
+      const oldRisposte = {};
+      tbody.querySelectorAll('tr').forEach(function(tr, idx) {
+        const t = tr.querySelector('[id^="qTesto"]');
+        const r = tr.querySelector('[id^="qRisposta"]');
+        if (t) oldTesti[idx + 1]    = t.value;
+        if (r) oldRisposte[idx + 1] = r.value;
+      });
       let html = '';
       for (let i = 1; i <= n; i++) {
         html += '<tr>' +
           '<td style="text-align:center;font-weight:700;color:var(--lk-primary);padding:4px 8px;">' + i + '</td>' +
           '<td style="padding:3px 6px;"><input type="text" class="form-control" id="qTesto' + i + '"' +
-          ' style="margin:2px 0;font-size:0.84rem;" placeholder="Testo opzionale"></td>' +
+          ' style="margin:2px 0;font-size:0.84rem;" placeholder="Testo opzionale"' +
+          ' value="' + ((oldTesti[i] || '').replace(/"/g, '&quot;')) + '"></td>' +
           '<td style="text-align:center;padding:3px 6px;"><input type="text" class="form-control" id="qRisposta' + i + '"' +
           ' style="margin:2px 0;width:90px;font-family:monospace;text-align:center;font-weight:700;"' +
-          ' placeholder="0000" maxlength="4"></td>' +
+          ' placeholder="0000" maxlength="4"' +
+          ' value="' + (oldRisposte[i] || '') + '"></td>' +
           '</tr>';
       }
       tbody.innerHTML = html;
@@ -3310,7 +3333,8 @@
     function salvaGara() {
       const nome = document.getElementById('nomeGara').value.trim();
       if (!nome) { alert('Inserisci il nome della gara.'); return; }
-      const n = (LOGIKRON_CONFIG.gare && LOGIKRON_CONFIG.gare.numeroDomande) || 10;
+      const inputN = parseInt(document.getElementById('ngNumDomande').value);
+      const n = (inputN > 0 && inputN <= 30) ? inputN : ((LOGIKRON_CONFIG.gare && LOGIKRON_CONFIG.gare.numeroDomande) || 10);
       const domande = [];
       let errori = 0;
       for (let i = 1; i <= n; i++) {
