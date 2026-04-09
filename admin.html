@@ -547,8 +547,14 @@
         <h2 class="mb-2">Accesso Admin</h2>
         <p class="text-muted mb-3">Inserisci la password per accedere al pannello di controllo</p>
         <div class="form-group">
-          <input type="password" id="adminPassword" class="form-control" placeholder="Password"
-                 onkeypress="if(event.key==='Enter') checkPassword()">
+          <div style="display:flex;align-items:center;gap:6px;">
+            <input type="password" id="adminPassword" class="form-control" placeholder="Password"
+                   onkeypress="if(event.key==='Enter') checkPassword()" style="flex:1;">
+            <button type="button"
+                    onclick="var i=document.getElementById('adminPassword');i.type=i.type==='password'?'text':'password';"
+                    style="background:none;border:1px solid #c7d2fe;border-radius:8px;padding:6px 10px;cursor:pointer;font-size:1rem;color:#64748b;"
+                    title="Mostra/nascondi password">👁</button>
+          </div>
         </div>
         <button onclick="checkPassword()" class="btn btn-primary btn-block">Accedi</button>
         <p id="loginError" class="form-error mt-2 hidden">Password non corretta</p>
