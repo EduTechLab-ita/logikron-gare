@@ -140,8 +140,8 @@
       </p>
     </div>
 
-    <!-- FORM (nascosto di default, mostrato solo se fase = 2) -->
-    <form id="formIscrizioni" novalidate style="display:none">
+    <!-- FORM (visibile subito, nascosto solo se il backend conferma fase ≠ 2) -->
+    <form id="formIscrizioni" novalidate>
 
       <!-- SEZIONE 1: DOCENTE E CLASSE -->
       <div class="card mt-2">
@@ -684,7 +684,7 @@
             // Prima chiamata: imposta stato iniziale
             _faseIscrizioni = attiva;
             if (attiva) {
-              document.getElementById('formIscrizioni').style.display = '';
+              // Form già visibile, niente da fare
             } else {
               document.getElementById('formIscrizioni').outerHTML =
                 '<div class="card mt-2" style="background:#fef3c7; border-left:4px solid #f59e0b; text-align:center;">' +

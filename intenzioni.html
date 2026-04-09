@@ -40,8 +40,8 @@
       </p>
     </div>
 
-    <!-- FORM (nascosto di default, mostrato solo se fase = 1) -->
-    <div class="card mt-2" id="formCard" style="display:none">
+    <!-- FORM (visibile subito, nascosto solo se il backend conferma fase ≠ 1) -->
+    <div class="card mt-2" id="formCard">
       <form id="formIntenzioni">
 
         <div class="form-group">
@@ -219,7 +219,7 @@
             // Prima chiamata: imposta stato iniziale
             _faseIntenzioni = attiva;
             if (attiva) {
-              document.getElementById('formCard').style.display = '';
+              // Form già visibile, niente da fare
             } else {
               document.getElementById('formCard').outerHTML =
                 '<div class="card mt-2" style="background:#fef3c7; border-left:4px solid #f59e0b; text-align:center;">' +
