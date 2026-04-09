@@ -34,10 +34,6 @@ function lkApi(url, params, timeoutMs) {
     const script = document.createElement('script');
     script.id = cbName;
     script.src = url + '?' + qs;
-    script.onerror = function() {
-      cleanup();
-      reject(new Error('Impossibile raggiungere il server'));
-    };
     document.head.appendChild(script);
   });
 }

@@ -236,7 +236,15 @@
             location.reload();
           }
         })
-        .catch(function() {});
+        .catch(function() {
+          // Su mobile il JSONP può fallire (falso errore sul redirect Google):
+          // mostriamo il form di default — se la fase non è attiva, il backend
+          // risponderà con errore al submit.
+          if (_faseIntenzioni === null) {
+            _faseIntenzioni = true;
+            document.getElementById('formCard').style.display = '';
+          }
+        });
     }
     checkFaseIntenzioni();
     setInterval(checkFaseIntenzioni, 12000);

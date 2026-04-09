@@ -700,7 +700,15 @@
             location.reload();
           }
         })
-        .catch(function() {});
+        .catch(function() {
+          // Su mobile il JSONP può fallire (falso errore sul redirect Google):
+          // mostriamo il form di default — se la fase non è attiva, il backend
+          // risponderà con errore al submit.
+          if (_faseIscrizioni === null) {
+            _faseIscrizioni = true;
+            document.getElementById('formIscrizioni').style.display = '';
+          }
+        });
     }
     checkFaseIscrizioni();
     setInterval(checkFaseIscrizioni, 12000);
