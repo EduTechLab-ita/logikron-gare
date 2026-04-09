@@ -40,8 +40,15 @@
       </p>
     </div>
 
-    <!-- FORM (visibile subito, nascosto solo se il backend conferma fase ≠ 1) -->
-    <div class="card mt-2" id="formCard">
+    <!-- LOADER (visibile subito, sostituito da form o messaggio errore) -->
+    <div class="card mt-2" id="loadingCard" style="text-align:center; padding: 2rem 1rem;">
+      <div style="font-size:2rem; margin-bottom:0.75rem;">⏳</div>
+      <p style="font-weight:600; color:var(--lk-primary); margin:0 0 0.25rem 0;">Caricamento modulo in corso...</p>
+      <p style="font-size:0.85rem; color:#6b7280; margin:0;">Attendi qualche secondo</p>
+    </div>
+
+    <!-- FORM (nascosto di default, mostrato solo se fase = 1) -->
+    <div class="card mt-2" id="formCard" style="display:none">
       <form id="formIntenzioni">
 
         <div class="form-group">
@@ -218,8 +225,10 @@
           if (_faseIntenzioni === null) {
             // Prima chiamata: imposta stato iniziale
             _faseIntenzioni = attiva;
+            const loader = document.getElementById('loadingCard');
+            if (loader) loader.style.display = 'none';
             if (attiva) {
-              // Form già visibile, niente da fare
+              document.getElementById('formCard').style.display = '';
             } else {
               document.getElementById('formCard').outerHTML =
                 '<div class="card mt-2" style="background:#fef3c7; border-left:4px solid #f59e0b; text-align:center;">' +
@@ -237,11 +246,10 @@
           }
         })
         .catch(function() {
-          // Su mobile il JSONP può fallire (falso errore sul redirect Google):
-          // mostriamo il form di default — se la fase non è attiva, il backend
-          // risponderà con errore al submit.
           if (_faseIntenzioni === null) {
             _faseIntenzioni = true;
+            const loader = document.getElementById('loadingCard');
+            if (loader) loader.style.display = 'none';
             document.getElementById('formCard').style.display = '';
           }
         });
