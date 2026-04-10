@@ -374,43 +374,48 @@
 
     function initIstituti() {
       const sel = document.getElementById('istituto');
-      sel.innerHTML = '<option value="">Caricamento...</option>';
-      sel.disabled = true;
 
+      // Pre-popola subito da config.js (sincrono, nessuna attesa API)
+      sel.innerHTML = '<option value="">Seleziona l\'Istituto</option>';
+      LOGIKRON_CONFIG.istituti.forEach(ic => {
+        const opt = document.createElement('option');
+        opt.value = ic.nome;
+        opt.textContent = ic.nome;
+        sel.appendChild(opt);
+      });
+      sel.disabled = false;
+
+      // Aggiorna in background: sigle ufficiali + eventuali nuovi IC da intenzioni
+      const nomiConfig = new Set(LOGIKRON_CONFIG.istituti.map(ic => ic.nome));
       lkApi(LOGIKRON_CONFIG.webAppUrls.iscrizioni, { action: 'getIstituti' })
         .then(r => {
           const list = (r && r.istituti) ? r.istituti : [];
           _icSigleMap = {};
           list.forEach(ic => { _icSigleMap[ic.nome] = ic.sigla; });
-          istitutiDaIntenzioni = list.map(ic => ({ nome: ic.nome, plessi: [] }));
-          sel.innerHTML = '<option value="">Seleziona l\'Istituto</option>';
-          if (list.length === 0) {
-            sel.innerHTML += '<option value="" disabled>Nessun istituto registrato</option>';
-          } else {
-            list.forEach(ic => {
+          list.forEach(ic => {
+            if (!nomiConfig.has(ic.nome)) {
               const opt = document.createElement('option');
               opt.value = ic.nome;
               opt.textContent = ic.nome;
               sel.appendChild(opt);
-            });
-          }
-          sel.disabled = false;
+              nomiConfig.add(ic.nome);
+            }
+          });
         })
         .catch(() => {
-          // Fallback alla lista da Intenzioni
           lkApi(LOGIKRON_CONFIG.webAppUrls.iscrizioni, { action: 'getIstitutiDaIntenzioni' })
             .then(data => {
-              istitutiDaIntenzioni = Array.isArray(data) ? data : [];
-              sel.innerHTML = '<option value="">Seleziona l\'Istituto</option>';
-              istitutiDaIntenzioni.forEach(ic => {
-                const opt = document.createElement('option');
-                opt.value = ic.nome;
-                opt.textContent = ic.nome;
-                sel.appendChild(opt);
+              (Array.isArray(data) ? data : []).forEach(ic => {
+                if (!nomiConfig.has(ic.nome)) {
+                  const opt = document.createElement('option');
+                  opt.value = ic.nome;
+                  opt.textContent = ic.nome;
+                  sel.appendChild(opt);
+                  nomiConfig.add(ic.nome);
+                }
               });
-              sel.disabled = false;
             })
-            .catch(() => { sel.innerHTML = '<option value="">Errore caricamento</option>'; sel.disabled = false; });
+            .catch(() => {}); // config già popolato, niente da fare
         });
     }
 
@@ -424,11 +429,31 @@
         aggiornaNoiSquadre();
         return;
       }
-      sel.innerHTML = '<option value="">Caricamento...</option>';
-      sel.disabled = true;
+
+      // Pre-popola subito da config.js (sincrono, nessuna attesa API)
+      const icConfig = LOGIKRON_CONFIG.istituti.find(ic => ic.nome === icNome);
+      sel.innerHTML = '<option value="">Seleziona il plesso</option>';
+      if (icConfig && icConfig.plessi.length > 0) {
+        icConfig.plessi.forEach(p => {
+          if (p.sigla) _plessiSigleMap[p.nome] = p.sigla;
+          const opt = document.createElement('option');
+          opt.value = p.nome;
+          opt.textContent = p.nome;
+          sel.appendChild(opt);
+        });
+        const altroOpt = document.createElement('option');
+        altroOpt.value = '__altro__';
+        altroOpt.textContent = '✏️ Altro (inserisci manualmente)...';
+        sel.appendChild(altroOpt);
+        sel.disabled = false;
+        aggiornaNoiSquadre();
+      }
+
+      // Aggiorna in background con dati ufficiali dal backend (sigle + nuovi plessi)
       lkApi(LOGIKRON_CONFIG.webAppUrls.iscrizioni, { action: 'getPlessi', ic: icNome })
         .then(r => {
           const plessi = (r && r.plessi) ? r.plessi.filter(p => p.ic === icNome) : [];
+          if (plessi.length === 0) return; // nessun dato utile, tieni config
           plessi.forEach(p => { if (p.sigla) _plessiSigleMap[p.nome] = p.sigla; });
           sel.innerHTML = '<option value="">Seleziona il plesso</option>';
           plessi.forEach(p => {
@@ -437,7 +462,6 @@
             opt.textContent = p.nome;
             sel.appendChild(opt);
           });
-          // Opzione per inserire un plesso non in lista
           const altroOpt = document.createElement('option');
           altroOpt.value = '__altro__';
           altroOpt.textContent = '✏️ Altro (inserisci manualmente)...';
@@ -446,11 +470,13 @@
           aggiornaNoiSquadre();
         })
         .catch(() => {
-          sel.innerHTML = '<option value="">Errore caricamento — inserisci manualmente</option>';
-          const altroOpt = document.createElement('option');
-          altroOpt.value = '__altro__';
-          altroOpt.textContent = '✏️ Inserisci manualmente...';
-          sel.appendChild(altroOpt);
+          // config già popolato; aggiungi __altro__ se manca
+          if (!sel.querySelector('[value="__altro__"]')) {
+            const altroOpt = document.createElement('option');
+            altroOpt.value = '__altro__';
+            altroOpt.textContent = '✏️ Inserisci manualmente...';
+            sel.appendChild(altroOpt);
+          }
           sel.disabled = false;
           aggiornaNoiSquadre();
         });
