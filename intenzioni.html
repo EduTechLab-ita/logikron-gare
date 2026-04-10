@@ -69,7 +69,7 @@
           <input type="text" id="istituto" class="form-control" required
                  placeholder="Cerca o scrivi il nome del tuo IC..."
                  list="istitutiSuggeriti" autocomplete="off"
-                 oninput="aggiornaPlessiSuggeriti()">
+                 oninput="aggiornaPlessiSuggeriti(true)">
           <datalist id="istitutiSuggeriti"></datalist>
           <p class="form-hint" id="istitutoHint">Caricamento lista istituti...</p>
         </div>
@@ -165,9 +165,30 @@
     // Carica lista IC dal backend e popola il dropdown
     var _icList = []; // [{nome, sigla}]
     var _plessiMap = {}; // { 'IC Gottolengo': ['Gottolengo','Gambara',...] }
+    var _plessiCaricati = false;
+    var _plessiInCaricamento = false;
+
+    function caricaPlessi() {
+      if (_plessiInCaricamento || _plessiCaricati) return;
+      _plessiInCaricamento = true;
+      lkApi(LOGIKRON_CONFIG.webAppUrls.intenzioni, { action: 'getPlessi', ic: '' }, 30000)
+        .then(r => {
+          _plessiInCaricamento = false;
+          if (!r || !r.plessi) return;
+          r.plessi.forEach(p => {
+            if (!_plessiMap[p.ic]) _plessiMap[p.ic] = [];
+            _plessiMap[p.ic].push(p.nome);
+          });
+          _plessiCaricati = true;
+          // Aggiorna suggerimenti se l'utente ha già scritto un IC
+          const ic = document.getElementById('istituto').value;
+          if (ic) aggiornaPlessiSuggeriti(false);
+        })
+        .catch(() => { _plessiInCaricamento = false; });
+    }
 
     function caricaIstitutiForm() {
-      lkApi(LOGIKRON_CONFIG.webAppUrls.intenzioni, { action: 'getIstituti' })
+      lkApi(LOGIKRON_CONFIG.webAppUrls.intenzioni, { action: 'getIstituti' }, 30000)
         .then(r => {
           const hint = document.getElementById('istitutoHint');
           const dl   = document.getElementById('istitutiSuggeriti');
@@ -187,20 +208,13 @@
         .catch(() => {
           document.getElementById('istitutoHint').textContent = 'Lista non disponibile. Scrivi il nome del tuo IC.';
         });
-      // Carica anche tutti i plessi per l'autocomplete
-      lkApi(LOGIKRON_CONFIG.webAppUrls.intenzioni, { action: 'getPlessi', ic: '' })
-        .then(r => {
-          if (!r || !r.plessi) return;
-          r.plessi.forEach(p => {
-            if (!_plessiMap[p.ic]) _plessiMap[p.ic] = [];
-            _plessiMap[p.ic].push(p.nome);
-          });
-        })
-        .catch(() => {});
+      caricaPlessi();
     }
 
-    function aggiornaPlessiSuggeriti() {
+    function aggiornaPlessiSuggeriti(svuotaPlesso) {
       const ic = document.getElementById('istituto').value;
+      // Se i plessi non sono ancora stati caricati, prova a ricaricarli ora
+      if (!_plessiCaricati && ic.length > 2) caricaPlessi();
       const dl = document.getElementById('plessiSuggeriti');
       dl.innerHTML = '';
       const plessi = _plessiMap[ic] || [];
@@ -209,8 +223,8 @@
         opt.value = p;
         dl.appendChild(opt);
       });
-      // Svuota il campo plesso quando cambia IC
-      document.getElementById('plesso').value = '';
+      // Svuota il campo plesso quando cambia IC (non quando chiamato da caricaPlessi)
+      if (svuotaPlesso !== false) document.getElementById('plesso').value = '';
     }
 
     caricaIstitutiForm();
@@ -299,17 +313,28 @@
         timestamp: new Date().toISOString()
       };
 
-      lkApi(LOGIKRON_CONFIG.webAppUrls.intenzioni, formData)
-      .then(result => {
-        if (result.error) throw new Error(result.error);
-        document.getElementById('formIntenzioni').parentElement.classList.add('hidden');
-        document.getElementById('successMessage').classList.remove('hidden');
-      })
-      .catch(err => {
-        btn.disabled = false;
-        btn.textContent = 'Invia Intenzione';
-        alert('Errore durante l\'invio:\n' + err.message);
-      });
+      // Timeout 45s + 1 retry automatico (gestisce il cold start di Apps Script)
+      lkApi(LOGIKRON_CONFIG.webAppUrls.intenzioni, formData, 45000)
+        .catch(err => {
+          if (err.message === 'Timeout risposta server') {
+            btn.textContent = 'Connessione lenta, riprovando\u2026';
+            return lkApi(LOGIKRON_CONFIG.webAppUrls.intenzioni, formData, 45000);
+          }
+          throw err;
+        })
+        .then(result => {
+          if (result.error) throw new Error(result.error);
+          document.getElementById('formIntenzioni').parentElement.classList.add('hidden');
+          document.getElementById('successMessage').classList.remove('hidden');
+        })
+        .catch(err => {
+          btn.disabled = false;
+          btn.textContent = 'Invia Intenzione';
+          const msg = err.message === 'Timeout risposta server'
+            ? 'Il server è lento in questo momento.\nAttendi qualche secondo e riprova.'
+            : err.message;
+          alert('Errore durante l\'invio:\n' + msg);
+        });
     });
 
 </script>
