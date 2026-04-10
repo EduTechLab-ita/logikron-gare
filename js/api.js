@@ -1,7 +1,8 @@
 /**
  * LogiKron - API Helper
- * Usa JSONP per bypassare i limiti CORS di Google Apps Script.
- * fetch() fallisce a causa dei redirect Google; <script> injection no.
+ * Usa fetch() come metodo principale (funziona su Chrome, Edge, Firefox).
+ * Fallback JSONP per browser che bloccano fetch() verso script.google.com.
+ * NOTA: il SW esclude già i domini Google dall'intercettazione (nessun conflitto CORS).
  */
 
 // ── Notifica aggiornamento SW ─────────────────────────────────────
@@ -32,35 +33,46 @@ if ('serviceWorker' in navigator) {
 }
 
 let _lkSeq = 0;
-function lkApi(url, params, timeoutMs) {
+
+// fetch() con timeout — metodo principale (non bloccato da Edge Tracking Prevention)
+function _lkFetch(url, params, timeoutMs) {
+  const qs = Object.keys(params)
+    .map(k => encodeURIComponent(k) + '=' + encodeURIComponent(params[k]))
+    .join('&');
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), timeoutMs || 15000);
+  return fetch(url + '?' + qs, { signal: controller.signal })
+    .then(r => { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
+    .finally(() => clearTimeout(timer))
+    .catch(err => {
+      if (err.name === 'AbortError') throw new Error('Timeout risposta server');
+      throw err;
+    });
+}
+
+// JSONP fallback — usato solo se fetch() non è disponibile o bloccato
+function _lkJsonp(url, params, timeoutMs) {
   return new Promise((resolve, reject) => {
     const cbName = '_lkCb_' + (++_lkSeq) + '_' + Date.now();
-
-    const timer = setTimeout(() => {
-      cleanup();
-      reject(new Error('Timeout risposta server'));
-    }, timeoutMs || 15000);
-
+    const timer = setTimeout(() => { cleanup(); reject(new Error('Timeout risposta server')); }, timeoutMs || 15000);
     function cleanup() {
       clearTimeout(timer);
       delete window[cbName];
       const el = document.getElementById(cbName);
       if (el) el.parentNode.removeChild(el);
     }
-
-    window[cbName] = function(data) {
-      cleanup();
-      resolve(data);
-    };
-
+    window[cbName] = function(data) { cleanup(); resolve(data); };
     const allParams = Object.assign({}, params, { callback: cbName });
-    const qs = Object.keys(allParams)
-      .map(k => encodeURIComponent(k) + '=' + encodeURIComponent(allParams[k]))
-      .join('&');
-
+    const qs = Object.keys(allParams).map(k => encodeURIComponent(k) + '=' + encodeURIComponent(allParams[k])).join('&');
     const script = document.createElement('script');
     script.id = cbName;
     script.src = url + '?' + qs;
     document.head.appendChild(script);
   });
+}
+
+// Punto di accesso unico: fetch() prima, JSONP come fallback
+function lkApi(url, params, timeoutMs) {
+  return _lkFetch(url, params, timeoutMs)
+    .catch(() => _lkJsonp(url, params, timeoutMs));
 }
