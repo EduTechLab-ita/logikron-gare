@@ -168,6 +168,22 @@
     var _faseVerificata = false;
     var _fallbackTimer = null;
 
+    // Popola subito datalist IC da config.js (sincrono, nessuna attesa API)
+    (function() {
+      const dl = document.getElementById('istitutiSuggeriti');
+      if (!dl || !LOGIKRON_CONFIG.istituti) return;
+      LOGIKRON_CONFIG.istituti.forEach(function(ic) {
+        _plessiMap[ic.nome] = (ic.plessi || []).map(function(p) { return p.nome; });
+        const opt = document.createElement('option');
+        opt.value = ic.nome;
+        dl.appendChild(opt);
+      });
+      if (LOGIKRON_CONFIG.istituti.length > 0) {
+        document.getElementById('istitutoHint').textContent =
+          'Seleziona dall\'elenco o scrivi il nome del tuo IC se non è presente.';
+      }
+    })();
+
     // Dopo 8 secondi senza risposta dal backend: mostra il form comunque.
     // Il server rifiuterà comunque l'invio se la fase non è attiva.
     _fallbackTimer = setTimeout(function() {
@@ -175,8 +191,6 @@
         _faseVerificata = true;
         document.getElementById('loadingCard').style.display = 'none';
         document.getElementById('formCard').style.display = '';
-        document.getElementById('istitutoHint').textContent =
-          'Lista non disponibile. Scrivi il nome del tuo IC.';
       }
     }, 8000);
 
