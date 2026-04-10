@@ -45,6 +45,7 @@
       <div style="font-size:2rem; margin-bottom:0.75rem;">⏳</div>
       <p style="font-weight:600; color:var(--lk-primary); margin:0 0 0.25rem 0;">Caricamento modulo in corso...</p>
       <p style="font-size:0.85rem; color:#6b7280; margin:0;">Attendi qualche secondo</p>
+      <p style="font-size:0.78rem; color:#9ca3af; margin:0.5rem 0 0 0;">Per la migliore esperienza usa <strong>Google Chrome</strong>.</p>
     </div>
 
     <!-- FORM (nascosto di default, mostrato solo se fase = 1) -->
@@ -183,15 +184,32 @@
     lkApi(LOGIKRON_CONFIG.webAppUrls.intenzioni, { action: 'getInitData' }, 45000)
       .then(r => {
         if (!r) return;
-        if (_faseVerificata) return; // fallback timer già scattato: non sovrascrivere
 
         clearTimeout(_fallbackTimer);
-        _faseVerificata = true;
-        document.getElementById('loadingCard').style.display = 'none';
 
-        // Verifica fase: se non è 1, blocca il form
-        if (r.fase !== 1) {
-          document.getElementById('formCard').outerHTML =
+        // Gestione fase (solo se non già mostrato dal fallback)
+        if (!_faseVerificata) {
+          _faseVerificata = true;
+          document.getElementById('loadingCard').style.display = 'none';
+
+          if (r.fase !== 1) {
+            document.getElementById('formCard').outerHTML =
+              '<div class="card mt-2" style="background:#fef3c7; border-left:4px solid #f59e0b; text-align:center;">' +
+              '<p style="font-size:1.1rem; font-weight:600; margin:0 0 0.5rem 0;">⏸ Fase Intenzioni non attiva</p>' +
+              '<p style="margin:0; color:#92400e;">' +
+                (r.fase === 0 ? 'La raccolta delle intenzioni non è ancora aperta.' :
+                 r.fase >= 2  ? 'La fase delle intenzioni si è conclusa. Attendi le comunicazioni dell\'organizzazione.' :
+                 'Fase ' + r.fase + ': questo form non è attivo.') +
+              '</p><p style="margin:0.5rem 0 0 0;"><a href="index.html">← Torna alla Home</a></p>' +
+              '</div>';
+            return;
+          }
+          document.getElementById('formCard').style.display = '';
+
+        } else if (r.fase !== 1) {
+          // Fallback timer aveva già mostrato il form, ma la fase non è attiva: blocca ora
+          const fc = document.getElementById('formCard');
+          if (fc) fc.outerHTML =
             '<div class="card mt-2" style="background:#fef3c7; border-left:4px solid #f59e0b; text-align:center;">' +
             '<p style="font-size:1.1rem; font-weight:600; margin:0 0 0.5rem 0;">⏸ Fase Intenzioni non attiva</p>' +
             '<p style="margin:0; color:#92400e;">' +
@@ -203,10 +221,9 @@
           return;
         }
 
-        document.getElementById('formCard').style.display = '';
-
-        // Popola IC: prima le IC già nelle intenzioni (nomi esatti = match garantito con plessi)
+        // Popola IC/plessi — sempre, anche se il fallback aveva già mostrato il form
         const dlIstituti = document.getElementById('istitutiSuggeriti');
+        if (!dlIstituti) return;
         const nomiGiaAggiunti = new Set();
         if (r.istitutiDaIntenzioni && r.istitutiDaIntenzioni.length) {
           r.istitutiDaIntenzioni.forEach(ic => {
@@ -217,7 +234,6 @@
             nomiGiaAggiunti.add(ic.nome);
           });
         }
-        // Poi aggiunge IC dal foglio ufficiale non ancora presenti
         if (r.istituti && r.istituti.length) {
           r.istituti.forEach(ic => {
             if (!nomiGiaAggiunti.has(ic.nome)) {
@@ -226,11 +242,9 @@
               dlIstituti.appendChild(opt);
             }
           });
-          document.getElementById('istitutoHint').textContent =
-            'Seleziona dall\'elenco o scrivi il nome del tuo IC se non è presente.';
         }
-
-        // Aggiorna suggerimenti plesso se l'utente aveva già scritto un IC
+        document.getElementById('istitutoHint').textContent =
+          'Seleziona dall\'elenco o scrivi il nome del tuo IC se non è presente.';
         const icCorrente = document.getElementById('istituto').value;
         if (icCorrente) aggiornaPlessiSuggeriti(false);
       })
@@ -240,8 +254,6 @@
         _faseVerificata = true;
         document.getElementById('loadingCard').style.display = 'none';
         document.getElementById('formCard').style.display = '';
-        document.getElementById('istitutoHint').textContent =
-          'Lista non disponibile. Scrivi il nome del tuo IC.';
       });
 
     // Poll leggero per cambi di fase (AS già caldo dopo getInitData)
