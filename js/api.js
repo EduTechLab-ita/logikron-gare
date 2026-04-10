@@ -71,8 +71,23 @@ function _lkJsonp(url, params, timeoutMs) {
   });
 }
 
-// Punto di accesso unico: fetch() prima, JSONP come fallback
+// Punto di accesso unico: fetch() e JSONP partono IN PARALLELO.
+// Vince chi risponde prima. Se fetch() è bloccato (Edge, Android), vince JSONP.
+// Se JSONP è bloccato (Edge tracking), vince fetch().
+// Nessuna attesa sequenziale: il primo che arriva risolve la Promise.
 function lkApi(url, params, timeoutMs) {
-  return _lkFetch(url, params, timeoutMs)
-    .catch(() => _lkJsonp(url, params, timeoutMs));
+  return new Promise(function(resolve, reject) {
+    var settled = false;
+    function win(val)  { if (!settled) { settled = true; resolve(val); } }
+    function lose(err) { if (!settled) { settled = true; reject(err); } }
+
+    // fetch() e JSONP in parallelo: entrambi "svegliano" AS contemporaneamente
+    _lkFetch(url, params, timeoutMs)
+      .then(win)
+      .catch(function() {}); // se fetch() fallisce, aspettiamo JSONP
+
+    _lkJsonp(url, params, timeoutMs)
+      .then(win)
+      .catch(lose); // se anche JSONP fallisce, rigetta
+  });
 }
