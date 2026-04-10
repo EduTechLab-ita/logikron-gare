@@ -165,21 +165,31 @@
     var _icList = [];
     var _plessiMap = {}; // { 'IC Gottolengo': ['Gottolengo','Gambara',...] }
     var _faseVerificata = false;
+    var _fallbackTimer = null;
 
-    // Mostra il form subito — senza aspettare il backend
-    (function() {
-      const loader = document.getElementById('loadingCard');
-      if (loader) loader.style.display = 'none';
-      document.getElementById('formCard').style.display = '';
-    })();
+    // Dopo 8 secondi senza risposta dal backend: mostra il form comunque.
+    // Il server rifiuterà comunque l'invio se la fase non è attiva.
+    _fallbackTimer = setTimeout(function() {
+      if (!_faseVerificata) {
+        _faseVerificata = true;
+        document.getElementById('loadingCard').style.display = 'none';
+        document.getElementById('formCard').style.display = '';
+        document.getElementById('istitutoHint').textContent =
+          'Lista non disponibile. Scrivi il nome del tuo IC.';
+      }
+    }, 8000);
 
-    // Carica dati in background (una sola chiamata)
+    // Carica fase + dati in background (una sola chiamata)
     lkApi(LOGIKRON_CONFIG.webAppUrls.intenzioni, { action: 'getInitData' }, 45000)
       .then(r => {
         if (!r) return;
+        if (_faseVerificata) return; // fallback timer già scattato: non sovrascrivere
+
+        clearTimeout(_fallbackTimer);
+        _faseVerificata = true;
+        document.getElementById('loadingCard').style.display = 'none';
 
         // Verifica fase: se non è 1, blocca il form
-        _faseVerificata = true;
         if (r.fase !== 1) {
           document.getElementById('formCard').outerHTML =
             '<div class="card mt-2" style="background:#fef3c7; border-left:4px solid #f59e0b; text-align:center;">' +
@@ -192,6 +202,8 @@
             '</div>';
           return;
         }
+
+        document.getElementById('formCard').style.display = '';
 
         // Popola IC: prima le IC già nelle intenzioni (nomi esatti = match garantito con plessi)
         const dlIstituti = document.getElementById('istitutiSuggeriti');
@@ -223,7 +235,11 @@
         if (icCorrente) aggiornaPlessiSuggeriti(false);
       })
       .catch(() => {
-        // AS non risponde: form già visibile, utente può compilare manualmente
+        if (_faseVerificata) return;
+        clearTimeout(_fallbackTimer);
+        _faseVerificata = true;
+        document.getElementById('loadingCard').style.display = 'none';
+        document.getElementById('formCard').style.display = '';
         document.getElementById('istitutoHint').textContent =
           'Lista non disponibile. Scrivi il nome del tuo IC.';
       });
