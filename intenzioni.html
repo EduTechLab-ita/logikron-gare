@@ -162,77 +162,77 @@
   <script src="js/api.js"></script>
   <script src="js/math-bg.js"></script>
   <script>
-    // Dati caricati in un'unica chiamata all'avvio
     var _icList = [];
     var _plessiMap = {}; // { 'IC Gottolengo': ['Gottolengo','Gambara',...] }
-    var _faseIntenzioni = null;
+    var _faseVerificata = false;
 
-    function popolaIstituti(istituti) {
-      const hint = document.getElementById('istitutoHint');
-      const dl   = document.getElementById('istitutiSuggeriti');
-      if (!istituti || !istituti.length) {
-        hint.textContent = 'Lista non disponibile. Scrivi il nome del tuo IC.';
-        return;
-      }
-      _icList = istituti;
-      dl.innerHTML = '';
-      _icList.forEach(ic => {
-        const opt = document.createElement('option');
-        opt.value = ic.nome;
-        dl.appendChild(opt);
-      });
-      hint.textContent = 'Seleziona dall\'elenco o scrivi il nome del tuo IC se non è presente.';
-    }
-
-    function popolaPlessi(plessi) {
-      if (!plessi) return;
-      plessi.forEach(p => {
-        if (!_plessiMap[p.ic]) _plessiMap[p.ic] = [];
-        _plessiMap[p.ic].push(p.nome);
-      });
-    }
-
-    function applicaFase(fase) {
-      _faseIntenzioni = (fase === 1);
+    // Mostra il form subito — senza aspettare il backend
+    (function() {
       const loader = document.getElementById('loadingCard');
       if (loader) loader.style.display = 'none';
-      if (_faseIntenzioni) {
-        document.getElementById('formCard').style.display = '';
-      } else {
-        document.getElementById('formCard').outerHTML =
-          '<div class="card mt-2" style="background:#fef3c7; border-left:4px solid #f59e0b; text-align:center;">' +
-          '<p style="font-size:1.1rem; font-weight:600; margin:0 0 0.5rem 0;">⏸ Fase Intenzioni non attiva</p>' +
-          '<p style="margin:0; color:#92400e;">' +
-            (fase === 0 ? 'La raccolta delle intenzioni non è ancora aperta.' :
-             fase >= 2  ? 'La fase delle intenzioni si è conclusa. Attendi le comunicazioni dell\'organizzazione.' :
-             'Fase ' + fase + ': questo form non è attivo.') +
-          '</p><p style="margin:0.5rem 0 0 0;"><a href="index.html">← Torna alla Home</a></p>' +
-          '</div>';
-      }
-    }
+      document.getElementById('formCard').style.display = '';
+    })();
 
-    // Una sola chiamata al backend: fase + istituti + plessi insieme
+    // Carica dati in background (una sola chiamata)
     lkApi(LOGIKRON_CONFIG.webAppUrls.intenzioni, { action: 'getInitData' }, 45000)
       .then(r => {
-        if (!r) throw new Error('no data');
-        applicaFase(r.fase);
-        popolaIstituti(r.istituti);
-        popolaPlessi(r.plessi);
+        if (!r) return;
+
+        // Verifica fase: se non è 1, blocca il form
+        _faseVerificata = true;
+        if (r.fase !== 1) {
+          document.getElementById('formCard').outerHTML =
+            '<div class="card mt-2" style="background:#fef3c7; border-left:4px solid #f59e0b; text-align:center;">' +
+            '<p style="font-size:1.1rem; font-weight:600; margin:0 0 0.5rem 0;">⏸ Fase Intenzioni non attiva</p>' +
+            '<p style="margin:0; color:#92400e;">' +
+              (r.fase === 0 ? 'La raccolta delle intenzioni non è ancora aperta.' :
+               r.fase >= 2  ? 'La fase delle intenzioni si è conclusa. Attendi le comunicazioni dell\'organizzazione.' :
+               'Fase ' + r.fase + ': questo form non è attivo.') +
+            '</p><p style="margin:0.5rem 0 0 0;"><a href="index.html">← Torna alla Home</a></p>' +
+            '</div>';
+          return;
+        }
+
+        // Popola IC: prima le IC già nelle intenzioni (nomi esatti = match garantito con plessi)
+        const dlIstituti = document.getElementById('istitutiSuggeriti');
+        const nomiGiaAggiunti = new Set();
+        if (r.istitutiDaIntenzioni && r.istitutiDaIntenzioni.length) {
+          r.istitutiDaIntenzioni.forEach(ic => {
+            _plessiMap[ic.nome] = ic.plessi || [];
+            const opt = document.createElement('option');
+            opt.value = ic.nome;
+            dlIstituti.appendChild(opt);
+            nomiGiaAggiunti.add(ic.nome);
+          });
+        }
+        // Poi aggiunge IC dal foglio ufficiale non ancora presenti
+        if (r.istituti && r.istituti.length) {
+          r.istituti.forEach(ic => {
+            if (!nomiGiaAggiunti.has(ic.nome)) {
+              const opt = document.createElement('option');
+              opt.value = ic.nome;
+              dlIstituti.appendChild(opt);
+            }
+          });
+          document.getElementById('istitutoHint').textContent =
+            'Seleziona dall\'elenco o scrivi il nome del tuo IC se non è presente.';
+        }
+
+        // Aggiorna suggerimenti plesso se l'utente aveva già scritto un IC
+        const icCorrente = document.getElementById('istituto').value;
+        if (icCorrente) aggiornaPlessiSuggeriti(false);
       })
       .catch(() => {
-        // Backend non risponde: mostra il form comunque (fallback ottimista)
-        document.getElementById('istitutoHint').textContent = 'Lista non disponibile. Scrivi il nome del tuo IC.';
-        applicaFase(1);
+        // AS non risponde: form già visibile, utente può compilare manualmente
+        document.getElementById('istitutoHint').textContent =
+          'Lista non disponibile. Scrivi il nome del tuo IC.';
       });
 
-    // Poll periodico per rilevare cambi di fase (usa getFase leggero, AS già caldo)
+    // Poll leggero per cambi di fase (AS già caldo dopo getInitData)
     setInterval(function() {
-      if (_faseIntenzioni === null) return;
+      if (!_faseVerificata) return;
       lkApi(LOGIKRON_CONFIG.webAppUrls.intenzioni, { action: 'getFase' }, 15000)
-        .then(r => {
-          if (!r) return;
-          if ((r.fase === 1) !== _faseIntenzioni) location.reload();
-        })
+        .then(r => { if (r && r.fase !== 1) location.reload(); })
         .catch(() => {});
     }, 12000);
 
