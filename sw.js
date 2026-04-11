@@ -3,7 +3,7 @@
 //  ⚙️  Aggiorna CACHE_NAME ad ogni deploy per forzare il refresh
 // ══════════════════════════════════════════════════════════════════
 
-const CACHE_NAME = 'logikron-v4.83';
+const CACHE_NAME = 'logikron-v4.84';
 
 const STATIC_ASSETS = [
   './',
@@ -37,12 +37,15 @@ self.addEventListener('install', event => {
 // ── Activate: elimina cache vecchie e notifica le tab aperte ──────
 self.addEventListener('activate', event => {
   event.waitUntil(
-    caches.keys().then(keys =>
-      Promise.all(keys.filter(k => k !== CACHE_NAME).map(k => caches.delete(k)))
-    ).then(() => {
-      // Notifica tutte le tab già aperte che c'è una nuova versione
-      return self.clients.matchAll({ type: 'window' }).then(clients => {
-        clients.forEach(client => client.postMessage({ type: 'SW_UPDATED' }));
+    caches.keys().then(keys => {
+      const oldKeys = keys.filter(k => k !== CACHE_NAME);
+      return Promise.all(oldKeys.map(k => caches.delete(k))).then(() => {
+        // Notifica solo se c'era davvero una versione precedente (non al primo avvio)
+        if (oldKeys.length > 0) {
+          return self.clients.matchAll({ type: 'window' }).then(clients => {
+            clients.forEach(client => client.postMessage({ type: 'SW_UPDATED' }));
+          });
+        }
       });
     })
   );
