@@ -102,14 +102,19 @@
 
         <div class="form-group">
           <label class="form-label">Sezione *</label>
-          <select id="sezione" class="form-control" required>
-            <option value="">Seleziona la sezione</option>
-            <option value="A">A</option>
-            <option value="B">B</option>
-            <option value="C">C</option>
-            <option value="D">D</option>
-            <option value="Unica">Unica</option>
-          </select>
+          <input type="text" id="sezione" class="form-control" required
+                 list="sezioneSuggeriti" placeholder="Es. A, B, E, Unica..."
+                 maxlength="10" autocomplete="off">
+          <datalist id="sezioneSuggeriti">
+            <option value="A">
+            <option value="B">
+            <option value="C">
+            <option value="D">
+            <option value="E">
+            <option value="F">
+            <option value="G">
+            <option value="Unica">
+          </datalist>
         </div>
 
         <div class="form-group">
