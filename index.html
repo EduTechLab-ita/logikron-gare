@@ -10,7 +10,7 @@
   <link rel="icon" type="image/png" sizes="192x192" href="assets/icon-192.png">
   <link rel="apple-touch-icon" href="assets/icon-192.png">
   <meta name="theme-color" content="#4f46e5">
-  <script>if('serviceWorker' in navigator) navigator.serviceWorker.register('./sw.js');</script>
+  <script>if('serviceWorker' in navigator){navigator.serviceWorker.register('./sw.js');navigator.serviceWorker.addEventListener('message',e=>{if(e.data&&e.data.type==='SW_UPDATED')location.reload();});}</script>
   <style>
     .home-grid {
       display: grid;
