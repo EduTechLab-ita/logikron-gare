@@ -1102,7 +1102,8 @@
       </div>
       <div style="display:flex;gap:0.5rem;align-items:center;">
         <button class="stat-btn-print" onclick="stampaPDF()">🖨️ Stampa / PDF</button>
-        <button class="stat-btn-print" onclick="salvaStatistiche()">💾 Salva su Drive</button>
+        <button class="stat-btn-print" onclick="salvaStatistiche()">💾 Report (Doc)</button>
+        <button class="stat-btn-print" id="btnSheetDrive" onclick="generaSheetDrive()">📊 Sheet Drive</button>
         <button class="mgara-close-btn" onclick="chiudiStatistiche()">✕ Chiudi</button>
       </div>
     </div>
@@ -2366,6 +2367,27 @@
         })
         .catch(function(err) {
           if (btn) { btn.disabled = false; btn.textContent = '💾 Salva su Drive'; }
+          alert('Errore di rete: ' + (err.message || err));
+        });
+    }
+
+    function generaSheetDrive() {
+      const btn = document.getElementById('btnSheetDrive');
+      if (btn) { btn.disabled = true; btn.textContent = '⏳ Generazione...'; }
+
+      lkApi(API, { action: 'generaSheetStatistiche', pwd: adminPwd }, 120000)
+        .then(function(r) {
+          if (btn) { btn.disabled = false; btn.textContent = '📊 Sheet Drive'; }
+          if (r.error) { alert('Errore: ' + r.error); return; }
+          const toast = document.createElement('div');
+          toast.style.cssText = 'position:fixed;bottom:1.5rem;right:1.5rem;background:#4f46e5;color:#fff;padding:1rem 1.5rem;border-radius:10px;z-index:9999;font-weight:600;box-shadow:0 4px 20px rgba(0,0,0,0.4);max-width:340px;';
+          toast.innerHTML = '✅ Sheet aggiornato su Drive!<br><small style="font-weight:400;">Cartella: ' + _escHtml(r.folder) + '</small><br><a href="' + r.sheetUrl + '" target="_blank" style="color:#c7d2fe;font-size:0.85rem;">Apri Sheet ↗</a>';
+          document.body.appendChild(toast);
+          setTimeout(function() { toast.remove(); }, 10000);
+          window.open(r.sheetUrl, '_blank');
+        })
+        .catch(function(err) {
+          if (btn) { btn.disabled = false; btn.textContent = '📊 Sheet Drive'; }
           alert('Errore di rete: ' + (err.message || err));
         });
     }
