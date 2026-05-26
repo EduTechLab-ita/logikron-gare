@@ -146,6 +146,23 @@
 
     #loadingMsg { text-align: center; color: var(--lk-text-muted); padding: 3rem; display: none; }
     #emptyMsg { text-align: center; color: var(--lk-text-muted); padding: 2rem; display: none; }
+
+    /* Selezione attestati */
+    .selezione-bar {
+      display: flex; align-items: center; gap: 0.75rem;
+      padding: 0.5rem 0.25rem; margin-bottom: 0.5rem;
+      font-size: 0.82rem; color: var(--lk-text-muted);
+    }
+    .btn-sel {
+      background: transparent; border: 1px solid var(--lk-border); color: var(--lk-text-muted);
+      padding: 0.25rem 0.65rem; border-radius: 6px; cursor: pointer; font-size: 0.78rem;
+    }
+    .btn-sel:hover { border-color: var(--lk-primary); color: var(--lk-text); }
+    .sq-checkbox, .al-checkbox {
+      width: 16px; height: 16px; cursor: pointer; flex-shrink: 0;
+      accent-color: var(--lk-primary);
+    }
+    .al-checkbox { margin-right: 2px; }
   </style>
 </head>
 <body>
@@ -246,6 +263,11 @@
             <span style="font-size:0.68rem;color:#64748b;text-align:center;">carica + invia email subito</span>
           </div>
         </div>
+      </div>
+      <div class="selezione-bar">
+        <button class="btn-sel" onclick="selezionaTutti()">☑ Tutti</button>
+        <button class="btn-sel" onclick="deselezionaTutti()">☐ Nessuno</button>
+        <span id="selezioneInfo" style="color:var(--lk-text-muted);"></span>
       </div>
       <div id="squadreList"></div>
     </div>
@@ -620,8 +642,6 @@
     list.innerHTML = '';
 
     const totAlunni = _datiAttest.reduce(function(s,sq){ return s + sq.alunni.length; }, 0);
-    document.getElementById('riepilogoCount').textContent =
-      _datiAttest.length + ' squadre · ' + totAlunni + ' alunni';
 
     _datiAttest.forEach(function(sq, sqIdx) {
       const block = document.createElement('div');
@@ -641,6 +661,10 @@
 
       block.innerHTML = `
         <div class="squadra-header" onclick="toggleSquadra(${sqIdx})">
+          <input type="checkbox" id="sq-check-${sqIdx}" class="sq-checkbox" checked
+                 onclick="event.stopPropagation()"
+                 onchange="toggleSelezioneSquadra(${sqIdx}, this.checked)"
+                 title="Seleziona/deseleziona tutta la squadra">
           ${posBadge}
           <div>
             <div class="squadra-nome">${_esc(sq.squadra)}</div>
@@ -656,6 +680,8 @@
         <div class="alunni-list" id="alunni-${sqIdx}">
           ${sq.alunni.map(function(nome, aIdx) {
             return `<div class="alunno-row">
+              <input type="checkbox" id="al-check-${sqIdx}-${aIdx}" class="al-checkbox" checked
+                     onchange="aggiornaCheckSquadra(${sqIdx})">
               <span class="alunno-nome">${_esc(nome)}</span>
               <span class="alunno-tipo" style="color:${sq.tipo==='Merito'?'#fbbf24':'#a5b4fc'}">${sq.tipo}</span>
               <button class="btn btn-sm btn-outline" onclick="apriEditNome(${sqIdx},${aIdx})" title="Modifica nome alunno">✏️</button>
@@ -669,6 +695,7 @@
     });
 
     document.getElementById('squadrePanel').style.display = 'block';
+    aggiornaCounterSelezione();
     // Apre automaticamente la prima squadra
     toggleSquadra(0);
   }
@@ -676,6 +703,75 @@
   function toggleSquadra(idx) {
     const block = document.getElementById('sq-block-' + idx);
     block.classList.toggle('open');
+  }
+
+  // ===================== SELEZIONE ATTESTATI =====================
+
+  function getListaSelezionati() {
+    const lista = [];
+    _datiAttest.forEach(function(sq, sqIdx) {
+      sq.alunni.forEach(function(nome, aIdx) {
+        const cb = document.getElementById('al-check-' + sqIdx + '-' + aIdx);
+        if (cb && cb.checked) lista.push({ sq: sq, nome: nome });
+      });
+    });
+    return lista;
+  }
+
+  function toggleSelezioneSquadra(sqIdx, checked) {
+    _datiAttest[sqIdx].alunni.forEach(function(nome, aIdx) {
+      const cb = document.getElementById('al-check-' + sqIdx + '-' + aIdx);
+      if (cb) cb.checked = checked;
+    });
+    aggiornaCounterSelezione();
+  }
+
+  function aggiornaCheckSquadra(sqIdx) {
+    const sqCb = document.getElementById('sq-check-' + sqIdx);
+    if (!sqCb) return;
+    const alCbs = _datiAttest[sqIdx].alunni.map(function(nome, aIdx) {
+      return document.getElementById('al-check-' + sqIdx + '-' + aIdx);
+    }).filter(Boolean);
+    const n = alCbs.filter(function(cb) { return cb.checked; }).length;
+    if (n === 0)            { sqCb.checked = false; sqCb.indeterminate = false; }
+    else if (n === alCbs.length) { sqCb.checked = true;  sqCb.indeterminate = false; }
+    else                         { sqCb.checked = false; sqCb.indeterminate = true;  }
+    aggiornaCounterSelezione();
+  }
+
+  function aggiornaCounterSelezione() {
+    const sel = getListaSelezionati();
+    const tot = _datiAttest.reduce(function(s, sq) { return s + sq.alunni.length; }, 0);
+    document.getElementById('riepilogoCount').textContent =
+      _datiAttest.length + ' squadre · ' + tot + ' alunni';
+    document.getElementById('selezioneInfo').textContent =
+      sel.length === tot
+        ? '✓ Tutti selezionati'
+        : sel.length + ' / ' + tot + ' selezionati';
+  }
+
+  function selezionaTutti() {
+    _datiAttest.forEach(function(sq, sqIdx) {
+      sq.alunni.forEach(function(nome, aIdx) {
+        const cb = document.getElementById('al-check-' + sqIdx + '-' + aIdx);
+        if (cb) cb.checked = true;
+      });
+      const sqCb = document.getElementById('sq-check-' + sqIdx);
+      if (sqCb) { sqCb.checked = true; sqCb.indeterminate = false; }
+    });
+    aggiornaCounterSelezione();
+  }
+
+  function deselezionaTutti() {
+    _datiAttest.forEach(function(sq, sqIdx) {
+      sq.alunni.forEach(function(nome, aIdx) {
+        const cb = document.getElementById('al-check-' + sqIdx + '-' + aIdx);
+        if (cb) cb.checked = false;
+      });
+      const sqCb = document.getElementById('sq-check-' + sqIdx);
+      if (sqCb) { sqCb.checked = false; sqCb.indeterminate = false; }
+    });
+    aggiornaCounterSelezione();
   }
 
   // ===================== GENERAZIONE PDF =====================
@@ -728,11 +824,8 @@
   }
 
   async function scaricaTutti() {
-    const lista = [];
-    _datiAttest.forEach(function(sq) {
-      sq.alunni.forEach(function(nome) { lista.push({sq, nome}); });
-    });
-    if (lista.length === 0) { toast('Nessun alunno trovato.'); return; }
+    const lista = getListaSelezionati();
+    if (lista.length === 0) { toast('Nessun alunno selezionato.'); return; }
 
     const btn = document.getElementById('btnTutti');
     btn.disabled = true;
@@ -1190,17 +1283,15 @@
 
   function confermaInvioEmail() {
     if (_datiAttest.length === 0) { toast('⚠️ Prima carica i dati di una gara.'); return; }
+    if (getListaSelezionati().length === 0) { toast('⚠️ Seleziona almeno un alunno.'); return; }
     document.getElementById('modalConfirmEmail').style.display = 'block';
   }
 
   // ===================== GENERA + DRIVE (senza email, per scheduler) =====================
 
   async function generaTuttiDriveOnly() {
-    const lista = [];
-    _datiAttest.forEach(function(sq) {
-      sq.alunni.forEach(function(nome) { lista.push({ sq: sq, nome: nome }); });
-    });
-    if (lista.length === 0) { toast('Nessun alunno trovato.'); return; }
+    const lista = getListaSelezionati();
+    if (lista.length === 0) { toast('Nessun alunno selezionato.'); return; }
 
     const btn = document.getElementById('btnDriveOnly');
     btn.disabled = true;
@@ -1270,11 +1361,8 @@
   // ===================== GENERA + DRIVE + EMAIL (FLUSSO COMPLETO) =====================
 
   async function generaTuttiDriveEmail() {
-    const lista = [];
-    _datiAttest.forEach(function(sq) {
-      sq.alunni.forEach(function(nome) { lista.push({ sq: sq, nome: nome }); });
-    });
-    if (lista.length === 0) { toast('Nessun alunno trovato.'); return; }
+    const lista = getListaSelezionati();
+    if (lista.length === 0) { toast('Nessun alunno selezionato.'); return; }
 
     const btn = document.getElementById('btnDriveEmail');
     btn.disabled = true;
