@@ -711,13 +711,16 @@
 
           // Aggiorna punteggio (la penalità/bonus è sempre valida)
           stato.puntiTotali += parseInt(r.punti) || 0;
+          if (r.bonusSuperbonus) stato.puntiTotali += parseInt(r.bonusSuperbonus) || 0;
           aggiornaScore();
 
           if (r.esito === 'corretta' && !precedenteCorretta) {
             // Prima risposta corretta
             stato.risposte[numDom] = { risposta: rNorm, esito: 'corretta', punti: r.punti };
             flashQBtn(numDom, 'corretta', isJolly);
-            feedback.textContent = '✓ CORRETTA! +' + r.punti + ' punti' + (isJolly ? ' ⭐ Jolly x2!' : '');
+            let msgCorretta = '✓ CORRETTA! +' + r.punti + ' punti' + (isJolly ? ' ⭐ Jolly x2!' : '');
+            if (r.bonusSuperbonus) msgCorretta += ' 🏆 SUPERBONUS COMPLETAMENTO! +' + r.bonusSuperbonus + ' pt!';
+            feedback.textContent = msgCorretta;
             feedback.style.color = '#065f46';
             input.value = '';
             // Auto-naviga alla prossima domanda aperta dopo 2s (aspetta fine flash)
