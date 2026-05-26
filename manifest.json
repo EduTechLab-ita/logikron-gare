@@ -2,6 +2,8 @@
   "name": "LogiKron - Giochi Matematici",
   "short_name": "LogiKron",
   "description": "Piattaforma per gare matematiche a squadre tra Istituti Comprensivi",
+  "id": "/logikron-gare/",
+  "scope": "/logikron-gare/",
   "start_url": "/logikron-gare/",
   "display": "standalone",
   "background_color": "#1e1b4b",
