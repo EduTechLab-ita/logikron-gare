@@ -1699,7 +1699,7 @@
       return lista.filter(i => {
         if (filtri.email    && i.email    !== filtri.email)    return false;
         if (filtri.ordine   && i.ordine   !== filtri.ordine)   return false;
-        if (filtri.classe   && i.classe   !== filtri.classe)   return false;
+        if (filtri.classe   && String(i.classe).trim().replace('^','') !== filtri.classe.trim().replace('^','')) return false;
         if (filtri.istituto && i.istituto !== filtri.istituto) return false;
         if (filtri.plesso   && i.plesso   !== filtri.plesso)   return false;
         return true;
