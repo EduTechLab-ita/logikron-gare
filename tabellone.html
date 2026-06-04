@@ -675,6 +675,7 @@
     let domandeDeadline= null;
     let timerInterval  = null;
     let pollingInterval= null;
+    let _pollSeq       = 0; // anti-stale: ignora risposte fuori ordine
     let attesaInterval = null;
     let _cerimoniaRendered = -1; // evita di rilanciare animazioni già mostrate
 
@@ -703,8 +704,10 @@
     }
 
     function aggiornaTabellone() {
+      const mySeq = ++_pollSeq;
       lkApi(API, { action: 'getTabellone', garaId: garaId })
         .then(data => {
+          if (mySeq !== _pollSeq) return; // risposta stale (fuori ordine) → ignora
           if (!data || data.error) return;
           lastData = data;
 
