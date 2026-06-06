@@ -427,45 +427,57 @@
       const btn = document.getElementById('btnLogin');
       btn.disabled = true; btn.textContent = 'Connessione...';
 
-      lkApi(API, { action: 'loginSquadra', codice: codice })
-        .then(r => {
-          btn.disabled = false; btn.textContent = 'Entra';
-          if (r.error) {
-            errEl.textContent = 'Codice non riconosciuto. Riprova.';
-            errEl.classList.remove('hidden');
-            return;
-          }
-          stato.garaId     = r.garaId;
-          stato.squadraId  = r.squadraId;
-          stato.nomeSquadra = r.nomeSquadra || codice;
-
-          if (r.garaStato === 'attiva') {
-            sessionStorage.setItem('lkGara', JSON.stringify({ garaId: r.garaId, squadraId: r.squadraId, nomeSquadra: stato.nomeSquadra }));
-            caricaGara();
-          } else if (r.garaStato === 'preparazione') {
-            sessionStorage.setItem('lkGara', JSON.stringify({ garaId: r.garaId, squadraId: r.squadraId, nomeSquadra: stato.nomeSquadra }));
-            mostraBannerAttesa();
-          } else if (r.garaStato === 'conclusa' && r.cerimonia < 2) {
-            // Gara conclusa ma podio non ancora mostrato → in attesa dei risultati
-            sessionStorage.removeItem('lkGara');
-            const ptEl = document.getElementById('punteggioFinaleVal');
-            if (ptEl) ptEl.textContent = '—';
-            const ov = document.getElementById('overlayGaraTerminata');
-            if (ov) ov.style.display = 'flex';
-            const loginEl = document.getElementById('loginSquadra');
-            if (loginEl) loginEl.classList.add('hidden');
-          } else {
-            // conclusa + cerimonia >= 2 (podio mostrato) oppure stato sconosciuto
-            errEl.textContent = 'La gara è conclusa. I risultati sono disponibili nell\'archivio.';
-            errEl.classList.remove('hidden');
+      function tentaLogin(tentativiRimasti) {
+        lkApi(API, { action: 'loginSquadra', codice: codice })
+          .then(r => {
             btn.disabled = false; btn.textContent = 'Entra';
-          }
-        })
-        .catch(err => {
-          btn.disabled = false; btn.textContent = 'Entra';
-          errEl.textContent = 'Errore di rete: ' + err.message;
-          errEl.classList.remove('hidden');
-        });
+            if (r.error) {
+              // Codice non valido: non riprovare
+              errEl.textContent = 'Codice non riconosciuto. Riprova.';
+              errEl.classList.remove('hidden');
+              return;
+            }
+            stato.garaId      = r.garaId;
+            stato.squadraId   = r.squadraId;
+            stato.nomeSquadra = r.nomeSquadra || codice;
+
+            if (r.garaStato === 'attiva') {
+              sessionStorage.setItem('lkGara', JSON.stringify({ garaId: r.garaId, squadraId: r.squadraId, nomeSquadra: stato.nomeSquadra }));
+              caricaGara();
+            } else if (r.garaStato === 'preparazione') {
+              sessionStorage.setItem('lkGara', JSON.stringify({ garaId: r.garaId, squadraId: r.squadraId, nomeSquadra: stato.nomeSquadra }));
+              mostraBannerAttesa();
+            } else if (r.garaStato === 'conclusa' && r.cerimonia < 2) {
+              // Gara conclusa ma podio non ancora mostrato → in attesa dei risultati
+              sessionStorage.removeItem('lkGara');
+              const ptEl = document.getElementById('punteggioFinaleVal');
+              if (ptEl) ptEl.textContent = '—';
+              const ov = document.getElementById('overlayGaraTerminata');
+              if (ov) ov.style.display = 'flex';
+              const loginEl = document.getElementById('loginSquadra');
+              if (loginEl) loginEl.classList.add('hidden');
+            } else {
+              // conclusa + cerimonia >= 2 (podio mostrato) oppure stato sconosciuto
+              errEl.textContent = 'La gara è conclusa. I risultati sono disponibili nell\'archivio.';
+              errEl.classList.remove('hidden');
+              btn.disabled = false; btn.textContent = 'Entra';
+            }
+          })
+          .catch(err => {
+            if (tentativiRimasti > 0) {
+              // Errore di rete/timeout: riprova dopo 4 secondi
+              const n = 3 - tentativiRimasti + 1;
+              btn.textContent = 'Riprovo (' + n + '/3)...';
+              setTimeout(() => tentaLogin(tentativiRimasti - 1), 4000);
+            } else {
+              btn.disabled = false; btn.textContent = 'Entra';
+              errEl.textContent = 'Server non raggiungibile. Ricarica la pagina e riprova.';
+              errEl.classList.remove('hidden');
+            }
+          });
+      }
+
+      tentaLogin(3); // max 3 tentativi automatici
     }
 
     function mostraBannerAttesa() {
