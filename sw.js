@@ -3,7 +3,7 @@
 //  ⚙️  Aggiorna CACHE_NAME ad ogni deploy per forzare il refresh
 // ══════════════════════════════════════════════════════════════════
 
-const CACHE_NAME = 'logikron-v4.96';
+const CACHE_NAME = 'logikron-v4.97';
 
 const STATIC_ASSETS = [
   './',
@@ -56,6 +56,9 @@ self.addEventListener('activate', event => {
 // ── Fetch: network-first per API backend, cache-first per asset locali ──
 self.addEventListener('fetch', event => {
   const url = new URL(event.request.url);
+
+  // sw.js stesso: NON intercettare (così il browser scarica sempre la versione aggiornata)
+  if (url.pathname.endsWith('/sw.js')) return;
 
   // Le chiamate al backend Apps Script: NON intercettare.
   // Il JSONP usa <script> tag che il browser carica senza CORS — se il SW fa fetch()
