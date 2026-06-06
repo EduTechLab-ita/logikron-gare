@@ -1301,6 +1301,7 @@
   let _driveTokenExpiry = 0;
   let _driveTokenClient = null;
   let _attestatiFolderId = null;
+  let _folderIdCache = {}; // cache subfolder IDs: "ordine|istituto|plesso|classe" → folderId
 
   function initDriveAuth() {
     // Inizializzato quando GIS è pronto (callback onload dello script GIS)
@@ -1341,6 +1342,38 @@
     return _attestatiFolderId;
   }
 
+  // Cerca o crea una cartella in Drive via API (nessun GAS coinvolto)
+  async function _driveGetOrCreateFolder(name, parentId, token) {
+    const q = "name='" + name.replace(/'/g, "\\'") + "' and mimeType='application/vnd.google-apps.folder' and '" + parentId + "' in parents and trashed=false";
+    const sr = await fetch('https://www.googleapis.com/drive/v3/files?q=' + encodeURIComponent(q) + '&fields=files(id)', { headers: { Authorization: 'Bearer ' + token } });
+    const sd = await sr.json();
+    if (sd.files && sd.files.length > 0) return sd.files[0].id;
+    const cr = await fetch('https://www.googleapis.com/drive/v3/files', {
+      method: 'POST',
+      headers: { Authorization: 'Bearer ' + token, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name: name, mimeType: 'application/vnd.google-apps.folder', parents: [parentId] })
+    });
+    const cf = await cr.json();
+    if (!cf.id) throw new Error('Impossibile creare cartella "' + name + '"');
+    return cf.id;
+  }
+
+  // Restituisce il folderId del subfolder corretto per un attestato (con cache per classe)
+  async function _getTargetFolderIdForAttest(meta, rootFolderId, token) {
+    const ordineLabel = (meta.ordine === 'primaria' ? 'Primaria' : 'Secondaria') + ' ' + meta.classe + '\u00aa';
+    const istitutoLabel = meta.istituto || 'Istituto';
+    const plessoLabel = meta.plesso || meta.istituto || 'Plesso';
+    const classeLabel = (meta.classe + '\u00aa ' + (meta.sezione || '')).trim();
+    const cacheKey = [ordineLabel, istitutoLabel, plessoLabel, classeLabel].join('|');
+    if (_folderIdCache[cacheKey]) return _folderIdCache[cacheKey];
+    let fId = rootFolderId;
+    for (const folderName of [ordineLabel, istitutoLabel, plessoLabel, classeLabel]) {
+      fId = await _driveGetOrCreateFolder(folderName, fId, token);
+    }
+    _folderIdCache[cacheKey] = fId;
+    return fId;
+  }
+
   async function _uploadToDriveApi(pdfBlob, fileName, folderId, token) {
     // Cerca se esiste già un file con lo stesso nome nella cartella → sovrascrive invece di duplicare
     const q = encodeURIComponent("name='" + fileName.replace(/'/g, "\\'") + "' and '" + folderId + "' in parents and trashed=false");
@@ -1379,41 +1412,46 @@
   }
 
   // Punto di ingresso unico — firma identica a prima, nessuna modifica nel resto del codice
-  // Ritorna Promise<{ ok, fileId, fileName }>
+  // Fix 5 (06/06/2026): upload diretto nel subfolder corretto via Drive API — nessun GAS intermediario
+  // Ritorna Promise<{ ok, fileId, fileName, fileIdCancellati }>
   async function uploadPdfToBackend(pdfBase64, meta) {
     // 1. Token OAuth
     const token = await getDriveToken();
 
-    // 2. Folder ID cartella Attestati (da Config via JSONP — chiamata piccola, nessun problema)
-    const folderId = await _getAttestatiFolderIdCached();
+    // 2. Root folder ID (da Config via JSONP — una sola chiamata, poi cached)
+    const rootFolderId = await _getAttestatiFolderIdCached();
 
-    // 3. Converti base64 → Blob
+    // 3. Subfolder corretto (browser→Drive API, con cache per classe — 4 query la prima volta, poi 0)
+    const targetFolderId = await _getTargetFolderIdForAttest(meta, rootFolderId, token);
+
+    // 4. Converti base64 → Blob
     const binary = atob(pdfBase64);
     const bytes = new Uint8Array(binary.length);
     for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
     const pdfBlob = new Blob([bytes], { type: 'application/pdf' });
     const fileName = (meta.nomeAlunno || 'attestato').replace(/[\/\\?%*:|"<>]/g, '_') + '.pdf';
 
-    // 4. Upload diretto su Drive (veloce, nessun limite di URL)
-    const uploaded = await _uploadToDriveApi(pdfBlob, fileName, folderId, token);
+    // 5. Upload diretto nel subfolder corretto (nessuna chiamata GAS per spostamento)
+    const uploaded = await _uploadToDriveApi(pdfBlob, fileName, targetFolderId, token);
 
-    // 5. Sposta nel subfolder corretto via AS (chiamata piccola — solo metadati)
-    const spostaParams = {
-      action:     'spostaAttestatoDrive',
-      pwd:        adminPwd,
-      fileId:     uploaded.id,
-      nomeAlunno: meta.nomeAlunno,
-      ordine:     meta.ordine,
-      classe:     meta.classe,
-      sezione:    meta.sezione,
-      istituto:   meta.istituto,
-      plesso:     meta.plesso
-    };
-    if (meta.vecchioNome) spostaParams.vecchioNome = meta.vecchioNome;
-    const moved = await lkApi(API, spostaParams, 30000);
-    if (moved.error) console.warn('Sposta subfolder:', moved.error, '— file resta nella cartella Attestati');
+    // 6. Se è una correzione di nome: elimina il vecchio file (se esiste) via Drive API
+    const fileIdCancellati = [];
+    if (meta.vecchioNome) {
+      const vecchioFileName = meta.vecchioNome.replace(/[\/\\?%*:|"<>]/g, '_') + '.pdf';
+      const qv = "name='" + vecchioFileName.replace(/'/g, "\\'") + "' and '" + targetFolderId + "' in parents and trashed=false";
+      const svr = await fetch('https://www.googleapis.com/drive/v3/files?q=' + encodeURIComponent(qv) + '&fields=files(id)', { headers: { Authorization: 'Bearer ' + token } });
+      const svData = await svr.json();
+      if (svData.files) {
+        for (const f of svData.files) {
+          if (f.id !== uploaded.id) {
+            await fetch('https://www.googleapis.com/drive/v3/files/' + f.id, { method: 'DELETE', headers: { Authorization: 'Bearer ' + token } });
+            fileIdCancellati.push(f.id);
+          }
+        }
+      }
+    }
 
-    return { ok: true, fileId: uploaded.id, fileName: uploaded.name, fileIdCancellati: moved.fileIdCancellati || [] };
+    return { ok: true, fileId: uploaded.id, fileName: uploaded.name, fileIdCancellati: fileIdCancellati };
   }
 
   // ===================== CONFIRM MODAL EMAIL =====================
