@@ -5,11 +5,19 @@
  * Modificare qui per cambiare anno scolastico o agganciare altre scuole.
  */
 
+// Anno scolastico calcolato automaticamente dalla data di sistema.
+// Regola: mese >= settembre → anno/anno+1 | mese < settembre → anno-1/anno
+// Es: giugno 2026 → "2025-2026" | settembre 2026 → "2026-2027"
+const _lkAnno = (function() {
+  var d = new Date(), y = d.getFullYear(), m = d.getMonth() + 1;
+  return m >= 9 ? (y + '-' + (y + 1)) : ((y - 1) + '-' + y);
+})();
+
 const LOGIKRON_CONFIG = {
   // ==========================================
-  // ANNO SCOLASTICO CORRENTE
+  // ANNO SCOLASTICO CORRENTE (calcolato automaticamente)
   // ==========================================
-  annoScolastico: '2025-2026',
+  annoScolastico: _lkAnno,
 
   // ==========================================
   // FASE ATTIVA (cambiare per aprire/chiudere le fasi)
@@ -43,14 +51,17 @@ const LOGIKRON_CONFIG = {
   },
 
   // ==========================================
-  // GOOGLE APPS SCRIPT - WEB APP URLs
+  // API URL — Cloudflare Worker (backend principale)
+  // Apps Script mantiene solo: email, Drive, sync notturno
   // ==========================================
-  // Questi URL vengono generati dopo il deploy degli script
+  apiUrl: 'https://logikron-api.edutechlab-ita.workers.dev',
+
+  // Legacy (non più usati dal frontend — mantenuti per compatibilità Apps Script)
   webAppUrls: {
     intenzioni: 'https://script.google.com/macros/s/AKfycby0I6cvCglgrVozTqef9tE3l1flVt-IUrygrLYDd7atUw6t3RHCozPKl-XJBFHAvm7K2g/exec',
     iscrizioni: 'https://script.google.com/macros/s/AKfycby0I6cvCglgrVozTqef9tE3l1flVt-IUrygrLYDd7atUw6t3RHCozPKl-XJBFHAvm7K2g/exec',
-    gare: 'https://script.google.com/macros/s/AKfycby0I6cvCglgrVozTqef9tE3l1flVt-IUrygrLYDd7atUw6t3RHCozPKl-XJBFHAvm7K2g/exec',
-    admin: 'https://script.google.com/macros/s/AKfycby0I6cvCglgrVozTqef9tE3l1flVt-IUrygrLYDd7atUw6t3RHCozPKl-XJBFHAvm7K2g/exec'
+    gare:       'https://script.google.com/macros/s/AKfycby0I6cvCglgrVozTqef9tE3l1flVt-IUrygrLYDd7atUw6t3RHCozPKl-XJBFHAvm7K2g/exec',
+    admin:      'https://script.google.com/macros/s/AKfycby0I6cvCglgrVozTqef9tE3l1flVt-IUrygrLYDd7atUw6t3RHCozPKl-XJBFHAvm7K2g/exec'
   },
 
   // ==========================================
