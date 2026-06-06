@@ -443,7 +443,7 @@
 </div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<!-- html2canvas rimosso: generazione PDF ora usa Canvas2D diretto (molto più veloce) -->
 <script>
   const ADMIN_PASSWORD = 'logikron2025';
   const API = LOGIKRON_CONFIG.webAppUrls.admin;
@@ -452,8 +452,9 @@
   let _datiAttest = []; // [{squadra, posizione, tipo, istituto, plesso, ordine, classe, sezione, docente, email, alunni:[]}]
   let _garaNome = '';
   let _garaId   = '';
-  let _imgCache = {}; // { name: base64 }
-  let _imgDim   = {}; // { name: {w, h} }
+  let _imgCache  = {}; // { name: base64 }
+  let _imgDim    = {}; // { name: {w, h} }
+  let _imgElCache = {}; // { name: HTMLImageElement } — pronti per drawImage() senza ricaricare
 
   // ===================== LOGIN =====================
 
@@ -516,7 +517,11 @@
         _imgCache[name] = b64;
         await new Promise(function(resolve) {
           const img = new Image();
-          img.onload = function() { _imgDim[name] = { w: img.width, h: img.height }; resolve(); };
+          img.onload = function() {
+            _imgDim[name] = { w: img.width, h: img.height };
+            _imgElCache[name] = img; // salva elemento già pronto per drawImage()
+            resolve();
+          };
           img.src = b64;
         });
       } catch(e) {
@@ -943,14 +948,15 @@
   // ===================== GENERA SINGOLO PDF =====================
 
   async function generaPDF(sq, nomeAlunno) {
-    // Normalizza in Title Case se il nome è tutto maiuscolo (es. inserito da docente in caps lock)
+    // Normalizza in Title Case se il nome è tutto maiuscolo
     if (nomeAlunno && nomeAlunno === nomeAlunno.toUpperCase()) {
       nomeAlunno = nomeAlunno.toLowerCase().replace(/\b\w/g, function(c) { return c.toUpperCase(); });
     }
     const { jsPDF } = window.jspdf;
     const campi = getCampi();
+    const isMerito = sq.tipo === 'Merito';
 
-    // Forza il caricamento di tutti i font Google prima di renderizzare
+    // Forza il caricamento dei font Google (una volta sola, poi browser li tiene in cache)
     await Promise.all([
       document.fonts.load('400 16px "Special Elite"'),
       document.fonts.load('400 16px "Playfair Display"'),
@@ -961,29 +967,160 @@
       document.fonts.load('400 16px "Great Vibes"'),
     ]).catch(function(){});
 
-    const div = buildAttestato(sq, nomeAlunno, campi);
-    div.style.position = 'fixed';
-    div.style.left = '-9999px';
-    div.style.top = '0px';
-    document.body.appendChild(div);
+    // Canvas2D diretto — niente html2canvas, niente DOM, molto più veloce
+    const W = 1122, H = 794, S = 2; // S=2 → 192 DPI su A4
+    const canvas = document.createElement('canvas');
+    canvas.width = W * S; canvas.height = H * S;
+    const ctx = canvas.getContext('2d');
+    ctx.scale(S, S);
 
-    try {
-      const canvas = await html2canvas(div, {
-        scale: 2,
-        useCORS: true,
-        allowTaint: true,
-        logging: false,
-        width: 1122,
-        height: 794,
-        backgroundColor: '#ffffff'
+    // Helper: carica un'immagine da base64 come HTMLImageElement (usa cache se disponibile)
+    function loadImgEl(name) {
+      return new Promise(function(resolve) {
+        if (_imgElCache[name]) { resolve(_imgElCache[name]); return; }
+        if (!_imgCache[name])  { resolve(null); return; }
+        const img = new Image();
+        img.onload  = function() { _imgElCache[name] = img; resolve(img); };
+        img.onerror = function() { resolve(null); };
+        img.src = _imgCache[name];
       });
-      const imgData = canvas.toDataURL('image/jpeg', 0.97);
-      const doc = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4' });
-      doc.addImage(imgData, 'JPEG', 0, 0, 297, 210);
-      return doc;
-    } finally {
-      document.body.removeChild(div);
     }
+
+    // ── Sfondo bianco + immagine di sfondo ──
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(0, 0, W, H);
+    const bgImg = await loadImgEl('sfondo');
+    if (bgImg) ctx.drawImage(bgImg, 0, 0, W, H);
+
+    // ── Logo stato (Repubblica) ──
+    const logoStato = await loadImgEl('logo-stato');
+    if (logoStato) ctx.drawImage(logoStato, 70, 72, 65, 65);
+
+    // ── "Ministero dell'Istruzione e del Merito" (sinistra, 3 righe) ──
+    ctx.fillStyle = '#1a1a1a';
+    ctx.font = '17px "Special Elite", monospace';
+    ctx.textAlign = 'left';
+    ctx.textBaseline = 'top';
+    ctx.fillText("Ministero", 145, 74);
+    ctx.fillText("dell\u2019Istruzione", 145, 74 + 26);
+    ctx.fillText("e del Merito", 145, 74 + 52);
+
+    // ── "ISTITUTO COMPRENSIVO di GOTTOLENGO" (destra, 2 righe) ──
+    ctx.font = '21px "Special Elite", monospace';
+    ctx.textAlign = 'right';
+    ctx.fillText("ISTITUTO COMPRENSIVO", W - 70, 74);
+    ctx.fillText("di GOTTOLENGO", W - 70, 74 + 32);
+
+    // ── Logo LogiKron (centrato) ──
+    const logoLk = await loadImgEl('logo-logikron');
+    if (logoLk) {
+      const dim = _imgDim['logo-logikron'] || { w: 600, h: 163 };
+      const lw = 400, lh = Math.round(lw * dim.h / dim.w);
+      ctx.drawImage(logoLk, Math.round((W - lw) / 2), 116, lw, lh);
+    }
+
+    // ── "Giochi Matematici a Squadre" ──
+    ctx.fillStyle = '#141414';
+    ctx.font = 'bold 33px "Playfair Display", serif';
+    ctx.textAlign = 'center';
+    ctx.fillText('Giochi Matematici a Squadre', W / 2, 228);
+
+    // ── Data ──
+    ctx.font = 'italic 24px "EB Garamond", serif';
+    ctx.fillStyle = '#222';
+    ctx.fillText(campi.dataCerimonia, W / 2, 267);
+
+    // ── Classe / plesso ──
+    const classeStr = 'Classe ' + sq.classe
+      + (sq.sezione ? ' sez. ' + sq.sezione : '')
+      + ' \u2014 ' + (sq.plesso || sq.istituto);
+    ctx.font = '22px "EB Garamond", serif';
+    ctx.fillStyle = '#2a2a2a';
+    ctx.fillText(classeStr, W / 2, 296);
+
+    // ── "Attestato di" ──
+    ctx.font = '400 38px "Playfair Display", serif';
+    ctx.fillStyle = '#141414';
+    ctx.fillText('Attestato di', W / 2, 336);
+
+    // ── Merito / Partecipazione ──
+    ctx.font = 'bold italic 62px "Playfair Display", serif';
+    ctx.fillStyle = isMerito ? '#6b2400' : '#0f2d7a';
+    ctx.fillText(sq.tipo, W / 2, 377);
+
+    // ── Badge (destra) ──
+    const badgeSrc = creaImgBadge(campi.edizioni);
+    const badgeImg = await loadImgEl('__badge__' + campi.edizioni);
+    if (!_imgElCache['__badge__' + campi.edizioni]) {
+      // crea e cachea il badge come HTMLImageElement
+      await new Promise(function(resolve) {
+        const img = new Image();
+        img.onload = function() { _imgElCache['__badge__' + campi.edizioni] = img; ctx.drawImage(img, W - 140 - 118, 324, 118, 118); resolve(); };
+        img.onerror = resolve;
+        img.src = badgeSrc;
+      });
+    } else {
+      ctx.drawImage(_imgElCache['__badge__' + campi.edizioni], W - 140 - 118, 324, 118, 118);
+    }
+
+    // ── "Conferito a" ──
+    ctx.font = '25px "EB Garamond", serif';
+    ctx.fillStyle = '#1e1e1e';
+    ctx.textAlign = 'center';
+    ctx.fillText('Conferito a', W / 2, 450);
+
+    // ── Nome alunno (Great Vibes, dimensione adattiva) ──
+    const nlen = nomeAlunno.length;
+    const nfs  = nlen > 30 ? 36 : nlen > 24 ? 42 : nlen > 18 ? 48 : nlen > 13 ? 54 : 62;
+    ctx.font = nfs + 'px "Great Vibes", cursive';
+    ctx.fillStyle = '#080808';
+    ctx.fillText(nomeAlunno, W / 2, 492);
+
+    // ── Sottolineatura oro (gradiente) ──
+    const grad = ctx.createLinearGradient(270, 568, W - 270, 568);
+    grad.addColorStop(0, 'rgba(0,0,0,0)');
+    grad.addColorStop(0.3, '#b08820');
+    grad.addColorStop(0.7, '#b08820');
+    grad.addColorStop(1, 'rgba(0,0,0,0)');
+    ctx.strokeStyle = grad;
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(270, 569); ctx.lineTo(W - 270, 569);
+    ctx.stroke();
+
+    // ── Timbro (centrato) ──
+    const timbro = await loadImgEl('timbro');
+    if (timbro) ctx.drawImage(timbro, Math.round((W - 130) / 2), 572, 130, 130);
+
+    // ── Referente (colonna sinistra: left:70, width:240, center=190) ──
+    const refCX = 70 + 120;
+    ctx.fillStyle = '#141414';
+    ctx.textAlign = 'center';
+    ctx.font = '20px "EB Garamond", serif';
+    ctx.fillText('Il Referente del Progetto', refCX, 584);
+    ctx.font = 'bold 22px "EB Garamond", serif';
+    ctx.fillText(campi.nomeRef, refCX, 584 + 30);
+
+    // ── Dirigente (colonna destra: right:70, width:270, center=917) ──
+    const dirCX = W - 70 - 270 / 2; // 917
+    ctx.font = '20px "EB Garamond", serif';
+    ctx.fillStyle = '#141414';
+    ctx.fillText('La Dirigente Scolastica', dirCX, 584);
+    ctx.font = 'bold 22px "EB Garamond", serif';
+    ctx.fillText(campi.nomeDS, dirCX, 584 + 30);
+    // Nota legale (3 righe piccole)
+    ctx.font = '14px "EB Garamond", serif';
+    ctx.fillStyle = '#555';
+    const noteY = 584 + 30 + 33 + 4;
+    ctx.fillText('Firma autografa sostituita a mezzo stampa', dirCX, noteY);
+    ctx.fillText('ai sensi e per gli effetti dell\u2019art.\u00a03, C.\u00a02,', dirCX, noteY + 20);
+    ctx.fillText('D.Lgs\u00a0n.\u00a039/1993', dirCX, noteY + 40);
+
+    // ── Genera PDF ──
+    const imgData = canvas.toDataURL('image/jpeg', 0.97);
+    const doc = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4' });
+    doc.addImage(imgData, 'JPEG', 0, 0, 297, 210);
+    return doc;
   }
 
   // ── Costruisce il div HTML dell'attestato (1122×794 px = A4 landscape) ──
