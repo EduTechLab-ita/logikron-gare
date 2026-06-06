@@ -893,6 +893,102 @@
         </div>
       </section>
 
+      <!-- ==================== GESTIONE EMERGENZE ==================== -->
+      <section class="admin-section">
+        <h3 class="admin-section-title">
+          🚨 Gestione Emergenze
+          <button onclick="toggleInfo('info-emergenze')" style="background:none;border:1px solid var(--lk-border);border-radius:6px;padding:2px 8px;font-size:0.75rem;cursor:pointer;color:var(--lk-text-muted);margin-left:8px;">ℹ️</button>
+        </h3>
+        <div class="info-panel" id="info-emergenze">
+          <strong>🔁 Sostituzione Docente</strong> — aggiorna nome e/o email in tutte le righe di Intenzioni + Iscrizioni in un colpo solo (invece di modificarle a mano su Sheets).<br>
+          <strong>⏰ Iscrizione Tardiva</strong> — aggiunge un docente/classe non iscritto entro la scadenza: crea le righe in Iscrizioni e le squadre nella gara selezionata con codici pronti da consegnare.
+        </div>
+
+        <!-- SUB-ACCORDION: Sostituzione Docente -->
+        <div class="stat-accordion-item" id="accSostDoc" style="margin-bottom:0.7rem;">
+          <div class="stat-accordion-header" onclick="toggleEmergenzaAcc('accSostDoc')">
+            <span>🔁 Sostituzione Docente</span>
+            <span class="stat-accordion-arrow">▶</span>
+          </div>
+          <div class="stat-accordion-body" style="padding:1rem;">
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.7rem;margin-bottom:0.8rem;">
+              <div>
+                <label style="font-size:0.8rem;color:var(--lk-text-muted);display:block;margin-bottom:3px;">Email ATTUALE del docente</label>
+                <input id="sdEmailVecchio" type="email" placeholder="mario.rossi@scuola.it" style="width:100%;padding:7px 10px;background:#0f172a;border:1px solid var(--lk-border);border-radius:7px;color:white;font-size:0.85rem;box-sizing:border-box;">
+              </div>
+              <div>
+                <label style="font-size:0.8rem;color:var(--lk-text-muted);display:block;margin-bottom:3px;">Nuova email (lascia vuoto se invariata)</label>
+                <input id="sdEmailNuovo" type="email" placeholder="anna.verdi@scuola.it" style="width:100%;padding:7px 10px;background:#0f172a;border:1px solid var(--lk-border);border-radius:7px;color:white;font-size:0.85rem;box-sizing:border-box;">
+              </div>
+              <div style="grid-column:1/-1;">
+                <label style="font-size:0.8rem;color:var(--lk-text-muted);display:block;margin-bottom:3px;">Nuovo nome completo (lascia vuoto se invariato)</label>
+                <input id="sdNomeNuovo" type="text" placeholder="Anna Verdi" style="width:100%;padding:7px 10px;background:#0f172a;border:1px solid var(--lk-border);border-radius:7px;color:white;font-size:0.85rem;box-sizing:border-box;">
+              </div>
+            </div>
+            <button onclick="eseguiSostituzioneDocente()" class="btn" style="background:linear-gradient(135deg,#6366f1,#4f46e5);border:none;color:white;padding:8px 20px;border-radius:8px;cursor:pointer;font-weight:600;">🔁 Aggiorna Docente</button>
+            <div id="sdRisultato" style="margin-top:0.7rem;font-size:0.85rem;display:none;"></div>
+          </div>
+        </div>
+
+        <!-- SUB-ACCORDION: Iscrizione Tardiva -->
+        <div class="stat-accordion-item" id="accIscTardiva">
+          <div class="stat-accordion-header" onclick="toggleEmergenzaAcc('accIscTardiva')">
+            <span>⏰ Iscrizione Tardiva</span>
+            <span class="stat-accordion-arrow">▶</span>
+          </div>
+          <div class="stat-accordion-body" style="padding:1rem;">
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.7rem;margin-bottom:0.8rem;">
+              <div style="grid-column:1/-1;">
+                <label style="font-size:0.8rem;color:var(--lk-text-muted);display:block;margin-bottom:3px;">Gara di destinazione</label>
+                <select id="itGaraId" style="width:100%;padding:7px 10px;background:#0f172a;border:1px solid var(--lk-border);border-radius:7px;color:white;font-size:0.85rem;">
+                  <option value="">— carica lista gare —</option>
+                </select>
+              </div>
+              <div>
+                <label style="font-size:0.8rem;color:var(--lk-text-muted);display:block;margin-bottom:3px;">Nome docente</label>
+                <input id="itNomeDocente" type="text" placeholder="Mario Rossi" style="width:100%;padding:7px 10px;background:#0f172a;border:1px solid var(--lk-border);border-radius:7px;color:white;font-size:0.85rem;box-sizing:border-box;">
+              </div>
+              <div>
+                <label style="font-size:0.8rem;color:var(--lk-text-muted);display:block;margin-bottom:3px;">Email docente</label>
+                <input id="itEmailDocente" type="email" placeholder="mario.rossi@scuola.it" style="width:100%;padding:7px 10px;background:#0f172a;border:1px solid var(--lk-border);border-radius:7px;color:white;font-size:0.85rem;box-sizing:border-box;">
+              </div>
+              <div>
+                <label style="font-size:0.8rem;color:var(--lk-text-muted);display:block;margin-bottom:3px;">Istituto (IC)</label>
+                <input id="itIstituto" type="text" placeholder="IC Gottolengo" style="width:100%;padding:7px 10px;background:#0f172a;border:1px solid var(--lk-border);border-radius:7px;color:white;font-size:0.85rem;box-sizing:border-box;">
+              </div>
+              <div>
+                <label style="font-size:0.8rem;color:var(--lk-text-muted);display:block;margin-bottom:3px;">Plesso (se diverso da IC)</label>
+                <input id="itPlesso" type="text" placeholder="Plesso Fiesse" style="width:100%;padding:7px 10px;background:#0f172a;border:1px solid var(--lk-border);border-radius:7px;color:white;font-size:0.85rem;box-sizing:border-box;">
+              </div>
+              <div>
+                <label style="font-size:0.8rem;color:var(--lk-text-muted);display:block;margin-bottom:3px;">Ordine</label>
+                <select id="itOrdine" style="width:100%;padding:7px 10px;background:#0f172a;border:1px solid var(--lk-border);border-radius:7px;color:white;font-size:0.85rem;">
+                  <option value="primaria">Primaria</option>
+                  <option value="secondaria">Secondaria</option>
+                </select>
+              </div>
+              <div>
+                <label style="font-size:0.8rem;color:var(--lk-text-muted);display:block;margin-bottom:3px;">Classe</label>
+                <select id="itClasse" style="width:100%;padding:7px 10px;background:#0f172a;border:1px solid var(--lk-border);border-radius:7px;color:white;font-size:0.85rem;">
+                  <option value="1">1ª</option><option value="2">2ª</option><option value="3">3ª</option>
+                  <option value="4">4ª</option><option value="5">5ª</option>
+                </select>
+              </div>
+              <div>
+                <label style="font-size:0.8rem;color:var(--lk-text-muted);display:block;margin-bottom:3px;">Sezione</label>
+                <input id="itSezione" type="text" maxlength="3" placeholder="A" style="width:100%;padding:7px 10px;background:#0f172a;border:1px solid var(--lk-border);border-radius:7px;color:white;font-size:0.85rem;box-sizing:border-box;">
+              </div>
+              <div>
+                <label style="font-size:0.8rem;color:var(--lk-text-muted);display:block;margin-bottom:3px;">N° squadre</label>
+                <input id="itNSquadre" type="number" min="1" max="10" value="1" style="width:100%;padding:7px 10px;background:#0f172a;border:1px solid var(--lk-border);border-radius:7px;color:white;font-size:0.85rem;box-sizing:border-box;">
+              </div>
+            </div>
+            <button onclick="eseguiIscrizioneTardiva()" class="btn" style="background:linear-gradient(135deg,#f59e0b,#d97706);border:none;color:white;padding:8px 20px;border-radius:8px;cursor:pointer;font-weight:600;">⏰ Crea Iscrizione + Squadre</button>
+            <div id="itRisultato" style="margin-top:0.7rem;font-size:0.85rem;display:none;"></div>
+          </div>
+        </div>
+      </section>
+
       <!-- ==================== LINK RAPIDI ==================== -->
       <section class="admin-section">
         <h3 class="admin-section-title">Link Rapidi</h3>
@@ -3963,6 +4059,76 @@
           btn.disabled = false; btn.textContent = '👥 Importa selezionate';
           alert('Errore: ' + err.message);
         });
+    }
+
+    // ==================== GESTIONE EMERGENZE ====================
+
+    function toggleEmergenzaAcc(id) {
+      const el = document.getElementById(id);
+      if (el) el.classList.toggle('open');
+    }
+
+    function eseguiSostituzioneDocente() {
+      const emailVecchio = document.getElementById('sdEmailVecchio').value.trim();
+      const emailNuovo   = document.getElementById('sdEmailNuovo').value.trim();
+      const nomeNuovo    = document.getElementById('sdNomeNuovo').value.trim();
+      const div          = document.getElementById('sdRisultato');
+      if (!emailVecchio) { toast('⚠️ Inserisci l\'email attuale del docente'); return; }
+      if (!emailNuovo && !nomeNuovo) { toast('⚠️ Inserisci almeno la nuova email o il nuovo nome'); return; }
+      div.style.display = 'none';
+      lkApi(API, { action: 'sostituisciDocente', pwd: adminPwd, emailVecchio: emailVecchio, emailNuovo: emailNuovo, nomeNuovo: nomeNuovo })
+        .then(function(r) {
+          if (r.error) { div.style.display = 'block'; div.style.color = '#f87171'; div.textContent = '❌ ' + r.error; return; }
+          div.style.display = 'block'; div.style.color = '#86efac';
+          div.textContent = '✅ ' + r.message;
+        })
+        .catch(function(e) { div.style.display = 'block'; div.style.color = '#f87171'; div.textContent = '❌ Errore: ' + e.message; });
+    }
+
+    function _caricaGarePerEmergenza() {
+      const sel = document.getElementById('itGaraId');
+      if (sel.options.length > 1) return; // già caricate
+      lkApi(API, { action: 'getListaGare' }).then(function(gare) {
+        sel.innerHTML = '<option value="">— seleziona gara —</option>';
+        (gare || []).forEach(function(g) {
+          const opt = document.createElement('option');
+          opt.value = g.id;
+          opt.textContent = g.nome + ' (' + g.stato + ')';
+          sel.appendChild(opt);
+        });
+      });
+    }
+
+    // Carica gare quando si apre l'accordion iscrizione tardiva
+    document.getElementById('accIscTardiva').querySelector('.stat-accordion-header').addEventListener('click', _caricaGarePerEmergenza);
+
+    function eseguiIscrizioneTardiva() {
+      const garaId       = document.getElementById('itGaraId').value;
+      const nomeDocente  = document.getElementById('itNomeDocente').value.trim();
+      const emailDocente = document.getElementById('itEmailDocente').value.trim();
+      const istituto     = document.getElementById('itIstituto').value.trim();
+      const plesso       = document.getElementById('itPlesso').value.trim();
+      const ordine       = document.getElementById('itOrdine').value;
+      const classe       = document.getElementById('itClasse').value;
+      const sezione      = document.getElementById('itSezione').value.trim() || 'A';
+      const nSquadre     = parseInt(document.getElementById('itNSquadre').value) || 1;
+      const div          = document.getElementById('itRisultato');
+      if (!garaId)       { toast('⚠️ Seleziona la gara'); return; }
+      if (!nomeDocente)  { toast('⚠️ Inserisci il nome del docente'); return; }
+      if (!emailDocente) { toast('⚠️ Inserisci l\'email del docente'); return; }
+      if (!istituto)     { toast('⚠️ Inserisci l\'istituto'); return; }
+      div.style.display = 'none';
+      lkApi(API, { action: 'aggiungiIscrizioneTardiva', pwd: adminPwd, garaId: garaId, nomeDocente: nomeDocente, emailDocente: emailDocente, istituto: istituto, plesso: plesso, ordine: ordine, classe: classe, sezione: sezione, nSquadre: nSquadre })
+        .then(function(r) {
+          if (r.error) { div.style.display = 'block'; div.style.color = '#f87171'; div.textContent = '❌ ' + r.error; return; }
+          div.style.display = 'block'; div.style.color = '#86efac';
+          let html = '✅ ' + r.message + '<br><br><strong style="color:#fbbf24;">Codici squadre da consegnare al docente:</strong><br>';
+          (r.squadreCreate || []).forEach(function(sq) {
+            html += '<code style="background:#1e293b;padding:2px 8px;border-radius:4px;margin:3px 0;display:inline-block;">' + sq.codice + '</code> — ' + sq.nome + '<br>';
+          });
+          div.innerHTML = html;
+        })
+        .catch(function(e) { div.style.display = 'block'; div.style.color = '#f87171'; div.textContent = '❌ Errore: ' + e.message; });
     }
 
   </script>
