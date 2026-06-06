@@ -611,23 +611,38 @@
           <button class="btn-info-toggle" onclick="toggleInfo('info-setup')" title="Informazioni">i</button>
         </h3>
         <div class="info-panel" id="info-setup">
-          <strong>Quando usare questa sezione:</strong> una sola volta all'inizio di ogni anno scolastico.
+          <strong>📅 Sequenza fine anno → nuovo anno (nell'ordine):</strong>
+          <ol style="margin:0.4rem 0 0.75rem 1.2rem; padding:0;">
+            <li><strong>① Archivia Anno Corrente</strong> (qui sotto) → aggiunge le statistiche dell'anno che si chiude ai totali storici del banner pubblico sulla home. Farlo PRIMA di resettare i dati.</li>
+            <li>Per ogni gara: <em>Controllo Gara Live</em> → selezionala → <strong>🗑 Elimina Attestati Drive</strong> → <strong>🗑 Elimina Gara</strong></li>
+            <li><em>Strumenti di Test</em> → <strong>🗑 Reset Iscrizioni</strong></li>
+            <li><em>Strumenti di Test</em> → <strong>🗑 Reset Intenzioni</strong></li>
+            <li><em>Fase 1</em> → riporta la fase a <strong>0</strong></li>
+            <li><strong>② Crea Cartelle Drive</strong> (qui sotto) → crea le cartelle del nuovo anno su Drive</li>
+            <li>Opzionale: <strong>③ Configurazione → Parametri</strong> → verifica/aggiorna i valori per il nuovo anno</li>
+          </ol>
           <ul>
             <li><strong>Crea Cartelle:</strong> prepara le cartelle su Google Drive per l'anno corrente (sottocartelle Attestati, Statistiche, Dati Gara). Fallo prima di aprire le intenzioni.</li>
             <li><strong>Configura → tab Parametri:</strong> modifica durata gara, numero quesiti, punteggi, password admin, email notifiche. Usa "Reset da regolamento" per tornare ai valori deliberati il 17/03/2026.</li>
-            <li><strong>Configura → tab Istituti:</strong> gestisci la lista degli IC e dei loro plessi. Al primo avvio clicca "Carica 19 IC predefiniti" per popolare l'Ambito 10. Le sigle qui definite vengono usate per generare automaticamente i codici/nomi delle squadre (es. GT+FI → GTFIPRI4A1). Puoi aggiungere nuovi IC o plessi in qualsiasi momento — le sigle devono essere univoche.</li>
+            <li><strong>Configura → tab Istituti:</strong> gestisci la lista degli IC e dei loro plessi. Le sigle qui definite vengono usate per generare automaticamente i codici/nomi delle squadre (es. GT+FI → GTFIPRI4A1).</li>
           </ul>
         </div>
         <div class="admin-grid">
           <div class="admin-card">
+            <div class="admin-card-icon">📊</div>
+            <h4 class="admin-card-title">① Archivia Anno Corrente</h4>
+            <p class="admin-card-desc">Aggiunge le statistiche dell'anno al contatore storico del sito.<br><small style="color:var(--lk-text-muted);">Ultima archiviazione: <strong id="storiciUltimoAnno">—</strong></small></p>
+            <button class="btn btn-primary" onclick="eseguiArchiviaAnno()">Archivia Anno</button>
+          </div>
+          <div class="admin-card">
             <div class="admin-card-icon">📅</div>
-            <h4 class="admin-card-title">Nuovo Anno</h4>
+            <h4 class="admin-card-title">② Crea Cartelle Drive</h4>
             <p class="admin-card-desc" id="descNuovoAnno">Crea le cartelle su Drive per l'anno scolastico <strong id="annoNuovoAnno">—</strong></p>
             <button class="btn btn-primary" onclick="setupNuovoAnno()">Crea Cartelle</button>
           </div>
           <div class="admin-card">
             <div class="admin-card-icon">⚙️</div>
-            <h4 class="admin-card-title">Configurazione</h4>
+            <h4 class="admin-card-title">③ Configurazione</h4>
             <p class="admin-card-desc">Modifica parametri gare e istituti</p>
             <button class="btn btn-outline" onclick="openConfig()">Configura</button>
           </div>
@@ -1143,12 +1158,13 @@
           </ol>
           <strong>📅 Sequenza reset a inizio nuovo anno scolastico:</strong>
           <ol style="margin:0.4rem 0 0 1.2rem; padding:0;">
+            <li>Vai in <em>Setup</em> → clicca <strong>① Archivia Anno Corrente</strong> (PRIMA di resettare i dati!)</li>
             <li>Per ogni gara conclusa: vai in <em>Controllo Gara Live</em> → selezionala → <strong>🗑 Elimina Attestati Drive</strong> → <strong>🗑 Elimina Gara</strong></li>
             <li>Clicca <strong>🗑 Reset Iscrizioni</strong></li>
             <li>Clicca <strong>🗑 Reset Intenzioni</strong></li>
             <li>Vai in <em>Fase 1</em> → riporta la fase a <strong>0</strong></li>
-            <li>Vai in <em>Setup</em> → clicca <strong>Crea Cartelle Drive</strong> per creare le cartelle del nuovo anno (Attestati, Statistiche, Dati Gara)</li>
-            <li>Opzionale: vai in <em>Configura → Parametri</em> → verifica/aggiorna i valori per il nuovo anno</li>
+            <li>Vai in <em>Setup</em> → clicca <strong>② Crea Cartelle Drive</strong> per creare le cartelle del nuovo anno</li>
+            <li>Opzionale: vai in <em>③ Configura → Parametri</em> → verifica/aggiorna i valori per il nuovo anno</li>
           </ol>
         </div>
         <div class="danger-zone">
@@ -1317,6 +1333,46 @@
       setTimeout(caricaStatIscrizioni, 2500);
       setTimeout(() => caricaListaGare(true), 3500);
       setTimeout(caricaSetupInfo, 4500);
+      setTimeout(caricaStorico, 5500);
+    }
+
+    function caricaStorico() {
+      lkApi(API, { action: 'getStoricoPublico' })
+        .then(function(r) {
+          const el = document.getElementById('storiciUltimoAnno');
+          if (el) el.textContent = r.ultimoAnno || 'mai';
+        })
+        .catch(function() {});
+    }
+
+    function eseguiArchiviaAnno() {
+      const anno = LOGIKRON_CONFIG.annoScolastico;
+      // Prima carica le stat dell'anno corrente per mostrarle nel dialog
+      lkApi(API, { action: 'getStatIscrizioni' })
+        .then(function(s) {
+          const msg = 'Archiviare l\'anno ' + anno + '?\n\n' +
+            'Dati che verranno aggiunti ai totali storici:\n' +
+            '  • Istituti:  ' + s.istituti + '\n' +
+            '  • Classi:    ' + s.classi   + '\n' +
+            '  • Squadre:   ' + s.squadre  + '\n' +
+            '  • Alunni:    ' + s.alunni   + '\n\n' +
+            '⚠️ Operazione irreversibile. Eseguire PRIMA di resettare Iscrizioni e Intenzioni.';
+          if (!confirm(msg)) return;
+          lkApi(API, { action: 'archiviAnnoCorrente', pwd: adminPwd, anno: anno })
+            .then(function(r) {
+              if (r.error) { alert('Errore: ' + r.error); return; }
+              document.getElementById('storiciUltimoAnno').textContent = r.annoArchiviato;
+              alert('✅ Anno ' + r.annoArchiviato + ' archiviato!\n\n' +
+                'Nuovi totali storici (visibili sul sito):\n' +
+                '  • Edizioni: ' + r.nuoviTotali.edizioni + '\n' +
+                '  • Istituti: ' + r.nuoviTotali.istituti + '\n' +
+                '  • Classi:   ' + r.nuoviTotali.classi   + '\n' +
+                '  • Squadre:  ' + r.nuoviTotali.squadre  + '\n' +
+                '  • Alunni:   ' + r.nuoviTotali.alunni);
+            })
+            .catch(function(e) { alert('Errore durante l\'archiviazione: ' + e.message); });
+        })
+        .catch(function() { alert('Impossibile leggere le statistiche. Verifica la connessione al server.'); });
     }
 
     function caricaFase(tentativo) {

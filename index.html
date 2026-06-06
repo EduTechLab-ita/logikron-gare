@@ -253,7 +253,7 @@
   <script src="js/api.js"></script>
   <script src="js/math-bg.js"></script>
   <script>
-    // Popola totali storici cumulativi dalla config
+    // Popola totali storici: fallback immediato da config.js, poi aggiorna dal backend
     const storico = LOGIKRON_CONFIG.totaleStorico;
     if (storico) {
       document.getElementById('prevIstituti').textContent = storico.istituti || '-';
@@ -261,6 +261,18 @@
       document.getElementById('prevSquadre').textContent = storico.squadre || '-';
       document.getElementById('prevAlunni').textContent = storico.alunni || '-';
     }
+    setTimeout(function() {
+      lkApi(LOGIKRON_CONFIG.webAppUrls.gare, { action: 'getStoricoPublico' })
+        .then(function(s) {
+          if (s.edizioni > 0) {
+            document.getElementById('prevIstituti').textContent = s.istituti;
+            document.getElementById('prevClassi').textContent   = s.classi;
+            document.getElementById('prevSquadre').textContent  = s.squadre;
+            document.getElementById('prevAlunni').textContent   = s.alunni;
+          }
+        })
+        .catch(function() {});
+    }, 3000);
 
     const btn1 = document.getElementById('btnStep1');
     const btn2 = document.getElementById('btnStep2');
